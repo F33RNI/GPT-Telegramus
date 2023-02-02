@@ -1,10 +1,14 @@
 # GPT-Telegramus
 ## ChatGPT implementation as a telegram bot
-
 <div style="width:100%;text-align:center;">
     <p align="center">
         <img src="https://badges.frapsoft.com/os/v1/open-source.png?v=103" >
         <a href="https://soundcloud.com/f3rni"><img alt="SoundCloud" src="https://img.shields.io/badge/-SoundCloud-orange" ></a>
+    </p>
+</div>
+<div style="width:100%;text-align:center;">
+    <p align="center">
+        <img src="Screenshot.png" width="auto" height="500">
     </p>
 </div>
 
