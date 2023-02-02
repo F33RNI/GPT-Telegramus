@@ -1,0 +1,10 @@
+{
+  "start_message": "Привет, чумба! Версия GPT-Telegramus: {}\\n\\nGPT-Telegramus - Fern Lane\\nChatGPT - OpenAI\\nAPI - acheong08",
+  "help_message": "/start - приветственное сообщение и версия бота\\n/gpt текст - запрос к ChatGPT\\n/queue - показать состояние очереди",
+  "gpt_no_text": "А де запрос, чумба?\\n\\nПример: \"/gpt tell a joke about tofik\"",
+  "queue_overflow": "Очередь запросов переполнена. Повторите попытку позже",
+  "queue_empty": "Очередь пуста",
+  "queue_stats": "Очередь:\\n\\n{0}",
+  "queue_accepted": "{0}, ваш запрос добавлен в очередь. Позиция в очереди: {1}/{2}",
+  "gpt_error": "Ошибка: {0}\\n\\nПовторите POPITку позже =("
+}
