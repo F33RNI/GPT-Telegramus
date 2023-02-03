@@ -4,6 +4,7 @@
     <p align="center">
         <img src="https://badges.frapsoft.com/os/v1/open-source.png?v=103" >
         <a href="https://soundcloud.com/f3rni"><img alt="SoundCloud" src="https://img.shields.io/badge/-SoundCloud-orange" ></a>
+        <a href="https://www.youtube.com/@F3RNI"><img alt="YouTube" src="https://img.shields.io/badge/-YouTube-red" ></a>
     </p>
 </div>
 <div style="width:100%;text-align:center;">
