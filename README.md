@@ -1,5 +1,5 @@
 # GPT-Telegramus
-## ChatGPT implementation as a telegram bot
+## ChatGPT and DALLE implementation as a telegram bot
 <div style="width:100%;text-align:center;">
     <p align="center">
         <img src="https://badges.frapsoft.com/os/v1/open-source.png?v=103" >
@@ -17,6 +17,7 @@
 ## Dependencies
 
 - **ChatGPT** (ChatGPT by OpenAI): https://chat.openai.com/chat
+- **DALLE** (DALLE by OpenAI): https://openai.com/dall-e-2/
 - **acheong08/ChatGPT** (API): https://github.com/acheong08/ChatGPT
 - **python-telegram-bot** (Telegram bot API): https://github.com/python-telegram-bot/python-telegram-bot
 
@@ -71,6 +72,7 @@
 - `/help` - Shows list of commands
 - `/queue` - Shows requests queue
 - `/gpt YOUR REQUEST` - Request to ChatGPT
+- `/draw YOUR REQUEST` - Request to DALLE
 - Or just type your request as message without `/gpt` command
 
 # This project is under development!
