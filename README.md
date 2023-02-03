@@ -9,6 +9,7 @@
 <div style="width:100%;text-align:center;">
     <p align="center">
         <img src="Screenshot.png" width="auto" height="500">
+        <img src="Screenshot_dalle.png" width="auto" height="500">
     </p>
 </div>
 
@@ -34,6 +35,12 @@
 7. Generate API Key https://platform.openai.com/account/api-keys
 8. Type OpenAI API Key into `open_ai_api_key` in `settings.json` file
 9. Run main script `python main.py`
+
+----------
+
+## Bot messages
+
+You can edit telegram bot messages by editing file `messages.json`. Restart script to apply changes
 
 ----------
 
@@ -75,4 +82,4 @@
 - `/draw YOUR REQUEST` - Request to DALLE
 - Or just type your request as message without `/gpt` command
 
-# This project is under development!
+# This project is under development! English messages in future...
