@@ -133,7 +133,8 @@ class BotHandler:
                     await context.bot.send_message(chat_id=chat_id, text=str(self.messages['queue_accepted'])
                                                    .format(user.full_name,
                                                            str(self.requests_queue.qsize()
-                                                               + (1 if self.gpt_handler.is_processing else 0)),
+                                                               + (1 if self.gpt_handler.
+                                                                  processing_container is not None else 0)),
                                                            str(self.settings['queue_max'])))
 
                 # Queue overflow
@@ -158,17 +159,29 @@ class BotHandler:
         """
         user = update.message.from_user
         chat_id = update.effective_chat.id
+        processing_container = self.gpt_handler.processing_container
         logging.info('/queue command from user ' + str(user.full_name))
 
         # Queue is empty
-        if self.requests_queue.empty():
+        if self.requests_queue.empty() and processing_container is None:
             await context.bot.send_message(chat_id=chat_id, text=str(self.messages['queue_empty']))
         else:
+            i = 0
             message = ''
-            for i in range(self.requests_queue.qsize()):
-                text_request = self.requests_queue.queue[i].request
-                text_from = self.requests_queue.queue[i].user_name
-                message += str(i + 1) + '. ' + text_from + ': ' + text_request + '\n\n'
+
+            # From queue
+            if not self.requests_queue.empty():
+                for i in range(self.requests_queue.qsize()):
+                    text_request = self.requests_queue.queue[i].request
+                    text_from = self.requests_queue.queue[i].user_name
+                    message += str(i + 1) + '. ' + text_from + ': ' + text_request + '\n\n'
+
+            # Current request
+            if processing_container is not None:
+                if len(message) > 0:
+                    i += 1
+                message += str(i + 1) + '. ' + processing_container.user_name + ': ' \
+                           + processing_container.request + '\n\n'
 
             # Send queue stats
             await context.bot.send_message(chat_id=chat_id, text=str(self.messages['queue_stats'])

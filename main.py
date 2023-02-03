@@ -17,18 +17,16 @@
 
 import json
 import logging
-
 # Encoding of HTML page
 import os
 import signal
-import time
 
 import psutil
 
 import BotHandler
 import GPTHandler
 
-TELEGRAMUS_VERSION = 'beta_0.3.2'
+TELEGRAMUS_VERSION = 'beta_0.3.3'
 
 # Logging level (INFO for debug, WARN for release)
 LOGGING_LEVEL = logging.INFO

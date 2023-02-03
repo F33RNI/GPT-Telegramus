@@ -21,6 +21,8 @@ import threading
 
 from revChatGPT.Official import Chatbot
 
+import RequestResponseContainer
+
 EMPTY_RESPONSE_ERROR_MESSAGE = 'Empty response'
 
 
@@ -37,8 +39,8 @@ class GPTHandler:
         # Responses queue
         self.responses_queue = None
 
-        # Asking flag
-        self.is_processing = False
+        # Asking request
+        self.processing_container = None
 
         # Requests queue
         self.requests_queue = None
@@ -72,7 +74,10 @@ class GPTHandler:
         while self.gpt_loop_running and self.requests_queue is not None:
             # Get request
             container = self.requests_queue.get(block=True)
-            self.is_processing = True
+            self.processing_container = RequestResponseContainer.RequestResponseContainer(container.chat_id,
+                                                                                          container.user_name,
+                                                                                          container.message_id,
+                                                                                          container.request)
 
             if self.chatbot is not None:
                 # Error message
@@ -119,8 +124,8 @@ class GPTHandler:
                 logging.info('Adding response to request: ' + str(container.request) + ' to the queue')
                 self.responses_queue.put(container)
 
-                # Clear processing flag
-                self.is_processing = False
+                # Clear processing container
+                self.processing_container = None
 
         # Loop finished
         logging.warning('GPTHandler loop finished')
