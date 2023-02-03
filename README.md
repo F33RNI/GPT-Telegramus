@@ -38,6 +38,12 @@
 
 ----------
 
+## Bot messages
+
+You can edit telegram bot messages by editing file `messages.json`. Restart script to apply changes
+
+----------
+
 ## Running as service on linux
 
 1. Install Python and pip
@@ -76,4 +82,4 @@
 - `/draw YOUR REQUEST` - Request to DALLE
 - Or just type your request as message without `/gpt` command
 
-# This project is under development!
+# This project is under development! English messages in future...
