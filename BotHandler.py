@@ -124,7 +124,7 @@ class BotHandler:
                                                    str(self.requests_queue.qsize()
                                                        + (1 if self.ai_handler.
                                                           processing_container is not None else 0)),
-                                                   str(self.settings['queue_max'])))
+                                                   str(self.settings['queue_max'])).replace('\\n', '\n'))
         # Queue overflow
         else:
             await context.bot.send_message(chat_id=chat_id,
@@ -223,7 +223,7 @@ class BotHandler:
 
         # Queue is empty
         if self.requests_queue.empty() and processing_container is None:
-            await context.bot.send_message(chat_id=chat_id, text=str(self.messages['queue_empty']))
+            await context.bot.send_message(chat_id=chat_id, text=str(self.messages['queue_empty']).replace('\\n', '\n'))
         else:
             i = 0
             message = ''
@@ -339,7 +339,8 @@ class BotHandler:
                                                                                           photo=response.response))
             else:
                 asyncio.run(self.send_reply(response.chat_id,
-                                            str(self.messages['gpt_error']).format(response.response),
+                                            str(self.messages['gpt_error']).format(response.response)
+                                            .replace('\\n', '\n'),
                                             response.message_id, False))
 
         # Loop finished
