@@ -9,6 +9,7 @@
 <div style="width:100%;text-align:center;">
     <p align="center">
         <img src="Screenshot.png" width="auto" height="500">
+        <img src="Screenshot_dalle.png" width="auto" height="500">
     </p>
 </div>
 
