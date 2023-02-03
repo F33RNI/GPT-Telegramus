@@ -8,8 +8,9 @@
 </div>
 <div style="width:100%;text-align:center;">
     <p align="center">
-        <img src="Screenshot.png" width="auto" height="500">
-        <img src="Screenshot_dalle.png" width="auto" height="500">
+        <img src="Screenshot_start.png" width="auto" height="300">
+        <img src="Screenshot.png" width="auto" height="300">
+        <img src="Screenshot_dalle.png" width="auto" height="300">
     </p>
 </div>
 
@@ -82,4 +83,4 @@ You can edit telegram bot messages by editing file `messages.json`. Restart scri
 - `/draw YOUR REQUEST` - Request to DALLE
 - Or just type your request as message without `/gpt` command
 
-# This project is under development! English messages in future...
+# This project is under development!
