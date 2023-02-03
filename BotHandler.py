@@ -25,18 +25,24 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
 
 import RequestResponseContainer
+from GPTHandler import GPTHandler
 from main import TELEGRAMUS_VERSION
 
 BOT_COMMAND_START = 'start'
 BOT_COMMAND_HELP = 'help'
 BOT_COMMAND_QUEUE = 'queue'
+BOT_COMMAND_RESET = 'reset'
 BOT_COMMAND_GPT = 'gpt'
+
+# List of markdown chars to escape with \\
+MARKDOWN_ESCAPE = ['_', '*', '[', ']', '(', ')', '~', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
 
 
 class BotHandler:
-    def __init__(self, settings, messages):
+    def __init__(self, settings, messages, gpt_handler: GPTHandler):
         self.settings = settings
         self.messages = messages
+        self.gpt_handler = gpt_handler
 
         # Response loop running flag
         self.response_loop_running = False
@@ -44,8 +50,8 @@ class BotHandler:
         # Requests queue
         self.requests_queue = None
 
-        # Responses queue
-        self.responses_queue = None
+        # Responses queue for GPTHandler class
+        self.responses_queue = self.gpt_handler.responses_queue
 
         # Check settings and messages
         if self.settings is not None and self.messages is not None:
@@ -63,11 +69,12 @@ class BotHandler:
         """
         try:
             # Build bot
-            application = ApplicationBuilder().token(self.settings['telegram_api_key'])\
+            application = ApplicationBuilder().token(self.settings['telegram_api_key']) \
                 .write_timeout(30).read_timeout(30).build()
             application.add_handler(CommandHandler(BOT_COMMAND_START, self.bot_command_start))
             application.add_handler(CommandHandler(BOT_COMMAND_HELP, self.bot_command_help))
             application.add_handler(CommandHandler(BOT_COMMAND_QUEUE, self.bot_command_queue))
+            application.add_handler(CommandHandler(BOT_COMMAND_RESET, self.bot_command_reset))
             application.add_handler(CommandHandler(BOT_COMMAND_GPT, self.bot_command_gpt))
 
             # Start bot
@@ -87,6 +94,18 @@ class BotHandler:
         thread = threading.Thread(target=self.response_loop)
         thread.start()
         logging.info('Responses handler background thread: ' + thread.name)
+
+    async def bot_command_reset(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """
+        /reset command
+        :param update:
+        :param context:
+        :return:
+        """
+        chat_id = update.effective_chat.id
+        if self.gpt_handler.chatbot is not None:
+            self.gpt_handler.chatbot.reset()
+            await context.bot.send_message(chat_id=chat_id, text=str(self.messages['reset']).replace('\\n', '\n'))
 
     async def bot_command_gpt(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
@@ -112,7 +131,9 @@ class BotHandler:
 
                     # Send confirmation message
                     await context.bot.send_message(chat_id=chat_id, text=str(self.messages['queue_accepted'])
-                                                   .format(user.full_name, str(self.requests_queue.qsize()),
+                                                   .format(user.full_name,
+                                                           str(self.requests_queue.qsize()
+                                                               + (1 if self.gpt_handler.is_processing else 0)),
                                                            str(self.settings['queue_max'])))
 
                 # Queue overflow
@@ -185,17 +206,40 @@ class BotHandler:
         # Send help message
         await self.bot_command_help(update, context)
 
-    async def send_reply(self, chat_id: int, message: str, reply_to_message_id: int):
+    async def send_reply(self, chat_id: int, message: str, reply_to_message_id: int, markdown=False):
         """
         Sends reply to chat
         :param chat_id: Chat id to send to
         :param message: Message to send
         :param reply_to_message_id: Message ID to reply on
+        :param markdown: parse as markdown
         :return:
         """
-        await telegram.Bot(self.settings['telegram_api_key']).sendMessage(chat_id=chat_id,
-                                                                          text=message,
-                                                                          reply_to_message_id=reply_to_message_id)
+        if markdown:
+            # Try parse markdown
+            try:
+                # Escape all chars with \\
+                for i in range(len(MARKDOWN_ESCAPE)):
+                    escape_char = MARKDOWN_ESCAPE[i]
+                    message = message.replace(escape_char, '\\' + escape_char)
+
+                await telegram.Bot(self.settings['telegram_api_key']).sendMessage(chat_id=chat_id,
+                                                                                  text=message,
+                                                                                  reply_to_message_id=
+                                                                                  reply_to_message_id,
+                                                                                  parse_mode='MarkdownV2')
+
+            # Error parsing markdown
+            except Exception as e:
+                logging.info(e)
+                await telegram.Bot(self.settings['telegram_api_key']).sendMessage(chat_id=chat_id,
+                                                                                  text=message.replace('\\n', '\n'),
+                                                                                  reply_to_message_id=
+                                                                                  reply_to_message_id)
+        else:
+            await telegram.Bot(self.settings['telegram_api_key']).sendMessage(chat_id=chat_id,
+                                                                              text=message.replace('\\n', '\n'),
+                                                                              reply_to_message_id=reply_to_message_id)
 
     def response_loop(self):
         """
@@ -208,11 +252,11 @@ class BotHandler:
 
             # Send reply
             if not response.error:
-                asyncio.run(self.send_reply(response.chat_id, response.response, response.message_id))
+                asyncio.run(self.send_reply(response.chat_id, response.response, response.message_id, True))
             else:
                 asyncio.run(self.send_reply(response.chat_id,
                                             str(self.messages['gpt_error']).format(response.response),
-                                            response.message_id))
+                                            response.message_id, False))
 
         # Loop finished
         logging.warning('Response loop finished')

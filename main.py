@@ -21,13 +21,14 @@ import logging
 # Encoding of HTML page
 import os
 import signal
+import time
 
 import psutil
 
 import BotHandler
 import GPTHandler
 
-TELEGRAMUS_VERSION = 'beta_0.0.1'
+TELEGRAMUS_VERSION = 'beta_0.3.2'
 
 # Logging level (INFO for debug, WARN for release)
 LOGGING_LEVEL = logging.INFO
@@ -99,11 +100,11 @@ def main():
     messages = load_json(MESSAGES_FILE)
 
     # Initialize BotHandler and GPTHandler classes
-    bot_handler = BotHandler.BotHandler(settings, messages)
-    gpt_handler = GPTHandler.GPTHandler(settings, bot_handler.requests_queue)
+    gpt_handler = GPTHandler.GPTHandler(settings)
+    bot_handler = BotHandler.BotHandler(settings, messages, gpt_handler)
 
-    # Set responses_queue to bot_handler
-    bot_handler.responses_queue = gpt_handler.responses_queue
+    # Set requests_queue to gpt_handler
+    gpt_handler.requests_queue = bot_handler.requests_queue
 
     # Start GPTHandler
     gpt_handler.thread_start()

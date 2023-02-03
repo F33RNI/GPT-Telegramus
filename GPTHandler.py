@@ -25,17 +25,26 @@ EMPTY_RESPONSE_ERROR_MESSAGE = 'Empty response'
 
 
 class GPTHandler:
-    def __init__(self, settings, requests_queue: queue.Queue):
+    def __init__(self, settings):
         self.settings = settings
-        self.requests_queue = requests_queue
 
+        # Loop running flag
         self.gpt_loop_running = False
+
+        # OpenAI API
+        self.chatbot = None
 
         # Responses queue
         self.responses_queue = None
 
-        # Check settings and requests_queue
-        if self.settings is not None and requests_queue is not None:
+        # Asking flag
+        self.is_processing = False
+
+        # Requests queue
+        self.requests_queue = None
+
+        # Check settings
+        if self.settings is not None:
             # Initialize queue
             self.responses_queue = queue.Queue(maxsize=self.settings['queue_max'])
 
@@ -58,13 +67,14 @@ class GPTHandler:
         :return:
         """
         # Initialize OpenAI API
-        chatbot = Chatbot(api_key=self.settings['open_ai_api_key'])
+        self.chatbot = Chatbot(api_key=self.settings['open_ai_api_key'])
 
         while self.gpt_loop_running and self.requests_queue is not None:
             # Get request
             container = self.requests_queue.get(block=True)
+            self.is_processing = True
 
-            if chatbot is not None:
+            if self.chatbot is not None:
                 # Error message
                 error_message = ''
 
@@ -75,7 +85,7 @@ class GPTHandler:
                     logging.info('Asking: ' + str(container.request))
 
                     # Send request
-                    chatbot_response_raw = chatbot.ask(str(container.request))
+                    chatbot_response_raw = self.chatbot.ask(str(container.request))
 
                     # Log response
                     logging.info(str(chatbot_response_raw))
@@ -86,7 +96,7 @@ class GPTHandler:
                         chatbot_response += choice['text'] + '\n'
                 except Exception as e:
                     error_message = str(e)
-                    logging.error(e)
+                    logging.error(e, exc_info=True)
 
                 # Check error
                 if len(error_message) == 0:
@@ -108,6 +118,9 @@ class GPTHandler:
                 # Add response to queue
                 logging.info('Adding response to request: ' + str(container.request) + ' to the queue')
                 self.responses_queue.put(container)
+
+                # Clear processing flag
+                self.is_processing = False
 
         # Loop finished
         logging.warning('GPTHandler loop finished')
