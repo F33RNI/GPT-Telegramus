@@ -22,7 +22,7 @@ import threading
 
 import telegram
 from telegram import Update
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
+from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 
 import RequestResponseContainer
 from GPTHandler import GPTHandler
@@ -76,6 +76,7 @@ class BotHandler:
             application.add_handler(CommandHandler(BOT_COMMAND_QUEUE, self.bot_command_queue))
             application.add_handler(CommandHandler(BOT_COMMAND_RESET, self.bot_command_reset))
             application.add_handler(CommandHandler(BOT_COMMAND_GPT, self.bot_command_gpt))
+            application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), self.bot_read_message))
 
             # Start bot
             application.run_polling()
@@ -95,6 +96,36 @@ class BotHandler:
         thread.start()
         logging.info('Responses handler background thread: ' + thread.name)
 
+    async def create_request(self, request: str, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """
+        Creates request to chatGPT
+        :param request:
+        :param update:
+        :param context:
+        :return:
+        """
+        user = update.message.from_user
+        chat_id = update.effective_chat.id
+
+        # Check queue length
+        if not self.requests_queue.full():
+            # Add request to queue
+            container = RequestResponseContainer.RequestResponseContainer(chat_id, user.full_name,
+                                                                          update.message.message_id, request=request)
+            self.requests_queue.put(container)
+
+            # Send confirmation message
+            await context.bot.send_message(chat_id=chat_id, text=str(self.messages['queue_accepted'])
+                                           .format(user.full_name,
+                                                   str(self.requests_queue.qsize()
+                                                       + (1 if self.gpt_handler.
+                                                          processing_container is not None else 0)),
+                                                   str(self.settings['queue_max'])))
+        # Queue overflow
+        else:
+            await context.bot.send_message(chat_id=chat_id,
+                                           text=str(self.messages['queue_overflow']).replace('\\n', '\n'))
+
     async def bot_command_reset(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
         /reset command
@@ -106,6 +137,23 @@ class BotHandler:
         if self.gpt_handler.chatbot is not None:
             self.gpt_handler.chatbot.reset()
             await context.bot.send_message(chat_id=chat_id, text=str(self.messages['reset']).replace('\\n', '\n'))
+
+    async def bot_read_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """
+        Read message from user
+        :param update:
+        :param context:
+        :return:
+        """
+        chat_id = update.effective_chat.id
+        message = update.message.text.strip()
+
+        if len(message) > 0:
+            await self.create_request(message, update, context)
+        # No message
+        else:
+            await context.bot.send_message(chat_id=chat_id,
+                                           text=str(self.messages['gpt_no_message']).replace('\\n', '\n'))
 
     async def bot_command_gpt(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
@@ -122,25 +170,7 @@ class BotHandler:
             # Combine all arguments to text
             request = str(' '.join(context.args)).strip()
             if len(request) > 0:
-                # Check queue length
-                if not self.requests_queue.full():
-                    # Add request to queue
-                    container = RequestResponseContainer.RequestResponseContainer(chat_id, user.full_name,
-                                                                                  update.message.message_id, request)
-                    self.requests_queue.put(container)
-
-                    # Send confirmation message
-                    await context.bot.send_message(chat_id=chat_id, text=str(self.messages['queue_accepted'])
-                                                   .format(user.full_name,
-                                                           str(self.requests_queue.qsize()
-                                                               + (1 if self.gpt_handler.
-                                                                  processing_container is not None else 0)),
-                                                           str(self.settings['queue_max'])))
-
-                # Queue overflow
-                else:
-                    await context.bot.send_message(chat_id=chat_id,
-                                                   text=str(self.messages['queue_overflow']).replace('\\n', '\n'))
+                await self.create_request(request, update, context)
             # No text
             else:
                 await context.bot.send_message(chat_id=chat_id,

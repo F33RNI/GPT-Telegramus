@@ -26,7 +26,7 @@ import psutil
 import BotHandler
 import GPTHandler
 
-TELEGRAMUS_VERSION = 'beta_0.3.3'
+TELEGRAMUS_VERSION = 'beta_0.3.5'
 
 # Logging level (INFO for debug, WARN for release)
 LOGGING_LEVEL = logging.INFO
