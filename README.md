@@ -71,5 +71,6 @@
 - `/help` - Shows list of commands
 - `/queue` - Shows requests queue
 - `/gpt YOUR REQUEST` - Request to ChatGPT
+- Or just type your request as message without `/gpt` command
 
 # This project is under development!
