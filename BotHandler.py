@@ -336,7 +336,9 @@ class BotHandler:
                 # DALLE
                 else:
                     asyncio.run(telegram.Bot(self.settings['telegram_api_key']).sendPhoto(chat_id=response.chat_id,
-                                                                                          photo=response.response))
+                                                                                          photo=response.response,
+                                                                                          reply_to_message_id
+                                                                                          =response.message_id))
             else:
                 asyncio.run(self.send_reply(response.chat_id,
                                             str(self.messages['gpt_error']).format(response.response)
