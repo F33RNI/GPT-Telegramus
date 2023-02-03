@@ -26,7 +26,7 @@
 
 1. Install Python and pip
 2. Download source code
-3. Install requirements `pip install -r requirements.txt`
+3. Install requirements `pip install -r requirements.txt --upgrade`
 4. Create bot at https://t.me/BotFather
 5. Type Bot's token into `telegram_api_key` in `settings.json` file
 6. Create account at OpenAI
