@@ -19,6 +19,7 @@ import logging
 import queue
 import threading
 
+import openai
 from revChatGPT.Official import Chatbot
 
 import RequestResponseContainer
@@ -26,7 +27,7 @@ import RequestResponseContainer
 EMPTY_RESPONSE_ERROR_MESSAGE = 'Empty response'
 
 
-class GPTHandler:
+class AIHandler:
     def __init__(self, settings):
         self.settings = settings
 
@@ -61,7 +62,7 @@ class GPTHandler:
         # Start thread
         thread = threading.Thread(target=self.gpt_loop)
         thread.start()
-        logging.info('GPTHandler thread: ' + thread.name)
+        logging.info('AIHandler thread: ' + thread.name)
 
     def gpt_loop(self):
         """
@@ -77,28 +78,52 @@ class GPTHandler:
             self.processing_container = RequestResponseContainer.RequestResponseContainer(container.chat_id,
                                                                                           container.user_name,
                                                                                           container.message_id,
-                                                                                          container.request)
+                                                                                          container.request,
+                                                                                          request_type=container
+                                                                                          .request_type)
 
             if self.chatbot is not None:
                 # Error message
                 error_message = ''
 
                 # Ask API
-                chatbot_response = None
+                api_response = None
                 try:
-                    # Log request
-                    logging.info('Asking: ' + str(container.request))
+                    # ChatGPT
+                    if container.request_type == RequestResponseContainer.REQUEST_TYPE_CHATGPT:
+                        # Log request
+                        logging.info('Asking: ' + str(container.request))
 
-                    # Send request
-                    chatbot_response_raw = self.chatbot.ask(str(container.request))
+                        # Send request
+                        chatbot_response_raw = self.chatbot.ask(str(container.request))
 
-                    # Log response
-                    logging.info(str(chatbot_response_raw))
+                        # Log response
+                        logging.info(str(chatbot_response_raw))
 
-                    # Add all choices
-                    chatbot_response = ''
-                    for choice in chatbot_response_raw['choices']:
-                        chatbot_response += choice['text'] + '\n'
+                        # Add all choices
+                        api_response = ''
+                        for choice in chatbot_response_raw['choices']:
+                            api_response += choice['text'] + '\n'
+
+                    # DALLE
+                    else:
+                        # Log request
+                        logging.info('Drawing: ' + str(container.request))
+
+                        # Send request
+                        image_response = openai.Image.create(
+                            prompt=str(container.request),
+                            n=1,
+                            size=self.settings['image_size'],
+                        )
+                        response_url = image_response['data'][0]['url']
+
+                        # Log response
+                        logging.info(str(response_url))
+
+                        # Add response
+                        api_response = str(response_url)
+
                 except Exception as e:
                     error_message = str(e)
                     logging.error(e, exc_info=True)
@@ -106,8 +131,8 @@ class GPTHandler:
                 # Check error
                 if len(error_message) == 0:
                     # Check response
-                    if chatbot_response is not None and len(chatbot_response) > 0:
-                        container.response = chatbot_response
+                    if api_response is not None and len(api_response) > 0:
+                        container.response = api_response
                         container.error = False
 
                     # Empty response
@@ -128,5 +153,5 @@ class GPTHandler:
                 self.processing_container = None
 
         # Loop finished
-        logging.warning('GPTHandler loop finished')
+        logging.warning('AIHandler loop finished')
         self.gpt_loop_running = False

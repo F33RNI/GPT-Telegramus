@@ -15,12 +15,16 @@
  OTHER DEALINGS IN THE SOFTWARE.
 """
 
+REQUEST_TYPE_CHATGPT = 0
+REQUEST_TYPE_DALLE = 1
+
 
 class RequestResponseContainer:
-    def __init__(self, chat_id, user_name, message_id, request='', response=''):
+    def __init__(self, chat_id, user_name, message_id, request='', response='', request_type=REQUEST_TYPE_CHATGPT):
         self.chat_id = chat_id
         self.user_name = user_name
         self.message_id = message_id
         self.request = request
         self.response = response
+        self.request_type = request_type
         self.error = False

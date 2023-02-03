@@ -1,7 +1,8 @@
 {
   "start_message": "Привет, чумба! Версия GPT-Telegramus: {}\\n\\nGPT-Telegramus - Fern Lane\\nChatGPT - OpenAI\\nAPI - acheong08",
-  "help_message": "/start - приветственное сообщение и версия бота\\n/gpt текст - запрос к ChatGPT\\n/reset - Сбросить историю OpenAI\\n/queue - показать состояние очереди",
-  "gpt_no_text": "А де запрос, чумба?\\n\\nПример: /gpt tell a joke about polytech",
+  "help_message": "/start - приветственное сообщение и версия бота\\n/gpt текст - запрос к ChatGPT\\n/draw запрос - нарисовать картинку с помощью DALLE\\n/reset - Сбросить историю OpenAI\\n/queue - показать состояние очереди",
+  "gpt_no_text": "А де запрос, чумба?\\n\\nПример: /gpt Tell a joke about polytech",
+  "draw_no_text": "А де запрос, чумба?\\n\\nПример: /draw An eco-friendly computer from the 90s in the style of vaporwave",
   "gpt_no_message": "Пусто! А де запрос, чумба?\\n\\nПример: tell a joke about polytech",
   "queue_overflow": "Очередь запросов переполнена. Повторите попытку позже",
   "queue_empty": "Очередь пуста",

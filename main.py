@@ -24,9 +24,9 @@ import signal
 import psutil
 
 import BotHandler
-import GPTHandler
+import AIHandler
 
-TELEGRAMUS_VERSION = 'beta_0.3.5'
+TELEGRAMUS_VERSION = 'beta_0.4.0'
 
 # Logging level (INFO for debug, WARN for release)
 LOGGING_LEVEL = logging.INFO
@@ -97,15 +97,15 @@ def main():
     settings = load_json(SETTINGS_FILE)
     messages = load_json(MESSAGES_FILE)
 
-    # Initialize BotHandler and GPTHandler classes
-    gpt_handler = GPTHandler.GPTHandler(settings)
-    bot_handler = BotHandler.BotHandler(settings, messages, gpt_handler)
+    # Initialize BotHandler and AIHandler classes
+    ai_handler = AIHandler.AIHandler(settings)
+    bot_handler = BotHandler.BotHandler(settings, messages, ai_handler)
 
-    # Set requests_queue to gpt_handler
-    gpt_handler.requests_queue = bot_handler.requests_queue
+    # Set requests_queue to ai_handler
+    ai_handler.requests_queue = bot_handler.requests_queue
 
-    # Start GPTHandler
-    gpt_handler.thread_start()
+    # Start AIHandler
+    ai_handler.thread_start()
 
     # Start reply handler
     bot_handler.reply_thread_start()

@@ -2,3 +2,5 @@ psutil~=5.9.1
 telegram~=0.0.1
 python-telegram-bot~=20.0
 revChatGPT>=1.1.3
+openai>=0.26.4
+tiktoken>=0.1.2

@@ -25,7 +25,7 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 
 import RequestResponseContainer
-from GPTHandler import GPTHandler
+from AIHandler import AIHandler
 from main import TELEGRAMUS_VERSION
 
 BOT_COMMAND_START = 'start'
@@ -33,16 +33,17 @@ BOT_COMMAND_HELP = 'help'
 BOT_COMMAND_QUEUE = 'queue'
 BOT_COMMAND_RESET = 'reset'
 BOT_COMMAND_GPT = 'gpt'
+BOT_COMMAND_DRAW = 'draw'
 
 # List of markdown chars to escape with \\
 MARKDOWN_ESCAPE = ['_', '*', '[', ']', '(', ')', '~', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
 
 
 class BotHandler:
-    def __init__(self, settings, messages, gpt_handler: GPTHandler):
+    def __init__(self, settings, messages, ai_handler: AIHandler):
         self.settings = settings
         self.messages = messages
-        self.gpt_handler = gpt_handler
+        self.ai_handler = ai_handler
 
         # Response loop running flag
         self.response_loop_running = False
@@ -50,8 +51,8 @@ class BotHandler:
         # Requests queue
         self.requests_queue = None
 
-        # Responses queue for GPTHandler class
-        self.responses_queue = self.gpt_handler.responses_queue
+        # Responses queue for AIHandler class
+        self.responses_queue = self.ai_handler.responses_queue
 
         # Check settings and messages
         if self.settings is not None and self.messages is not None:
@@ -76,6 +77,7 @@ class BotHandler:
             application.add_handler(CommandHandler(BOT_COMMAND_QUEUE, self.bot_command_queue))
             application.add_handler(CommandHandler(BOT_COMMAND_RESET, self.bot_command_reset))
             application.add_handler(CommandHandler(BOT_COMMAND_GPT, self.bot_command_gpt))
+            application.add_handler(CommandHandler(BOT_COMMAND_DRAW, self.bot_command_draw))
             application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), self.bot_read_message))
 
             # Start bot
@@ -96,12 +98,13 @@ class BotHandler:
         thread.start()
         logging.info('Responses handler background thread: ' + thread.name)
 
-    async def create_request(self, request: str, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def create_request(self, request: str, update: Update, context: ContextTypes.DEFAULT_TYPE, request_type: int):
         """
         Creates request to chatGPT
         :param request:
         :param update:
         :param context:
+        :param request_type:
         :return:
         """
         user = update.message.from_user
@@ -111,14 +114,15 @@ class BotHandler:
         if not self.requests_queue.full():
             # Add request to queue
             container = RequestResponseContainer.RequestResponseContainer(chat_id, user.full_name,
-                                                                          update.message.message_id, request=request)
+                                                                          update.message.message_id, request=request,
+                                                                          request_type=request_type)
             self.requests_queue.put(container)
 
             # Send confirmation message
             await context.bot.send_message(chat_id=chat_id, text=str(self.messages['queue_accepted'])
                                            .format(user.full_name,
                                                    str(self.requests_queue.qsize()
-                                                       + (1 if self.gpt_handler.
+                                                       + (1 if self.ai_handler.
                                                           processing_container is not None else 0)),
                                                    str(self.settings['queue_max'])))
         # Queue overflow
@@ -134,8 +138,8 @@ class BotHandler:
         :return:
         """
         chat_id = update.effective_chat.id
-        if self.gpt_handler.chatbot is not None:
-            self.gpt_handler.chatbot.reset()
+        if self.ai_handler.chatbot is not None:
+            self.ai_handler.chatbot.reset()
             await context.bot.send_message(chat_id=chat_id, text=str(self.messages['reset']).replace('\\n', '\n'))
 
     async def bot_read_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -149,11 +153,36 @@ class BotHandler:
         message = update.message.text.strip()
 
         if len(message) > 0:
-            await self.create_request(message, update, context)
+            await self.create_request(message, update, context, RequestResponseContainer.REQUEST_TYPE_CHATGPT)
         # No message
         else:
             await context.bot.send_message(chat_id=chat_id,
                                            text=str(self.messages['gpt_no_message']).replace('\\n', '\n'))
+
+    async def bot_command_draw(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """
+        /draw command
+        :param update:
+        :param context:
+        :return:
+        """
+        user = update.message.from_user
+        chat_id = update.effective_chat.id
+        logging.info('/draw command from user ' + str(user.full_name) + ' request: ' + ' '.join(context.args))
+
+        if len(context.args) > 0:
+            # Combine all arguments to text
+            request = str(' '.join(context.args)).strip()
+            if len(request) > 0:
+                await self.create_request(request, update, context, RequestResponseContainer.REQUEST_TYPE_DALLE)
+            # No text
+            else:
+                await context.bot.send_message(chat_id=chat_id,
+                                               text=str(self.messages['draw_no_text']).replace('\\n', '\n'))
+        # No text
+        else:
+            await context.bot.send_message(chat_id=chat_id,
+                                           text=str(self.messages['draw_no_text']).replace('\\n', '\n'))
 
     async def bot_command_gpt(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
@@ -170,7 +199,7 @@ class BotHandler:
             # Combine all arguments to text
             request = str(' '.join(context.args)).strip()
             if len(request) > 0:
-                await self.create_request(request, update, context)
+                await self.create_request(request, update, context, RequestResponseContainer.REQUEST_TYPE_CHATGPT)
             # No text
             else:
                 await context.bot.send_message(chat_id=chat_id,
@@ -189,7 +218,7 @@ class BotHandler:
         """
         user = update.message.from_user
         chat_id = update.effective_chat.id
-        processing_container = self.gpt_handler.processing_container
+        processing_container = self.ai_handler.processing_container
         logging.info('/queue command from user ' + str(user.full_name))
 
         # Queue is empty
@@ -202,16 +231,21 @@ class BotHandler:
             # From queue
             if not self.requests_queue.empty():
                 for i in range(self.requests_queue.qsize()):
-                    text_request = self.requests_queue.queue[i].request
-                    text_from = self.requests_queue.queue[i].user_name
-                    message += str(i + 1) + '. ' + text_from + ': ' + text_request + '\n\n'
+                    container = self.requests_queue.queue[i]
+                    text_request = container.request
+                    text_from = container.user_name
+                    message += str(i + 1) + '. ' + ('ChatGPT: ' if container.request_type == RequestResponseContainer
+                                                    .REQUEST_TYPE_CHATGPT else 'DALLE: ') \
+                               + text_from + ': ' + text_request + '\n\n'
 
             # Current request
             if processing_container is not None:
                 if len(message) > 0:
                     i += 1
-                message += str(i + 1) + '. ' + processing_container.user_name + ': ' \
-                           + processing_container.request + '\n\n'
+                message += str(i + 1) + '. ' + ('ChatGPT: ' if processing_container.request_type
+                                                               == RequestResponseContainer
+                                                .REQUEST_TYPE_CHATGPT else 'DALLE: ') \
+                           + processing_container.user_name + ': ' + processing_container.request + '\n\n'
 
             # Send queue stats
             await context.bot.send_message(chat_id=chat_id, text=str(self.messages['queue_stats'])
@@ -295,7 +329,14 @@ class BotHandler:
 
             # Send reply
             if not response.error:
-                asyncio.run(self.send_reply(response.chat_id, response.response, response.message_id, True))
+                # ChatGPT
+                if response.request_type == RequestResponseContainer.REQUEST_TYPE_CHATGPT:
+                    asyncio.run(self.send_reply(response.chat_id, response.response, response.message_id, True))
+
+                # DALLE
+                else:
+                    asyncio.run(telegram.Bot(self.settings['telegram_api_key']).sendPhoto(chat_id=response.chat_id,
+                                                                                          photo=response.response))
             else:
                 asyncio.run(self.send_reply(response.chat_id,
                                             str(self.messages['gpt_error']).format(response.response),
