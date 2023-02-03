@@ -41,7 +41,9 @@
 
 ## Bot messages
 
-You can edit telegram bot messages by editing file `messages.json`. Restart script to apply changes
+You can edit telegram bot messages by editing file `messages.json`. You can add new lines by adding `\\n`
+
+Note: make shure you don't delete argumensts `{0}` in message and please restart script to apply changes
 
 ----------
 
