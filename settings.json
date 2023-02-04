@@ -1,6 +1,6 @@
 {
   "open_ai_api_key": "",
   "telegram_api_key": "",
-  "queue_max": 10,
-  "image_size": "256x256"
+  "queue_max": 5,
+  "image_size": "512x512"
 }
