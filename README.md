@@ -86,4 +86,20 @@ Note: make shure you don't delete argumensts `{0}` in message and please restart
 - `/draw YOUR REQUEST` - Request to DALLE
 - Or just type your request as message without `/gpt` command
 
-# This project is under development!
+----------
+
+## TODO
+
+- Create `/settings` command to show and edit current settings
+- Add the ability to change settings on the fly
+- Add the ability to restart bot / api using command
+
+----------
+
+## Contribution
+
+### Anyone can contribute! Just create a pull request
+
+----------
+
+## P.S. This project is under development!
