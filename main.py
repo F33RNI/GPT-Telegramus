@@ -19,6 +19,7 @@ import json
 import logging
 import os
 import signal
+import argparse
 
 import psutil
 
@@ -80,6 +81,14 @@ def exit_(signum, frame):
     psutil.Process(current_system_pid).terminate()
     exit(0)
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--open_ai_api_key', type=str, help='Open AI API Key', default=os.getenv('TELEGRAMUS_OPEN_AI_API_KEY', None))
+    parser.add_argument('--telegram_api_key', type=str, help='Telegram API Key', default=os.getenv('TELEGRAMUS_API_KEY', None))
+    parser.add_argument('--queue_max', type=int, help='Maximum number of requests to queue', default=os.getenv('TELEGRAMUS_QUEUE_MAX', None))
+    parser.add_argument('--image_size', type=str, help='Image size (in the format of 512x512)', default=os.getenv('TELEGRAMUS_IMAGE_SIZE', None))
+    return parser.parse_args()
+
 
 def main():
     """
@@ -95,6 +104,17 @@ def main():
     # Load settings and messages
     settings = load_json(SETTINGS_FILE)
     messages = load_json(MESSAGES_FILE)
+
+    args = parse_args()
+
+    if args.open_ai_api_key is not None:
+        settings["open_ai_api_key"] = args.open_ai_api_key
+    if args.telegram_api_key is not None:
+        settings["telegram_api_key"] = args.telegram_api_key
+    if args.queue_max is not None:
+        settings["queue_max"] = args.queue_max
+    if args.image_size is not None:
+        settings["image_size"] = args.image_size
 
     # Initialize BotHandler and AIHandler classes
     ai_handler = AIHandler.AIHandler(settings)
