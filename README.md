@@ -9,9 +9,9 @@
 </div>
 <div style="width:100%;text-align:center;">
     <p align="center">
-        <img src="Screenshot_start.png" width="auto" height="300">
-        <img src="Screenshot.png" width="auto" height="300">
-        <img src="Screenshot_dalle.png" width="auto" height="300">
+        <img src="Screenshots/start.png" width="auto" height="300">
+        <img src="Screenshots/chatgpt.png" width="auto" height="300">
+        <img src="Screenshots/dalle.png" width="auto" height="300">
     </p>
 </div>
 
