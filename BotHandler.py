@@ -120,8 +120,7 @@ class BotHandler:
 
             # Send confirmation message
             await context.bot.send_message(chat_id=chat_id, text=str(self.messages['queue_accepted'])
-                                           .format(user.full_name,
-                                                   str(self.requests_queue.qsize()
+                                           .format(str(self.requests_queue.qsize()
                                                        + (1 if self.ai_handler.
                                                           processing_container is not None else 0)),
                                                    str(self.settings['queue_max'])).replace('\\n', '\n'))
@@ -234,18 +233,17 @@ class BotHandler:
                     container = self.requests_queue.queue[i]
                     text_request = container.request
                     text_from = container.user_name
-                    message += str(i + 1) + '. ' + ('ChatGPT: ' if container.request_type == RequestResponseContainer
-                                                    .REQUEST_TYPE_CHATGPT else 'DALLE: ') \
-                               + text_from + ': ' + text_request + '\n\n'
+                    message += str(i + 1) + '. ' + text_from + ', ' + \
+                               RequestResponseContainer.REQUEST_NAMES[container.request_type] \
+                               + ': ' + text_request + '\n\n'
 
             # Current request
             if processing_container is not None:
                 if len(message) > 0:
                     i += 1
-                message += str(i + 1) + '. ' + ('ChatGPT: ' if processing_container.request_type
-                                                               == RequestResponseContainer
-                                                .REQUEST_TYPE_CHATGPT else 'DALLE: ') \
-                           + processing_container.user_name + ': ' + processing_container.request + '\n\n'
+                message += str(i + 1) + '. ' + processing_container.user_name + ', ' + \
+                           RequestResponseContainer.REQUEST_NAMES[processing_container.request_type] \
+                           + ': ' + processing_container.request + '\n\n'
 
             # Send queue stats
             await context.bot.send_message(chat_id=chat_id, text=str(self.messages['queue_stats'])

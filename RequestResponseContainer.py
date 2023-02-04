@@ -18,6 +18,8 @@
 REQUEST_TYPE_CHATGPT = 0
 REQUEST_TYPE_DALLE = 1
 
+REQUEST_NAMES = ['ChatGPT', 'DALL-E']
+
 
 class RequestResponseContainer:
     def __init__(self, chat_id, user_name, message_id, request='', response='', request_type=REQUEST_TYPE_CHATGPT):

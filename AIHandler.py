@@ -97,13 +97,13 @@ class AIHandler:
                         # Send request
                         chatbot_response_raw = self.chatbot.ask(str(container.request))
 
-                        # Log response
-                        logging.info(str(chatbot_response_raw))
-
                         # Add all choices
                         api_response = ''
                         for choice in chatbot_response_raw['choices']:
                             api_response += choice['text'] + '\n'
+
+                        # Log response
+                        logging.info(str(api_response))
 
                     # DALLE
                     else:

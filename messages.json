@@ -1,13 +1,13 @@
 {
-  "start_message": "Привет, чумба!\\nHello, choomba!\\n\\nGPT-Telegramus: {}\\nGPT-Telegramus - Fern Lane\\nChatGPT - OpenAI\\nAPI - acheong08",
-  "help_message": "/start - welcome message and bot version\\n/gpt request - ChatGPT request\\n/draw request - draw a picture with DALLE\\n/reset - reset ChatGPT history\\n/queue - show requests queue\\n\\n/start - приветственное сообщение и версия бота\\n/gpt текст - запрос к ChatGPT\\n/draw запрос - нарисовать картинку с помощью DALLE\\n/reset - сбросить историю ChatGPT\\n/queue - показать состояние очереди",
-  "gpt_no_text": "Empty request, choomba!\\nА де запрос, чумба?\\n\\n/gpt Write a song about OpenAI",
-  "draw_no_text": "Empty request, choomba!\\nА де запрос, чумба?\\n\\n/draw An eco-friendly computer from the 90s in the style of vaporwave",
-  "gpt_no_message": "Empty request, choomba!\\nПусто! А де запрос, чумба?\\n\\nWrite a song about OpenAI",
-  "queue_overflow": "Queue is full. Try again later\\n\\nОчередь запросов переполнена. Повторите попытку позже",
-  "queue_empty": "Queue is empty\\n\\nОчередь пуста",
-  "queue_stats": "Queue:\\nОчередь:\\n\\n{0}",
-  "queue_accepted": "{0}, your request has been added to the queue. Position in queue: {1}/{2}\\n\\n{0}, ваш запрос добавлен в очередь. Позиция в очереди: {1}/{2}",
-  "gpt_error": "Error: {0}\\n\\nTry again later =(\\nПовторите попитку позже =(",
-  "reset": "Reset command sent\\nКоманда на сброс истории отправлена"
+  "start_message": "Hello, choomba!\\n\\nGPT-Telegramus version {}\\n\\nGPT-Telegramus - Fern Lane\\nChatGPT - OpenAI\\nAPI - acheong08",
+  "help_message": "/start - welcome message and bot version\\n/gpt request - ChatGPT request\\n/draw request - draw a picture with DALLE\\n/reset - reset ChatGPT history\\n/queue - show requests queue",
+  "gpt_no_text": "Empty request, choomba!\\n\\nExample: /gpt Write a song about OpenAI",
+  "draw_no_text": "Empty request, choomba!\\n\\nExample: /draw An eco-friendly computer from the 90s in the style of vaporwave",
+  "gpt_no_message": "Empty request, choomba!\\n\\nExample: Write a song about OpenAI",
+  "queue_overflow": "Queue is full. Try again later",
+  "queue_empty": "Queue is empty",
+  "queue_stats": "Queue:\\n\\n{0}",
+  "queue_accepted": "Added to the queue. Position: {0}/{1}",
+  "gpt_error": "Error: {0}\\n\\nMake another request or try again later =(",
+  "reset": "Reset command sent"
 }
