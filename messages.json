@@ -1,5 +1,5 @@
 {
-  "start_message": "Hello, choomba!\\n\\nGPT-Telegramus version {}\\n\\nGPT-Telegramus - Fern Lane\\nChatGPT - OpenAI\\nAPI - acheong08",
+  "start_message": "Hello, choomba!\\n\\nGPT-Telegramus version {}\\n\\nAuthor: Fern Lane\\nContributors: Sergey Krashevich\\nChatGPT: OpenAI\\nAPI: acheong08",
   "help_message": "/start - welcome message and bot version\\n/gpt request - ChatGPT request\\n/draw request - draw a picture with DALLE\\n/reset - reset ChatGPT history\\n/queue - show requests queue",
   "gpt_no_text": "Empty request, choomba!\\n\\nExample: /gpt Write a song about OpenAI",
   "draw_no_text": "Empty request, choomba!\\n\\nExample: /draw An eco-friendly computer from the 90s in the style of vaporwave",
