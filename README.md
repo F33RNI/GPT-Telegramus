@@ -77,6 +77,21 @@ Note: make shure you don't delete argumensts `{0}` in message and please restart
 
 ----------
 
+## Running in Docker
+
+1. Install Docker
+2. Clone repo
+3. Build container
+    ```
+    docker buildx build -t telegramus --load -f Dockerfile .
+    ```
+4. Run the container
+    ```
+    docker run -d -e TELEGRAMUS_OPEN_AI_API_KEY=you_apikey -e TELEGRAMUS_API_KEY=you_tgbot_apikey --name gpt-telegramus --restart on-failure telegramus
+    ```
+
+----------
+
 ## Commands
 
 - `/start` - Shows version
