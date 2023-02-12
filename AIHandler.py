@@ -25,7 +25,7 @@ from revChatGPT.V2 import Chatbot
 import RequestResponseContainer
 
 EMPTY_RESPONSE_ERROR_MESSAGE = 'Empty response'
-NO_AUTH_GPT_ERROR_MESSAGE = 'No email or password provided!'
+NO_AUTH_GPT_ERROR_MESSAGE = 'Auth error or no email or password provided!'
 NO_AUTH_DALLE_ERROR_MESSAGE = 'No OpenAI API key provided!'
 
 
