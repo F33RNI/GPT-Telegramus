@@ -10,10 +10,10 @@ FROM python:3.9-alpine AS build
 WORKDIR /app
 
 # Install Python and pip
-RUN <<eot \
-    apk add --update python3 gcc build-base libc-dev linux-headers rust cargo \
-    python3 -m ensurepip \
-    rm -rf /var/cache/apk/* \
+RUN <<eot
+    apk add --update python3 gcc build-base libc-dev linux-headers rust cargo
+    python3 -m ensurepip
+    rm -rf /var/cache/apk/*
 eot
 
 # Add just requirements.txt file (for caching purposes)
@@ -32,9 +32,9 @@ ADD requirements.txt .
 
 RUN pip3 install --no-cache-dir --no-index -r requirements.txt
 ADD . .
-RUN <<EOT \
-    apk add musl-dev build-base upx \
-    pip3 install --no-cache-dir pyinstaller \
+RUN <<EOT
+    apk add musl-dev build-base upx
+    pip3 install --no-cache-dir pyinstaller
 EOT
 RUN pyinstaller --clean --onefile --name main --collect-all tiktoken_ext.openai_public --collect-all blobfile main.py
 
