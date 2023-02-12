@@ -26,7 +26,7 @@ import psutil
 import BotHandler
 import AIHandler
 
-TELEGRAMUS_VERSION = 'beta_0.4.7'
+TELEGRAMUS_VERSION = 'beta_1.0.0'
 
 # Logging level (INFO for debug, WARN for release)
 LOGGING_LEVEL = logging.INFO
@@ -88,13 +88,27 @@ def parse_args():
     :return:
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--open_ai_api_key', type=str, help='Open AI API Key',
+    parser.add_argument('--open_ai_api_key', type=str, help='OpenAI API Key for DALL-E only',
                         default=os.getenv('TELEGRAMUS_OPEN_AI_API_KEY', None))
+
+    parser.add_argument('--chatgpt_auth_email', type=str, help='OpenAI account login for ChatGPT',
+                        default=os.getenv('TELEGRAMUS_CHATGPT_AUTH_EMAIL', None))
+    parser.add_argument('--chatgpt_auth_password', type=str, help='OpenAI account password for ChatGPT',
+                        default=os.getenv('TELEGRAMUS_CHATGPT_AUTH_PASSWORD', None))
+    parser.add_argument('--chatgpt_auth_proxy', type=str,
+                        help='Custom proxy for auth. See: https://github.com/acheong08/ChatGPT-Proxy',
+                        default=os.getenv('TELEGRAMUS_CHATGPT_AUTH_PROXY', None))
+    parser.add_argument('--chatgpt_auth_insecure', action='store_true',
+                        help='Authentication using the built-in proxy. See: https://github.сom/acheong08/chatgpt',
+                        default=None if os.getenv('TELEGRAMUS_CHATGPT_AUTH_INSECURE', None) is None else
+                        (os.getenv('TELEGRAMUS_CHATGPT_AUTH_INSECURE', 'False').lower()
+                         in ('true', '1', 't', 'y', 'yes')))
+
     parser.add_argument('--telegram_api_key', type=str, help='Telegram API Key',
-                        default=os.getenv('TELEGRAMUS_API_KEY', None))
-    parser.add_argument('--queue_max', type=int, help='Maximum number of requests to queue',
+                        default=os.getenv('TELEGRAMUS_TELEGRAM_API_KEY', None))
+    parser.add_argument('--queue_max', type=int, help='Requests queue for chatgpt and dall-e (messages to bot queue)',
                         default=os.getenv('TELEGRAMUS_QUEUE_MAX', None))
-    parser.add_argument('--image_size', type=str, help='Image size (in the format of 512x512)',
+    parser.add_argument('--image_size', type=str, help='DALL-E image size (256x256 or 512x512 or 1024x1024)',
                         default=os.getenv('TELEGRAMUS_IMAGE_SIZE', None))
     return parser.parse_args()
 
@@ -118,6 +132,14 @@ def main():
     args = parse_args()
     if args.open_ai_api_key is not None:
         settings['open_ai_api_key'] = args.open_ai_api_key
+    if args.chatgpt_auth_email is not None:
+        settings['chatgpt_auth_email'] = args.chatgpt_auth_email
+    if args.chatgpt_auth_password is not None:
+        settings['chatgpt_auth_password'] = args.chatgpt_auth_password
+    if args.chatgpt_auth_proxy is not None:
+        settings['chatgpt_auth_proxy'] = args.chatgpt_auth_proxy
+    if args.chatgpt_auth_insecure is not None:
+        settings['chatgpt_auth_insecure'] = args.chatgpt_auth_insecure
     if args.telegram_api_key is not None:
         settings['telegram_api_key'] = args.telegram_api_key
     if args.queue_max is not None:

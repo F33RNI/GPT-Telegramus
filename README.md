@@ -33,10 +33,11 @@
 3. Install requirements `pip install -r requirements.txt --upgrade`
 4. Create bot at https://t.me/BotFather
 5. Type Bot's token into `telegram_api_key` in `settings.json` file
-6. Create account at OpenAI
-7. Generate API Key https://platform.openai.com/account/api-keys
-8. Type OpenAI API Key into `open_ai_api_key` in `settings.json` file
-9. Run main script `python main.py`
+6. Create account at OpenAI using email and password
+7. Type OpenAI account email and password into `chatgpt_auth_email` and `chatgpt_auth_password` in `settings.json` file
+8. For DALL-E, generate API Key https://platform.openai.com/account/api-keys
+9. Type OpenAI API Key into `open_ai_api_key` in `settings.json` file
+10. Run main script `python main.py`
 
 ----------
 
@@ -52,7 +53,7 @@ Note: make shure you don't delete argumensts `{0}` in message and please restart
 
 1. Install Python and pip
 2. Clone repo
-3. Fill `telegram_api_key` and `open_ai_api_key` in `settings.json` file
+3. Fill `telegram_api_key`, `chatgpt_auth_email`, `chatgpt_auth_password` and `open_ai_api_key` in `settings.json` file
 4. Install systemd `sudo apt-get install -y systemd`
 5. Create new service file `sudo nano /etc/systemd/system/gpt-telegramus.service`
    ```
@@ -87,12 +88,24 @@ Note: make shure you don't delete argumensts `{0}` in message and please restart
     ```
 4. Run the container
     ```
-    docker run -d -e TELEGRAMUS_OPEN_AI_API_KEY=you_apikey -e TELEGRAMUS_API_KEY=you_tgbot_apikey --name gpt-telegramus --restart on-failure telegramus
+    docker run -d -e TELEGRAMUS_CHATGPT_AUTH_EMAIL=you_email -e TELEGRAMUS_CHATGPT_AUTH_PASSWORD=you_password -e TELEGRAMUS_OPEN_AI_API_KEY=you_apikey -e TELEGRAMUS_API_KEY=you_tgbot_apikey --name gpt-telegramus --restart on-failure telegramus
     ```
 
 ----------
 
-## Commands
+## Custom proxy or insecure auth to bypass OpenAI's geo-blocking
+
+To enable insecure auth:
+- you can set `chatgpt_auth_insecure` to `true` in `settings.json` file
+- or you can set `TELEGRAMUS_CHATGPT_AUTH_INSECURE` env variable to `True`
+
+To enable custom proxy (see https://github.com/acheong08/ChatGPT-Proxy)
+- you can set proxy to `chatgpt_auth_proxy` in `settings.json` file
+- or you can set `TELEGRAMUS_CHATGPT_AUTH_PROXY` env variable
+
+----------
+
+## Telegram bot commands
 
 - `/start` - Shows version
 - `/help` - Shows list of commands

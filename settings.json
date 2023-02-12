@@ -1,6 +1,23 @@
 {
   "open_ai_api_key": "",
+  "open_ai_api_key__comments__": "OPEN_AI_API_KEY IS REQUIRED TO USE DALL-E",
+
+  "chatgpt_auth_email": "",
+  "chatgpt_auth_password": "",
+  "chatgpt_auth__comments__": "LOGIN AND PASSWORD FOR AUTHENTICATION ON OPENAI TO USE CHATGPT",
+
+  "chatgpt_auth_proxy": "",
+  "chatgpt_auth_proxy__comments__": "CUSTOM PROXY FOR AUTHENTICATION. SEE: https://github.com/acheong08/ChatGPT-Proxy",
+
+  "chatgpt_auth_insecure": false,
+  "chatgpt_auth_insecure__comments__": "AUTHENTICATION USING THE BUILT-IN PROXY. SEE: https://github.com/acheong08/ChatGPT",
+
   "telegram_api_key": "",
+  "telegram_api_key__comments__": "TELEGRAM BOT TOKEN FROM https://t.me/BotFather",
+
   "queue_max": 5,
-  "image_size": "512x512"
+  "queue_max__comments__": "REQUESTS QUEUE FOR CHATGPT AND DALL-E (MESSAGES TO BOT QUEUE)",
+
+  "image_size": "512x512",
+  "image_size__comments__": "DALL-E GENERATED IMAGE SIZE (256x256 or 512x512 or 1024x1024)"
 }

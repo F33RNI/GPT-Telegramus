@@ -10,10 +10,10 @@ FROM python:3.9-alpine AS build
 WORKDIR /app
 
 # Install Python and pip
-RUN <<eot
-    apk add --update python3 gcc build-base libc-dev linux-headers rust cargo
-    python3 -m ensurepip
-    rm -rf /var/cache/apk/*
+RUN <<eot \
+    apk add --update python3 gcc build-base libc-dev linux-headers rust cargo \
+    python3 -m ensurepip \
+    rm -rf /var/cache/apk/* \
 eot
 
 # Add just requirements.txt file (for caching purposes)
@@ -32,9 +32,9 @@ ADD requirements.txt .
 
 RUN pip3 install --no-cache-dir --no-index -r requirements.txt
 ADD . .
-RUN <<EOT
-    apk add musl-dev build-base upx
-    pip3 install --no-cache-dir pyinstaller 
+RUN <<EOT \
+    apk add musl-dev build-base upx \
+    pip3 install --no-cache-dir pyinstaller \
 EOT
 RUN pyinstaller --clean --onefile --name main --collect-all tiktoken_ext.openai_public --collect-all blobfile main.py
 
@@ -55,7 +55,11 @@ RUN apk add --update gcc build-base libc-dev linux-headers rust cargo
 RUN pip3 install --no-cache-dir --upgrade --no-index --find-links=/wheels -r requirements.txt
 
 ENV TELEGRAMUS_OPEN_AI_API_KEY ""
-ENV TELEGRAMUS_API_KEY ""
+ENV TELEGRAMUS_CHATGPT_AUTH_EMAIL ""
+ENV TELEGRAMUS_CHATGPT_AUTH_PASSWORD ""
+ENV TELEGRAMUS_CHATGPT_AUTH_PROXY ""
+ENV TELEGRAMUS_CHATGPT_AUTH_INSECURE "False"
+ENV TELEGRAMUS_TELEGRAM_API_KEY ""
 ENV TELEGRAMUS_QUEUE_MAX 5
 ENV TELEGRAMUS_IMAGE_SIZE "512x512"
 #ENV GPT_ENGINE "text-chat-davinci-002-20221122"
@@ -73,7 +77,11 @@ COPY --link --from=compile /lib/ld-musl-*.so.1 /lib/
 ADD settings.json messages.json /app/
 
 ENV TELEGRAMUS_OPEN_AI_API_KEY ""
-ENV TELEGRAMUS_API_KEY ""
+ENV TELEGRAMUS_CHATGPT_AUTH_EMAIL ""
+ENV TELEGRAMUS_CHATGPT_AUTH_PASSWORD ""
+ENV TELEGRAMUS_CHATGPT_AUTH_PROXY ""
+ENV TELEGRAMUS_CHATGPT_AUTH_INSECURE "False"
+ENV TELEGRAMUS_TELEGRAM_API_KEY ""
 ENV TELEGRAMUS_QUEUE_MAX 5
 ENV TELEGRAMUS_IMAGE_SIZE "512x512"
 #ENV GPT_ENGINE "text-chat-davinci-002-20221122"
