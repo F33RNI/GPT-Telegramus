@@ -88,7 +88,7 @@ Note: make shure you don't delete argumensts `{0}` in message and please restart
     ```
 4. Run the container
     ```
-    docker run -d -e TELEGRAMUS_CHATGPT_AUTH_EMAIL=you_email -e TELEGRAMUS_CHATGPT_AUTH_PASSWORD=you_password -e TELEGRAMUS_OPEN_AI_API_KEY=you_apikey -e TELEGRAMUS_API_KEY=you_tgbot_apikey --name gpt-telegramus --restart on-failure telegramus
+    docker run -d -e TELEGRAMUS_CHATGPT_AUTH_EMAIL=you_email -e TELEGRAMUS_CHATGPT_AUTH_PASSWORD=you_password -e TELEGRAMUS_OPEN_AI_API_KEY=you_apikey -e TELEGRAMUS_TELEGRAM_API_KEY=you_tgbot_apikey --name gpt-telegramus --restart on-failure telegramus
     ```
 
 ----------
@@ -97,11 +97,11 @@ Note: make shure you don't delete argumensts `{0}` in message and please restart
 
 To enable insecure auth:
 - you can set `chatgpt_auth_insecure` to `true` in `settings.json` file
-- or you can set `TELEGRAMUS_CHATGPT_AUTH_INSECURE` env variable to `True`
+- or you can set `TELEGRAMUS_CHATGPT_AUTH_INSECURE` env variable to `True` (docker: `-e TELEGRAMUS_CHATGPT_AUTH_INSECURE='True'`)
 
 To enable custom proxy (see https://github.com/acheong08/ChatGPT-Proxy)
 - you can set proxy to `chatgpt_auth_proxy` in `settings.json` file
-- or you can set `TELEGRAMUS_CHATGPT_AUTH_PROXY` env variable
+- or you can set `TELEGRAMUS_CHATGPT_AUTH_PROXY` env variable (docker: `-e TELEGRAMUS_CHATGPT_AUTH_PROXY=your_proxy`)
 
 ----------
 

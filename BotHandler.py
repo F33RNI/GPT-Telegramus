@@ -31,7 +31,6 @@ from main import TELEGRAMUS_VERSION
 BOT_COMMAND_START = 'start'
 BOT_COMMAND_HELP = 'help'
 BOT_COMMAND_QUEUE = 'queue'
-BOT_COMMAND_RESET = 'reset'
 BOT_COMMAND_GPT = 'gpt'
 BOT_COMMAND_DRAW = 'draw'
 
@@ -75,7 +74,6 @@ class BotHandler:
             application.add_handler(CommandHandler(BOT_COMMAND_START, self.bot_command_start))
             application.add_handler(CommandHandler(BOT_COMMAND_HELP, self.bot_command_help))
             application.add_handler(CommandHandler(BOT_COMMAND_QUEUE, self.bot_command_queue))
-            application.add_handler(CommandHandler(BOT_COMMAND_RESET, self.bot_command_reset))
             application.add_handler(CommandHandler(BOT_COMMAND_GPT, self.bot_command_gpt))
             application.add_handler(CommandHandler(BOT_COMMAND_DRAW, self.bot_command_draw))
             application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), self.bot_read_message))
@@ -128,18 +126,6 @@ class BotHandler:
         else:
             await context.bot.send_message(chat_id=chat_id,
                                            text=str(self.messages['queue_overflow']).replace('\\n', '\n'))
-
-    async def bot_command_reset(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """
-        /reset command
-        :param update:
-        :param context:
-        :return:
-        """
-        chat_id = update.effective_chat.id
-        if self.ai_handler.chatbot is not None:
-            self.ai_handler.chatbot.reset()
-            await context.bot.send_message(chat_id=chat_id, text=str(self.messages['reset']).replace('\\n', '\n'))
 
     async def bot_read_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
