@@ -5,44 +5,50 @@
 # https://github.com/moby/buildkit
 
 # First stage: install dependencies
-FROM python:3.9-alpine AS build
-
+FROM python:3.9 AS build
+ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 
 # Install Python and pip
 RUN <<eot
-    apk add --update python3 gcc build-base libc-dev linux-headers rust cargo
+    apt update
+    apt install -y --no-install-recommends python3 gcc libc-dev linux-headers wget
     python3 -m ensurepip
-    rm -rf /var/cache/apk/*
+    wget "https://static.rust-lang.org/rustup/dist/$(uname -m)-unknown-linux-gnu/rustup-init" -O /tmp/rustup-init
+    chmod +x /tmp/rustup-init
+    /tmp/rustup-init -y
 eot
-
+ENV PATH=/root/.cargo/bin:$PATH
 # Add just requirements.txt file (for caching purposes)
 ADD requirements.txt requirements.txt
 
 # Install requirements
-RUN pip3 install --no-cache-dir -r requirements.txt --upgrade
+RUN --mount=type=cache,target=/root/.cache/pip pip3 install -r requirements.txt --upgrade
 
 # Build and save wheels
-RUN pip3 wheel --no-cache-dir --wheel-dir=/wheels -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip pip3 wheel --wheel-dir=/wheels -r requirements.txt
 
 FROM build as compile
+ENV DEBIAN_FRONTEND=noninteractive
+RUN mkdir -p /lib64
+RUN mkdir -p /lib
 WORKDIR /app
 # Add just requirements.txt file (for caching purposes)
 ADD requirements.txt .
 
-RUN pip3 install --no-cache-dir --no-index -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip pip3 install --no-index -r requirements.txt
 ADD . .
-RUN <<EOT
-    apk add musl-dev build-base upx
-    pip3 install --no-cache-dir pyinstaller
+RUN --mount=type=cache,target=/root/.cache/pip <<EOT
+    apt install upx
+    pip3 install pyinstaller
 EOT
-RUN pyinstaller --clean --onefile --name main --collect-all tiktoken_ext.openai_public --collect-all blobfile main.py
-
-
+RUN pyinstaller --clean --onefile --name main --collect-all tiktoken_ext.openai_public \
+    --collect-all blobfile --collect-all tls_client \
+    main.py
 
 # Optional target: build classic python-based container
-FROM python:3.9-alpine as classic
-
+FROM python:3.9 as classic
+ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 ADD . .
 
@@ -50,9 +56,9 @@ COPY --link --from=build /app /app
 COPY --link --from=build /wheels /wheels
 
 # install deps
-RUN apk add --update gcc build-base libc-dev linux-headers rust cargo
+RUN apt update && apt install -y --no-install-recommends gcc build-base libc-dev linux-headers rustc cargo
 # Install wheels
-RUN pip3 install --no-cache-dir --upgrade --no-index --find-links=/wheels -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip pip3 install --upgrade --no-index --find-links=/wheels -r requirements.txt
 
 ENV TELEGRAMUS_OPEN_AI_API_KEY ""
 ENV TELEGRAMUS_CHATGPT_AUTH_EMAIL ""
@@ -72,8 +78,8 @@ FROM gcr.io/distroless/static
 WORKDIR /app
 
 COPY --link --from=compile /app/dist/main /app/telegramus
-COPY --link --from=compile /lib/libz.so.1 /lib/libz.so.1
-COPY --link --from=compile /lib/ld-musl-*.so.1 /lib/
+COPY --link --from=compile /lib/ /lib/
+COPY --link --from=compile /lib64/ /lib64/
 ADD settings.json messages.json /app/
 
 ENV TELEGRAMUS_OPEN_AI_API_KEY ""
