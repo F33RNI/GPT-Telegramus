@@ -48,8 +48,9 @@ class AIHandler:
         # Requests queue
         self.requests_queue = None
 
-        # Conversation id to continue dialog
+        # Conversation id and parent id to continue dialog
         self.conversation_id = None
+        self.parent_id = None
 
         # Check settings
         if self.settings is not None:
@@ -131,13 +132,20 @@ class AIHandler:
                         # Log request
                         logging.info('Asking: ' + str(container.request))
 
-                        # Initialize conversation_id
+                        # Initialize conversation_id and parent_id
                         if self.conversation_id is None:
                             self.conversation_id = str(self.settings['chatgpt_conversation_id']) if \
                                 len(str(self.settings['chatgpt_conversation_id'])) > 0 else None
+                            logging.info('Initial conversation id: ' + str(self.conversation_id))
+                        if self.parent_id is None:
+                            self.parent_id = str(self.settings['chatgpt_parent_id']) if \
+                                len(str(self.settings['chatgpt_parent_id'])) > 0 else None
+                            logging.info('Initial parent id: ' + str(self.parent_id))
 
                         # Ask
-                        for data in self.chatbot.ask(str(container.request), conversation_id=self.conversation_id):
+                        for data in self.chatbot.ask(str(container.request),
+                                                     conversation_id=self.conversation_id,
+                                                     parent_id=self.parent_id):
                             # Get last response
                             api_response = data['message']
 
@@ -145,8 +153,9 @@ class AIHandler:
                             if data['conversation_id'] is not None:
                                 self.conversation_id = data['conversation_id']
 
-                        # Low conversation id
-                        logging.info('Current conversation id: ' + str(self.conversation_id))
+                        # Log conversation id and parent id
+                        logging.info('Current conversation id: ' + str(self.conversation_id)
+                                     + '\tParent id: ' + str(self.parent_id))
 
                         # Log response
                         logging.info(str(api_response))

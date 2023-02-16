@@ -18,6 +18,9 @@
   "chatgpt_conversation_id": "",
   "chatgpt_conversation_id__comment__": "INITIAL conversation_id",
 
+  "chatgpt_parent_id": "",
+  "chatgpt_parent_id__comment__": "INITIAL parent_id",
+
   "telegram_api_key": "",
   "telegram_api_key__comments__": "TELEGRAM BOT TOKEN FROM https://t.me/BotFather",
 
