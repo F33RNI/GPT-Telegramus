@@ -25,7 +25,7 @@ from revChatGPT.V1 import Chatbot
 import RequestResponseContainer
 
 EMPTY_RESPONSE_ERROR_MESSAGE = 'Empty response'
-NO_AUTH_GPT_ERROR_MESSAGE = 'Auth error or no email or password provided!'
+NO_AUTH_GPT_ERROR_MESSAGE = 'Auth error!'
 NO_AUTH_DALLE_ERROR_MESSAGE = 'No OpenAI API key provided!'
 
 
@@ -47,6 +47,9 @@ class AIHandler:
 
         # Requests queue
         self.requests_queue = None
+
+        # Conversation id to continue dialog
+        self.conversation_id = None
 
         # Check settings
         if self.settings is not None:
@@ -79,15 +82,15 @@ class AIHandler:
             # Initialize ChatGPT
             try:
                 config = {}
-                if 'chatgpt_auth_email' in self.settings and 'chatgpt_auth_password' in self.settings:
+                if len(self.settings['chatgpt_auth_email']) > 0 and len(self.settings['chatgpt_auth_password']) > 0:
                     config['email'] = self.settings['chatgpt_auth_email']
                     config['password'] = self.settings['chatgpt_auth_password']
-                elif 'chatgpt_auth_session_token' in self.settings:
+                elif len(self.settings['chatgpt_auth_session_token']) > 0:
                     config['session_token'] = self.settings['chatgpt_auth_session_token']
-                elif 'chatgpt_auth_access_token' in self.settings:
+                elif len(self.settings['chatgpt_auth_access_token']) > 0:
                     config['access_token'] = self.settings['chatgpt_auth_access_token']
 
-                if 'chatgpt_auth_proxy' in self.settings:
+                if len(self.settings['chatgpt_auth_proxy']) > 0:
                     config['proxy'] = self.settings['chatgpt_auth_proxy']
 
                 self.chatbot = Chatbot(config=config)
@@ -128,9 +131,22 @@ class AIHandler:
                         # Log request
                         logging.info('Asking: ' + str(container.request))
 
-                        # Add response
-                        for data in self.chatbot.ask(str(container.request)):
+                        # Initialize conversation_id
+                        if self.conversation_id is None:
+                            self.conversation_id = str(self.settings['chatgpt_conversation_id']) if \
+                                len(str(self.settings['chatgpt_conversation_id'])) > 0 else None
+
+                        # Ask
+                        for data in self.chatbot.ask(str(container.request), conversation_id=self.conversation_id):
+                            # Get last response
                             api_response = data['message']
+
+                            # Store conversation_id
+                            if data['conversation_id'] is not None:
+                                self.conversation_id = data['conversation_id']
+
+                        # Low conversation id
+                        logging.info('Current conversation id: ' + str(self.conversation_id))
 
                         # Log response
                         logging.info(str(api_response))

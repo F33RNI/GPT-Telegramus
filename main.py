@@ -26,7 +26,7 @@ import psutil
 import BotHandler
 import AIHandler
 
-TELEGRAMUS_VERSION = 'beta_1.1.1'
+TELEGRAMUS_VERSION = 'beta_1.2.0'
 
 # Logging level (INFO for debug, WARN for release)
 LOGGING_LEVEL = logging.INFO
@@ -104,6 +104,10 @@ def parse_args():
                         help='Custom proxy for auth. See: https://github.com/acheong08/ChatGPT',
                         default=os.getenv('TELEGRAMUS_CHATGPT_AUTH_PROXY', None))
 
+    parser.add_argument('--chatgpt_conversation_id', type=str,
+                        help='Initial conversation_id',
+                        default=os.getenv('TELEGRAMUS_CHATGPT_CONVERSATION_ID', None))
+
     parser.add_argument('--telegram_api_key', type=str, help='Telegram API Key',
                         default=os.getenv('TELEGRAMUS_TELEGRAM_API_KEY', None))
     parser.add_argument('--queue_max', type=int, help='Requests queue for chatgpt and dall-e (messages to bot queue)',
@@ -142,6 +146,8 @@ def main():
         settings['chatgpt_auth_access_token'] = args.chatgpt_auth_access_token
     if args.chatgpt_auth_proxy is not None:
         settings['chatgpt_auth_proxy'] = args.chatgpt_auth_proxy
+    if args.chatgpt_conversation_id is not None:
+        settings['chatgpt_conversation_id'] = args.chatgpt_conversation_id
     if args.telegram_api_key is not None:
         settings['telegram_api_key'] = args.telegram_api_key
     if args.queue_max is not None:

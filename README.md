@@ -37,7 +37,8 @@
 7. Type OpenAI account email and password into `chatgpt_auth_email` and `chatgpt_auth_password` in `settings.json` file
 8. For DALL-E, generate API Key https://platform.openai.com/account/api-keys
 9. Type OpenAI API Key into `open_ai_api_key` in `settings.json` file
-10. Run main script `python main.py`
+10. If you have conversation id you can specify it in `chatgpt_conversation_id` in `settings.json` file
+11. Run main script `python main.py`
 
 ----------
 
@@ -93,13 +94,11 @@ Note: make shure you don't delete argumensts `{0}` in message and please restart
 
 ----------
 
-## Custom proxy or insecure auth to bypass OpenAI's geo-blocking
+## Proxy to bypass OpenAI's geo-blocking
 
-To enable insecure auth:
-- you can set `chatgpt_auth_insecure` to `true` in `settings.json` file
-- or you can set `TELEGRAMUS_CHATGPT_AUTH_INSECURE` env variable to `True` (docker: `-e TELEGRAMUS_CHATGPT_AUTH_INSECURE='True'`)
+**WARNING: Not tested**
 
-To enable custom proxy (see https://github.com/acheong08/ChatGPT-Proxy)
+To enable proxy (see https://github.com/acheong08/ChatGPT)
 - you can set proxy to `chatgpt_auth_proxy` in `settings.json` file
 - or you can set `TELEGRAMUS_CHATGPT_AUTH_PROXY` env variable (docker: `-e TELEGRAMUS_CHATGPT_AUTH_PROXY=your_proxy`)
 
