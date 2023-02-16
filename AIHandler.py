@@ -20,7 +20,7 @@ import queue
 import threading
 
 import openai
-from revChatGPT.V2 import Chatbot
+from revChatGPT.V1 import Chatbot
 
 import RequestResponseContainer
 
@@ -72,31 +72,38 @@ class AIHandler:
         :return:
         """
         # Initialize ChatGPT
-        if len(self.settings['chatgpt_auth_email']) > 0 and len(self.settings['chatgpt_auth_password']) > 0:
+        if (len(self.settings['chatgpt_auth_email']) > 0 and len(self.settings['chatgpt_auth_password']) > 0) \
+                or len(self.settings['chatgpt_auth_session_token']) > 0 \
+                or len(self.settings['chatgpt_auth_access_token']) > 0:
             # Insecure warning
             if self.settings['chatgpt_auth_insecure']:
                 logging.warning('chatgpt_auth_insecure is set to True')
 
             # Initialize ChatGPT
             try:
-                if len(self.settings['chatgpt_auth_proxy']) > 0:
-                    self.chatbot = Chatbot(email=self.settings['chatgpt_auth_email'],
-                                           password=self.settings['chatgpt_auth_password'],
-                                           proxy=self.settings['chatgpt_auth_proxy'],
-                                           insecure=self.settings['chatgpt_auth_insecure'])
-                else:
-                    self.chatbot = Chatbot(email=self.settings['chatgpt_auth_email'],
-                                           password=self.settings['chatgpt_auth_password'],
-                                           insecure=self.settings['chatgpt_auth_insecure'])
+                config = {}
+                if 'chatgpt_auth_email' in self.settings and 'chatgpt_auth_password' in self.settings:
+                    config['email'] = self.settings['chatgpt_auth_email']
+                    config['password'] = self.settings['chatgpt_auth_password']
+                elif 'chatgpt_auth_session_token' in self.settings:
+                    config['session_token'] = self.settings['chatgpt_auth_session_token']
+                elif 'chatgpt_auth_access_token' in self.settings:
+                    config['access_token'] = self.settings['chatgpt_auth_access_token']
+
+                if 'chatgpt_auth_proxy' in self.settings:
+                    config['proxy'] = self.settings['chatgpt_auth_proxy']
+
+                self.chatbot = Chatbot(config=config)
+
             except Exception as e:
                 self.chatbot = None
                 logging.warning(e, exc_info=True)
                 logging.warning('Error initializing ChatGPT. ChatGPT functions will be disabled')
 
-        # No email / password
+        # No login details
         else:
             self.chatbot = None
-            logging.warning('No email or password provided. ChatGPT functions will be disabled')
+            logging.warning('No login details provided! ChatGPT functions will be disabled')
 
         # No API Key
         if len(self.settings['open_ai_api_key']) <= 0:
@@ -124,21 +131,9 @@ class AIHandler:
                         # Log request
                         logging.info('Asking: ' + str(container.request))
 
-                        # ChatGPT responses
-                        async_responses = []
-
-                        async def chatbot_async_result():
-                            """
-                            Sync wrapper for async function
-                            (there is no point in asynchrony, because telegram does not support stream messaging)
-                            :return:
-                            """
-                            async for line in self.chatbot.ask(str(container.request)):
-                                async_responses.append(line['choices'][0]['text'].replace('<|im_end|>', ''))
-
-                        # Construct response
-                        asyncio.new_event_loop().run_until_complete(chatbot_async_result())
-                        api_response = ''.join(async_responses)
+                        # Add response
+                        for data in self.chatbot.ask(str(container.request)):
+                            api_response = data['message']
 
                         # Log response
                         logging.info(str(api_response))

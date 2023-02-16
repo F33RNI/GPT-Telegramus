@@ -26,7 +26,7 @@ import psutil
 import BotHandler
 import AIHandler
 
-TELEGRAMUS_VERSION = 'beta_1.0.1'
+TELEGRAMUS_VERSION = 'beta_1.1.0'
 
 # Logging level (INFO for debug, WARN for release)
 LOGGING_LEVEL = logging.INFO
@@ -95,8 +95,13 @@ def parse_args():
                         default=os.getenv('TELEGRAMUS_CHATGPT_AUTH_EMAIL', None))
     parser.add_argument('--chatgpt_auth_password', type=str, help='OpenAI account password for ChatGPT',
                         default=os.getenv('TELEGRAMUS_CHATGPT_AUTH_PASSWORD', None))
+    parser.add_argument('--chatgpt_auth_session_token', type=str, help='Comes from cookies on chat.openai.com as '
+                                                                       '"__Secure-next-auth.session-token"',
+                        default=os.getenv('TELEGRAMUS_CHATGPT_AUTH_EMAIL', None))
+    parser.add_argument('--chatgpt_auth_access_token', type=str, help='https://chat.openai.com/api/auth/session',
+                        default=os.getenv('TELEGRAMUS_CHATGPT_AUTH_PASSWORD', None))
     parser.add_argument('--chatgpt_auth_proxy', type=str,
-                        help='Custom proxy for auth. See: https://github.com/acheong08/ChatGPT-Proxy',
+                        help='Custom proxy for auth. See: https://github.com/acheong08/ChatGPT',
                         default=os.getenv('TELEGRAMUS_CHATGPT_AUTH_PROXY', None))
     parser.add_argument('--chatgpt_auth_insecure', action='store_true',
                         help='Authentication using the built-in proxy. See: https://github.сom/acheong08/chatgpt',
@@ -136,6 +141,10 @@ def main():
         settings['chatgpt_auth_email'] = args.chatgpt_auth_email
     if args.chatgpt_auth_password is not None:
         settings['chatgpt_auth_password'] = args.chatgpt_auth_password
+    if args.chatgpt_auth_session_token is not None:
+        settings['chatgpt_auth_session_token'] = args.chatgpt_auth_session_token
+    if args.chatgpt_auth_access_token is not None:
+        settings['chatgpt_auth_access_token'] = args.chatgpt_auth_access_token
     if args.chatgpt_auth_proxy is not None:
         settings['chatgpt_auth_proxy'] = args.chatgpt_auth_proxy
     if args.chatgpt_auth_insecure is not None:

@@ -6,8 +6,14 @@
   "chatgpt_auth_password": "",
   "chatgpt_auth__comments__": "LOGIN AND PASSWORD FOR AUTHENTICATION ON OPENAI TO USE CHATGPT",
 
+  "chatgpt_auth_session_token": "",
+  "chatgpt_auth_session_token__comments__": "SESSION TOKEN INSTEAD OF LOGIN AND PASSWORD. COMES FROM COOKIES ON chat.openai.com AS \"__Secure-next-auth.session-token\"",
+
+  "chatgpt_auth_access_token": "",
+  "chatgpt_auth_access_token__comments__": "ACCESS TOKEN INSTEAD OF LOGIN AND PASSWORD. SEE: https://chat.openai.com/api/auth/session",
+
   "chatgpt_auth_proxy": "",
-  "chatgpt_auth_proxy__comments__": "CUSTOM PROXY FOR AUTHENTICATION. SEE: https://github.com/acheong08/ChatGPT-Proxy",
+  "chatgpt_auth_proxy__comments__": "CUSTOM PROXY FOR AUTHENTICATION. SEE: https://github.com/acheong08/ChatGPT",
 
   "chatgpt_auth_insecure": false,
   "chatgpt_auth_insecure__comments__": "AUTHENTICATION USING THE BUILT-IN PROXY. SEE: https://github.com/acheong08/ChatGPT",
