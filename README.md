@@ -3,8 +3,14 @@
 <div style="width:100%;text-align:center;">
     <p align="center">
         <img src="https://badges.frapsoft.com/os/v1/open-source.png?v=103" >
-        <a href="https://soundcloud.com/f3rni"><img alt="SoundCloud" src="https://img.shields.io/badge/-SoundCloud-orange" ></a>
+    </p>
+</div>
+<div style="width:100%;text-align:center;">
+    <p align="center">
         <a href="https://www.youtube.com/@F3RNI"><img alt="YouTube" src="https://img.shields.io/badge/-YouTube-red" ></a>
+        <a href="https://f3rni.bandcamp.com"><img alt="Bandcamp" src="https://img.shields.io/badge/-Bandcamp-cyan" ></a>
+        <a href="https://open.spotify.com/artist/22PQ62alehywlYiksbtzsm"><img alt="Spotify" src="https://img.shields.io/badge/-Spotify-green" ></a>
+        <a href="https://soundcloud.com/f3rni"><img alt="SoundCloud" src="https://img.shields.io/badge/-SoundCloud-orange" ></a>
     </p>
 </div>
 <div style="width:100%;text-align:center;">
@@ -14,6 +20,18 @@
         <img src="Screenshots/dalle.png" width="auto" height="300">
     </p>
 </div>
+
+----------
+
+## Support project
+
+Support the project by buying and listening to my music 🎵
+
+- [Bandcamp](https://f3rni.bandcamp.com)
+- [Spotify](https://open.spotify.com/artist/22PQ62alehywlYiksbtzsm)
+- [Other platforms](https://distrokid.com/hyperfollow/f3rni/dysphoria) (Latest album)
+- [YouTube](https://www.youtube.com/@F3RNI) (Updates rarely)
+- [SoundCloud](https://soundcloud.com/f3rni) (Updates rarely)
 
 ----------
 
@@ -91,6 +109,21 @@ Note: make shure you don't delete argumensts `{0}` in message and please restart
     ```
     docker run -d -e TELEGRAMUS_CHATGPT_AUTH_EMAIL=you_email -e TELEGRAMUS_CHATGPT_AUTH_PASSWORD=you_password -e TELEGRAMUS_OPEN_AI_API_KEY=you_apikey -e TELEGRAMUS_TELEGRAM_API_KEY=you_tgbot_apikey --name gpt-telegramus --restart on-failure telegramus
     ```
+
+**Note:** All available env variables:
+```dockerfile
+ENV TELEGRAMUS_OPEN_AI_API_KEY ""
+ENV TELEGRAMUS_CHATGPT_AUTH_EMAIL ""
+ENV TELEGRAMUS_CHATGPT_AUTH_PASSWORD ""
+ENV TELEGRAMUS_CHATGPT_AUTH_SESSION_TOKEN ""
+ENV TELEGRAMUS_CHATGPT_AUTH_ACCESS_TOKEN ""
+ENV TELEGRAMUS_CHATGPT_AUTH_PROXY ""
+ENV TELEGRAMUS_CHATGPT_CONVERSATION_ID ""
+ENV TELEGRAMUS_CHATGPT_PARENT_ID ""
+ENV TELEGRAMUS_TELEGRAM_API_KEY ""
+ENV TELEGRAMUS_QUEUE_MAX 5
+ENV TELEGRAMUS_IMAGE_SIZE "512x512"
+```
 
 ----------
 
