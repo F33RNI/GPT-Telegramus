@@ -75,9 +75,6 @@ class AIHandler:
         if (len(self.settings['chatgpt_auth_email']) > 0 and len(self.settings['chatgpt_auth_password']) > 0) \
                 or len(self.settings['chatgpt_auth_session_token']) > 0 \
                 or len(self.settings['chatgpt_auth_access_token']) > 0:
-            # Insecure warning
-            if self.settings['chatgpt_auth_insecure']:
-                logging.warning('chatgpt_auth_insecure is set to True')
 
             # Initialize ChatGPT
             try:
