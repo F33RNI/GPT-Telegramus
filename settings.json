@@ -15,9 +15,6 @@
   "chatgpt_auth_proxy": "",
   "chatgpt_auth_proxy__comments__": "CUSTOM PROXY FOR AUTHENTICATION. SEE: https://github.com/acheong08/ChatGPT",
 
-  "chatgpt_auth_insecure": false,
-  "chatgpt_auth_insecure__comments__": "AUTHENTICATION USING THE BUILT-IN PROXY. SEE: https://github.com/acheong08/ChatGPT",
-
   "telegram_api_key": "",
   "telegram_api_key__comments__": "TELEGRAM BOT TOKEN FROM https://t.me/BotFather",
 

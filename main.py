@@ -26,7 +26,7 @@ import psutil
 import BotHandler
 import AIHandler
 
-TELEGRAMUS_VERSION = 'beta_1.1.0'
+TELEGRAMUS_VERSION = 'beta_1.1.1'
 
 # Logging level (INFO for debug, WARN for release)
 LOGGING_LEVEL = logging.INFO
@@ -103,11 +103,6 @@ def parse_args():
     parser.add_argument('--chatgpt_auth_proxy', type=str,
                         help='Custom proxy for auth. See: https://github.com/acheong08/ChatGPT',
                         default=os.getenv('TELEGRAMUS_CHATGPT_AUTH_PROXY', None))
-    parser.add_argument('--chatgpt_auth_insecure', action='store_true',
-                        help='Authentication using the built-in proxy. See: https://github.сom/acheong08/chatgpt',
-                        default=None if os.getenv('TELEGRAMUS_CHATGPT_AUTH_INSECURE', None) is None else
-                        (os.getenv('TELEGRAMUS_CHATGPT_AUTH_INSECURE', 'False').lower()
-                         in ('true', '1', 't', 'y', 'yes')))
 
     parser.add_argument('--telegram_api_key', type=str, help='Telegram API Key',
                         default=os.getenv('TELEGRAMUS_TELEGRAM_API_KEY', None))
@@ -147,8 +142,6 @@ def main():
         settings['chatgpt_auth_access_token'] = args.chatgpt_auth_access_token
     if args.chatgpt_auth_proxy is not None:
         settings['chatgpt_auth_proxy'] = args.chatgpt_auth_proxy
-    if args.chatgpt_auth_insecure is not None:
-        settings['chatgpt_auth_insecure'] = args.chatgpt_auth_insecure
     if args.telegram_api_key is not None:
         settings['telegram_api_key'] = args.telegram_api_key
     if args.queue_max is not None:
