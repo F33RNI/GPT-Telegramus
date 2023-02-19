@@ -152,7 +152,14 @@ class Authenticator:
 
                 # Sleep for next check cycle
                 logging.info('Check successful! Sleeping for next check...')
-                time.sleep(int(self.settings['proxy']['check_interval_seconds']))
+
+                # Sleep and check for self.chatbot_working
+                sleep_started_time = time.time()
+                while time.time() - sleep_started_time < int(self.settings['proxy']['check_interval_seconds']):
+                    if not self.chatbot_working:
+                        logging.info('Sleep interrupted!')
+                        break
+                    time.sleep(1)
 
             # Check is not successful
             else:

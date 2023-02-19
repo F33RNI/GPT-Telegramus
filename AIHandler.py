@@ -167,7 +167,13 @@ class AIHandler:
                     # Add response
                     api_response = str(response_url)
 
+            # Error
             except Exception as e:
+                # Wake up authenticator check loop from sleep
+                if container.request_type == RequestResponseContainer.REQUEST_TYPE_CHATGPT:
+                    self.authenticator.chatbot_working = False
+
+                # Print error message
                 error_message = str(e)
                 logging.error(e, exc_info=True)
 
