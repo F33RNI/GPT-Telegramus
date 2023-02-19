@@ -49,14 +49,59 @@ Support the project by buying and listening to my music 🎵
 1. Install Python and pip
 2. Download source code
 3. Install requirements `pip install -r requirements.txt --upgrade`
-4. Create bot at https://t.me/BotFather
-5. Type Bot's token into `telegram_api_key` in `settings.json` file
-6. Create account at OpenAI using email and password
-7. Type OpenAI account email and password into `chatgpt_auth_email` and `chatgpt_auth_password` in `settings.json` file
-8. For DALL-E, generate API Key https://platform.openai.com/account/api-keys
-9. Type OpenAI API Key into `open_ai_api_key` in `settings.json` file
-10. If you have conversation id you can specify it in `chatgpt_conversation_id` in `settings.json` file
+4. Create account at OpenAI using email and password
+5. Type OpenAI account email and password into `email` and `password` in `chatgpt_auth` in `settings.json` file
+6. For DALL-E, generate API Key https://platform.openai.com/account/api-keys
+7. Type Generated OpenAI API Key into `open_ai_api_key` in `dalle` in `settings.json` file
+8. Create bot at https://t.me/BotFather
+9. Type Bot's token into `api_key` in `telegram` in `settings.json` file
+10. If you have conversation id you can specify it in `conversation_id` in `chatgpt_dialog` in `settings.json` file
 11. Run main script `python main.py`
+
+Example `settings.json`:
+```json
+{
+  "modules": {
+    "chatgpt": true,
+    "dalle": true
+  },
+   
+  "chatgpt_auth": {
+    "email": "myemail@domain.com",
+    "password": "12345qwerty",
+    "session_token": "",
+    "access_token": ""
+  },
+   
+  "proxy": {
+    "enabled": true,
+    "auto": true,
+	"https_only": true,
+    "manual_proxy": "http://111.222.123.111:443",
+    "check_interval_seconds": 300,
+    "check_message": "1+1",
+    "check_message_timeout": 120,
+    "check_reply_must_include": "2"
+  },
+   
+  "dalle": {
+    "open_ai_api_key": "sk-1xxxxxxXXxXXXxxXXXxxXXXXXXXXXXXxxxxxxxxxxxxxxxXX",
+    "image_size": "512x512",
+    "use_proxy": true
+  },
+   
+  "chatgpt_dialog": {
+    "conversation_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "parent_id": ""
+  },
+   
+  "telegram": {
+    "api_key": "1234567890:XXXxXxxXxxXXxxXXX-XXXXXXXxXxxxXxXxX",
+    "queue_max": 5,
+    "show_queue_message": true
+  }
+}
+```
 
 ----------
 
@@ -72,7 +117,7 @@ Note: make shure you don't delete argumensts `{0}` in message and please restart
 
 1. Install Python and pip
 2. Clone repo
-3. Fill `telegram_api_key`, `chatgpt_auth_email`, `chatgpt_auth_password` and `open_ai_api_key` in `settings.json` file
+3. Edit `settings.json`
 4. Install systemd `sudo apt-get install -y systemd`
 5. Create new service file `sudo nano /etc/systemd/system/gpt-telegramus.service`
    ```
@@ -107,33 +152,39 @@ Note: make shure you don't delete argumensts `{0}` in message and please restart
     ```
 4. Run the container
     ```
-    docker run -d -e TELEGRAMUS_CHATGPT_AUTH_EMAIL=you_email -e TELEGRAMUS_CHATGPT_AUTH_PASSWORD=you_password -e TELEGRAMUS_OPEN_AI_API_KEY=you_apikey -e TELEGRAMUS_TELEGRAM_API_KEY=you_tgbot_apikey --name gpt-telegramus --restart on-failure telegramus
+    docker run -d -e TELEGRAMUS_SETTINGS_FILE=you_settings_file_location -e TELEGRAMUS_MESSAGES_FILE=you_messages_file_location --name gpt-telegramus --restart on-failure telegramus
     ```
 
-**Note:** All available env variables:
+**Note:** You can specify settings and messages file location. (default location is in project folder):
 ```dockerfile
-ENV TELEGRAMUS_OPEN_AI_API_KEY ""
-ENV TELEGRAMUS_CHATGPT_AUTH_EMAIL ""
-ENV TELEGRAMUS_CHATGPT_AUTH_PASSWORD ""
-ENV TELEGRAMUS_CHATGPT_AUTH_SESSION_TOKEN ""
-ENV TELEGRAMUS_CHATGPT_AUTH_ACCESS_TOKEN ""
-ENV TELEGRAMUS_CHATGPT_AUTH_PROXY ""
-ENV TELEGRAMUS_CHATGPT_CONVERSATION_ID ""
-ENV TELEGRAMUS_CHATGPT_PARENT_ID ""
-ENV TELEGRAMUS_TELEGRAM_API_KEY ""
-ENV TELEGRAMUS_QUEUE_MAX 5
-ENV TELEGRAMUS_IMAGE_SIZE "512x512"
+ENV TELEGRAMUS_SETTINGS_FILE "settings.json"
+ENV TELEGRAMUS_MESSAGES_FILE "messages.json"
 ```
 
 ----------
 
 ## Proxy to bypass OpenAI's geo-blocking
 
-**WARNING: Not tested**
+It is possible to bypass geo-blocking. GPT-Telegramus includes automatic proxy-list downloading
 
-To enable proxy (see https://github.com/acheong08/ChatGPT)
-- you can set proxy to `chatgpt_auth_proxy` in `settings.json` file
-- or you can set `TELEGRAMUS_CHATGPT_AUTH_PROXY` env variable (docker: `-e TELEGRAMUS_CHATGPT_AUTH_PROXY=your_proxy`)
+1. Set `enabled` in `proxy` in `settings.json` to `true`
+2. Restart app and hope for the best. 
+
+GPT-Telegramus will have to download the proxy list itself and start trying various proxies (see console for logs).
+Sometimes trying can take a very long time (Usually up to half of the proxies is at least one that works)
+
+If you have proxy that definitely works you can specify it in `manual_proxy` in `proxy` in `settings.json`.
+**Make sure you set `auto` to `false` when using `manual_proxy`**
+
+`proxy` settings description:
+- `enabled` - Whether proxy login is enabled.
+- `auto` - Download proxies automatically. Otherwise, use `manual_proxy`
+- `https_only` - Don't include http proxies in list
+- `manual_proxy` - Manual proxy server. It must support HTTPS, but you need to type it in `http://IP:PORT` format
+- `check_interval_seconds` - Automatic connection check interval (in seconds)
+- `check_message` - This message will be sent as a request
+- `check_message_timeout` - How long should a response take?
+- `check_reply_must_include` - The response message must contain this text to consider that the check was successful
 
 ----------
 
@@ -150,9 +201,8 @@ To enable proxy (see https://github.com/acheong08/ChatGPT)
 
 ## TODO
 
-- Create `/settings` command to show and edit current settings
-- Add the ability to change settings on the fly
-- Add the ability to restart bot / api using command
+- Make database for every dialog with separate `conversation_id`
+- Make whitelist for users and admin account
 
 ----------
 
