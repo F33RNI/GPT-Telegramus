@@ -29,7 +29,9 @@
     "check_interval_seconds": 300,
     "check_message": "1+1",
     "check_message_timeout": 240,
-    "check_reply_must_include": "2"
+    "check_reply_must_include": "2",
+    "max_number_of_processes": 5,
+    "initialization_timeout": 60
   },
 
   "__comment11__": "PROVIDE YOUR API_KEY FROM https://platform.openai.com/account/api-keys FOR REQUESTS TO DALL-E",

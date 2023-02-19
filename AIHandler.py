@@ -170,8 +170,7 @@ class AIHandler:
             # Error
             except Exception as e:
                 # Wake up authenticator check loop from sleep
-                if container.request_type == RequestResponseContainer.REQUEST_TYPE_CHATGPT:
-                    self.authenticator.chatbot_working = False
+                self.authenticator.chatbot_working = False
 
                 # Print error message
                 error_message = str(e)

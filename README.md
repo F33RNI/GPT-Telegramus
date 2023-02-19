@@ -76,12 +76,14 @@ Example `settings.json`:
   "proxy": {
     "enabled": true,
     "auto": true,
-	"https_only": true,
+    "https_only": true,
     "manual_proxy": "http://111.222.123.111:443",
     "check_interval_seconds": 300,
     "check_message": "1+1",
     "check_message_timeout": 120,
-    "check_reply_must_include": "2"
+    "check_reply_must_include": "2",
+    "max_number_of_processes": 5,
+    "initialization_timeout": 60
   },
    
   "dalle": {
@@ -185,6 +187,8 @@ If you have proxy that definitely works you can specify it in `manual_proxy` in 
 - `check_message` - This message will be sent as a request
 - `check_message_timeout` - How long should a response take?
 - `check_reply_must_include` - The response message must contain this text to consider that the check was successful
+- `max_number_of_processes` - How many background processes are used for checking proxy
+- `initialization_timeout` - How long to wait for initialization with proxy
 
 ----------
 
