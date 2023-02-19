@@ -14,30 +14,27 @@
  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  OTHER DEALINGS IN THE SOFTWARE.
 """
-import asyncio
 import logging
 import queue
 import threading
+import time
 
 import openai
-from revChatGPT.V1 import Chatbot
 
 import RequestResponseContainer
 
-EMPTY_RESPONSE_ERROR_MESSAGE = 'Empty response'
-NO_AUTH_GPT_ERROR_MESSAGE = 'Auth error!'
-NO_AUTH_DALLE_ERROR_MESSAGE = 'No OpenAI API key provided!'
+EMPTY_RESPONSE_ERROR_MESSAGE = 'Empty response or unhandled error!'
+ERROR_CHATGPT_DISABLED = 'ChatGPT module is disabled in settings.json'
+ERROR_DALLE_DISABLED = 'DALL-E module is disabled in settings.json'
 
 
 class AIHandler:
-    def __init__(self, settings):
+    def __init__(self, settings, authenticator):
         self.settings = settings
+        self.authenticator = authenticator
 
         # Loop running flag
-        self.gpt_loop_running = False
-
-        # OpenAI API
-        self.chatbot = None
+        self.loop_running = False
 
         # Responses queue
         self.responses_queue = None
@@ -55,7 +52,7 @@ class AIHandler:
         # Check settings
         if self.settings is not None:
             # Initialize queue
-            self.responses_queue = queue.Queue(maxsize=self.settings['queue_max'])
+            self.responses_queue = queue.Queue(maxsize=self.settings['telegram']['queue_max'])
 
     def thread_start(self):
         """
@@ -63,7 +60,7 @@ class AIHandler:
         :return:
         """
         # Set flag
-        self.gpt_loop_running = True
+        self.loop_running = True
 
         # Start thread
         thread = threading.Thread(target=self.gpt_loop)
@@ -75,42 +72,7 @@ class AIHandler:
         Background loop for handling requests
         :return:
         """
-        # Initialize ChatGPT
-        if (len(self.settings['chatgpt_auth_email']) > 0 and len(self.settings['chatgpt_auth_password']) > 0) \
-                or len(self.settings['chatgpt_auth_session_token']) > 0 \
-                or len(self.settings['chatgpt_auth_access_token']) > 0:
-
-            # Initialize ChatGPT
-            try:
-                config = {}
-                if len(self.settings['chatgpt_auth_email']) > 0 and len(self.settings['chatgpt_auth_password']) > 0:
-                    config['email'] = self.settings['chatgpt_auth_email']
-                    config['password'] = self.settings['chatgpt_auth_password']
-                elif len(self.settings['chatgpt_auth_session_token']) > 0:
-                    config['session_token'] = self.settings['chatgpt_auth_session_token']
-                elif len(self.settings['chatgpt_auth_access_token']) > 0:
-                    config['access_token'] = self.settings['chatgpt_auth_access_token']
-
-                if len(self.settings['chatgpt_auth_proxy']) > 0:
-                    config['proxy'] = self.settings['chatgpt_auth_proxy']
-
-                self.chatbot = Chatbot(config=config)
-
-            except Exception as e:
-                self.chatbot = None
-                logging.warning(e, exc_info=True)
-                logging.warning('Error initializing ChatGPT. ChatGPT functions will be disabled')
-
-        # No login details
-        else:
-            self.chatbot = None
-            logging.warning('No login details provided! ChatGPT functions will be disabled')
-
-        # No API Key
-        if len(self.settings['open_ai_api_key']) <= 0:
-            logging.warning('No OpenAI API key for DALL-E provided. DALL-E functions will be disabled')
-
-        while self.gpt_loop_running and self.requests_queue is not None:
+        while self.loop_running and self.requests_queue is not None:
             # Get request
             container = self.requests_queue.get(block=True)
             self.processing_container = RequestResponseContainer.RequestResponseContainer(container.chat_id,
@@ -128,68 +90,82 @@ class AIHandler:
             try:
                 # ChatGPT
                 if container.request_type == RequestResponseContainer.REQUEST_TYPE_CHATGPT:
-                    if self.chatbot is not None:
-                        # Log request
-                        logging.info('Asking: ' + str(container.request))
-
-                        # Initialize conversation_id and parent_id
-                        if self.conversation_id is None:
-                            self.conversation_id = str(self.settings['chatgpt_conversation_id']) if \
-                                len(str(self.settings['chatgpt_conversation_id'])) > 0 else None
-                            logging.info('Initial conversation id: ' + str(self.conversation_id))
-                        if self.parent_id is None:
-                            self.parent_id = str(self.settings['chatgpt_parent_id']) if \
-                                len(str(self.settings['chatgpt_parent_id'])) > 0 else None
-                            logging.info('Initial parent id: ' + str(self.parent_id))
-
-                        # Ask
-                        for data in self.chatbot.ask(str(container.request),
-                                                     conversation_id=self.conversation_id,
-                                                     parent_id=self.parent_id):
-                            # Get last response
-                            api_response = data['message']
-
-                            # Store conversation_id
-                            if data['conversation_id'] is not None:
-                                self.conversation_id = data['conversation_id']
-
-                        # Log conversation id and parent id
-                        logging.info('Current conversation id: ' + str(self.conversation_id)
-                                     + '\tParent id: ' + str(self.parent_id))
-
-                        # Log response
-                        logging.info(str(api_response))
-
-                    # ChatGPT is not initialized
-                    else:
+                    # Check if ChatGPT is enabled
+                    if not self.settings['modules']['chatgpt']:
+                        logging.warning(ERROR_CHATGPT_DISABLED)
                         api_response = None
-                        raise Exception(NO_AUTH_GPT_ERROR_MESSAGE)
+                        raise Exception(ERROR_CHATGPT_DISABLED)
 
-                # ALLE
+                    # Wait for chatbot
+                    chatbot = self.authenticator.chatbot
+                    while not self.authenticator.chatbot_working or chatbot is None:
+                        time.sleep(1)
+                        chatbot = self.authenticator.chatbot
+
+                    # Log request
+                    logging.info('Asking: ' + str(container.request))
+
+                    # Initialize conversation_id and parent_id
+                    if self.conversation_id is None:
+                        self.conversation_id = str(self.settings['chatgpt_dialog']['conversation_id']) if \
+                            len(str(self.settings['chatgpt_dialog']['conversation_id'])) > 0 else None
+                        logging.info('Initial conversation id: ' + str(self.conversation_id))
+                    if self.parent_id is None:
+                        self.parent_id = str(self.settings['chatgpt_dialog']['parent_id']) if \
+                            len(str(self.settings['chatgpt_dialog']['parent_id'])) > 0 else None
+                        logging.info('Initial parent id: ' + str(self.parent_id))
+
+                    # Ask
+                    for data in chatbot.ask(str(container.request),
+                                            conversation_id=self.conversation_id,
+                                            parent_id=self.parent_id):
+                        # Get last response
+                        api_response = data['message']
+
+                        # Store conversation_id
+                        if data['conversation_id'] is not None:
+                            self.conversation_id = data['conversation_id']
+
+                    # Log conversation id and parent id
+                    logging.info('Current conversation id: ' + str(self.conversation_id)
+                                 + '\tParent id: ' + str(self.parent_id))
+
+                    # Log response
+                    logging.info(str(api_response))
+
+                # DALL-E
                 else:
-                    if len(self.settings['open_ai_api_key']) > 0:
-                        # Log request
-                        logging.info('Drawing: ' + str(container.request))
-
-                        # Send request
-                        openai.api_key = self.settings['open_ai_api_key']
-                        image_response = openai.Image.create(
-                            prompt=str(container.request),
-                            n=1,
-                            size=self.settings['image_size'],
-                        )
-                        response_url = image_response['data'][0]['url']
-
-                        # Log response
-                        logging.info(str(response_url))
-
-                        # Add response
-                        api_response = str(response_url)
-
-                    # No API key provided
-                    else:
+                    # Check if ChatGPT is enabled
+                    if not self.settings['modules']['dalle'] or len(self.settings['dalle']['open_ai_api_key']) <= 0:
+                        logging.warning(ERROR_DALLE_DISABLED)
                         api_response = None
-                        raise Exception(NO_AUTH_DALLE_ERROR_MESSAGE)
+                        raise Exception(ERROR_DALLE_DISABLED)
+
+                    # Log request
+                    logging.info('Drawing: ' + str(container.request))
+
+                    # Set Key
+                    openai.api_key = self.settings['dalle']['open_ai_api_key']
+
+                    # Proxy for DALL-E
+                    if self.settings['dalle']['use_proxy']:
+                        proxy = self.authenticator.current_proxy
+                        if proxy is not None and len(proxy) > 0:
+                            openai.proxy = proxy
+
+                    # Send request
+                    image_response = openai.Image.create(
+                        prompt=str(container.request),
+                        n=1,
+                        size=self.settings['dalle']['image_size'],
+                    )
+                    response_url = image_response['data'][0]['url']
+
+                    # Log response
+                    logging.info(str(response_url))
+
+                    # Add response
+                    api_response = str(response_url)
 
             except Exception as e:
                 error_message = str(e)
@@ -221,4 +197,4 @@ class AIHandler:
 
         # Loop finished
         logging.warning('AIHandler loop finished')
-        self.gpt_loop_running = False
+        self.loop_running = False

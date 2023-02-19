@@ -1,32 +1,58 @@
 {
-  "open_ai_api_key": "",
-  "open_ai_api_key__comments__": "OPEN_AI_API_KEY IS REQUIRED TO USE DALL-E",
+  "__comment1__": "SPECIFY WHAT MODULES WILL BE INCLUDED IN TELEGRAM BOT",
+  "modules": {
+    "chatgpt": true,
+    "dalle": true
+  },
 
-  "chatgpt_auth_email": "",
-  "chatgpt_auth_password": "",
-  "chatgpt_auth__comments__": "LOGIN AND PASSWORD FOR AUTHENTICATION ON OPENAI TO USE CHATGPT",
+  "__comment2__": "PROVIDE YOUR OPENAI ACCOUNT DETAILS BELOW TO USE CHATGPT (IF ENABLED)",
+  "__comment3__": "YOU CAN USE EMAIL/PASSWORD",
+  "__comment4__": "OR SESSION_TOKEN (FROM COOKIES ON chat.openai.com AS __Secure-next-auth.session-token)",
+  "__comment5__": "OR ACCESS_TOKEN (https://chat.openai.com/api/auth/session)",
+  "chatgpt_auth": {
+    "email": "",
+    "password": "",
+    "session_token": "",
+    "access_token": ""
+  },
 
-  "chatgpt_auth_session_token": "",
-  "chatgpt_auth_session_token__comments__": "SESSION TOKEN INSTEAD OF LOGIN AND PASSWORD. COMES FROM COOKIES ON chat.openai.com AS \"__Secure-next-auth.session-token\"",
+  "__comment6__": "PROXIES TO BYPASS COUNTRY RESTRICTIONS",
+  "__comment7__": "IN AUTO MODE, PROXIES WILL BE REQUESTED FROM http://free-proxy-list.net/",
+  "__comment8__": "IF AUTO IS FALSE, SPECIFY PROXY IN THE http://IP:PORT FORMAT",
+  "__comment9__": "SPECIFY THE INTERVAL HOW LONG TO CHECK THE PROXY BY ASKING A QUESTION. OR SET 0 TO DISABLE CHECK",
+  "__comment10__": "SPECIFY THE QUESTION WHICH THE APP WILL ASK AND THE TEXT WHICH SHOULD BE IN THE ANSWER",
+  "proxy": {
+    "enabled": false,
+    "auto": true,
+	"https_only": true,
+    "manual_proxy": "http://IP:PORT",
+    "check_interval_seconds": 300,
+    "check_message": "1+1",
+    "check_message_timeout": 120,
+    "check_reply_must_include": "2"
+  },
 
-  "chatgpt_auth_access_token": "",
-  "chatgpt_auth_access_token__comments__": "ACCESS TOKEN INSTEAD OF LOGIN AND PASSWORD. SEE: https://chat.openai.com/api/auth/session",
+  "__comment11__": "PROVIDE YOUR API_KEY FROM https://platform.openai.com/account/api-keys FOR REQUESTS TO DALL-E",
+  "__comment12__": "SPECIFY FORMAT OF GENERATED IMAGES (256x256 or 512x512 or 1024x1024)",
+  "__comment13__": "SPECIFY IS PROXY NEEDED FOR DALLE (SAME PROXY AS FOR CHATGPT)",
+  "dalle": {
+    "open_ai_api_key": "",
+    "image_size": "512x512",
+    "use_proxy": true
+  },
 
-  "chatgpt_auth_proxy": "",
-  "chatgpt_auth_proxy__comments__": "CUSTOM PROXY FOR AUTHENTICATION. SEE: https://github.com/acheong08/ChatGPT",
+  "__comment14__": "SPECIFY YOUR INITIAL CONVERSATION_ID and PARENT_ID TO CONTINUE THE DIALOGUE",
+  "__comment15__": "WHEN YOU START FOR THE FIRST TIME, LEAVE THEM BLANK, ASK A QUESTION AND LOOK IN THE CONSOLE",
+  "chatgpt_dialog": {
+    "conversation_id": "",
+    "parent_id": ""
+  },
 
-  "chatgpt_conversation_id": "",
-  "chatgpt_conversation_id__comment__": "INITIAL conversation_id",
-
-  "chatgpt_parent_id": "",
-  "chatgpt_parent_id__comment__": "INITIAL parent_id",
-
-  "telegram_api_key": "",
-  "telegram_api_key__comments__": "TELEGRAM BOT TOKEN FROM https://t.me/BotFather",
-
-  "queue_max": 5,
-  "queue_max__comments__": "REQUESTS QUEUE FOR CHATGPT AND DALL-E (MESSAGES TO BOT QUEUE)",
-
-  "image_size": "512x512",
-  "image_size__comments__": "DALL-E GENERATED IMAGE SIZE (256x256 or 512x512 or 1024x1024)"
+  "__comment16__": "PROVIDE YOUR BOT API KEY FROM https://t.me/BotFather",
+  "__comment17__": "SPECIFY THE SIZE OF THE REQUEST QUEUE AND WHETHER TO SHOW A MESSAGE ABOUT ADDING TO THE QUEUE",
+  "telegram": {
+    "api_key": "",
+    "queue_max": 5,
+    "show_queue_message": true
+  }
 }

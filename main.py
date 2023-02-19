@@ -15,18 +15,19 @@
  OTHER DEALINGS IN THE SOFTWARE.
 """
 
+import argparse
 import json
 import logging
 import os
 import signal
-import argparse
 
 import psutil
 
-import BotHandler
 import AIHandler
+import Authenticator
+import BotHandler
 
-TELEGRAMUS_VERSION = 'beta_1.3.1'
+TELEGRAMUS_VERSION = 'beta_1.4.0'
 
 # Logging level (INFO for debug, WARN for release)
 LOGGING_LEVEL = logging.INFO
@@ -160,12 +161,16 @@ def main():
     if args.image_size is not None:
         settings['image_size'] = args.image_size
 
-    # Initialize BotHandler and AIHandler classes
-    ai_handler = AIHandler.AIHandler(settings)
+    # Initialize classes
+    authenticator = Authenticator.Authenticator(settings)
+    ai_handler = AIHandler.AIHandler(settings, authenticator)
     bot_handler = BotHandler.BotHandler(settings, messages, ai_handler)
 
     # Set requests_queue to ai_handler
     ai_handler.requests_queue = bot_handler.requests_queue
+
+    # Start checker loop
+    authenticator.start_check_loop()
 
     # Start AIHandler
     ai_handler.thread_start()
