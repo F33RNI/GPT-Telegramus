@@ -201,7 +201,7 @@ class Authenticator:
                     self.chatbot = Chatbot(config=config)
                 # Error initializing chatbot
                 except Exception as e:
-                    logging.warning('Error initializing chatbot!' + str(e))
+                    logging.warning('Error initializing chatbot! ' + str(e))
 
                 # Sleep 1 second to limit connections interval
                 time.sleep(1)
