@@ -14,8 +14,9 @@
  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  OTHER DEALINGS IN THE SOFTWARE.
 """
-
+import copy
 import logging
+import multiprocessing
 import random
 import threading
 import time
@@ -28,16 +29,53 @@ import useragents
 PROXY_FROM_URL = 'http://free-proxy-list.net/'
 
 
+def kill_all_processes(processes_and_times):
+    """
+    Kills all processes
+    :param processes_and_times: list of (process, time_started)
+    :return:
+    """
+    for (process_, time_) in processes_and_times:
+        if process_ is not None and time_ is not None and process_.is_alive():
+            logging.info('Killing process with PID: ' + str(process_.pid))
+            try:
+                process_.kill()
+                process_.join()
+            except:
+                logging.warning('Error killing process with PID: ' + str(process_.pid))
+
+
+def initialize_chatbot(proxy, config, chatbots_and_proxies_queue):
+    """
+    Pops first proxy and tries to initialize chatbot
+    :return:
+    """
+    try:
+        # Get config
+        config_ = copy.deepcopy(config)
+        config_['proxy'] = proxy
+
+        # Initialize chatbot
+        chatbot = Chatbot(config=config_)
+
+        # Append working chatbot and proxy
+        if chatbot is not None:
+            chatbots_and_proxies_queue.put((chatbot, proxy))
+    except:
+        pass
+
+
 class Authenticator:
     def __init__(self, settings):
         self.settings = settings
 
         self.chatbot = None
         self.chatbot_working = False
+        self.chatbots_and_proxies_queue = multiprocessing.Queue(maxsize=int(self.settings['proxy']
+                                                                            ['max_number_of_processes']) * 2)
         self.current_proxy = None
         self.conversation_id = None
         self.proxy_list = []
-        self.proxy_list_index = 0
         self.check_loop_running = False
 
     def start_check_loop(self):
@@ -74,7 +112,6 @@ class Authenticator:
         """
         # Reset proxy list
         self.proxy_list = []
-        self.proxy_list_index = 0
 
         # Try to get proxy
         try:
@@ -162,70 +199,100 @@ class Authenticator:
 
             # Check is not successful
             else:
-                # Get config
-                config = self.get_chatbot_config()
-
                 # Get proxy
                 if self.settings['proxy']['enabled']:
-                    proxy = None
                     # Auto proxy
                     if self.settings['proxy']['auto']:
-                        # Already have proxy_list -> get new proxy from it
-                        if self.proxy_list_index < len(self.proxy_list) - 1:
-                            # If half list checked
-                            if self.proxy_list_index >= len(self.proxy_list) // 2:
-                                # Try to get new proxies
-                                logging.info('Trying to update proxy-list...')
-                                proxy_list_old = self.proxy_list
-                                proxy_list_index_old = self.proxy_list_index
-                                self.proxy_get()
-
-                                # Check if new proxies are identical or empty
-                                if proxy_list_old == self.proxy_list or len(self.proxy_list) == 0:
-                                    # Restore previous
-                                    logging.info('New proxies are identical or empty. Restoring previous...')
-                                    self.proxy_list = proxy_list_old
-                                    self.proxy_list_index = proxy_list_index_old
-
-                            # Switch to next proxy
-                            self.proxy_list_index += 1
-                            logging.info('Loading next proxy: ' + str(self.proxy_list_index + 1) + '/'
-                                         + str(len(self.proxy_list)))
-
-                            # Load proxy
-                            proxy = self.proxy_list[self.proxy_list_index]
-
-                        # No proxy or all checked
-                        else:
-                            # Get new proxy list
+                        # Get new proxy list
+                        if len(self.proxy_list) <= 0:
                             self.proxy_get()
-
-                            # Get proxy from list
-                            if len(self.proxy_list) > 0:
-                                proxy = self.proxy_list[0]
-
                     # Manual proxy
                     else:
-                        proxy = self.settings['proxy']['manual_proxy']
-
-                    # Add proxy to config
-                    self.current_proxy = proxy
-                    if proxy is not None:
-                        logging.info('Using proxy: ' + proxy)
-                        config['proxy'] = proxy
+                        self.proxy_list = [self.settings['proxy']['manual_proxy']]
+                # Proxy disabled
+                else:
+                    break
 
                 # Remove old chatbot
                 if self.chatbot is not None:
                     del self.chatbot
                     self.chatbot = None
 
-                # Initialize new chatbot
-                logging.info('Initializing new chatbot with config: ' + str(config))
-                try:
-                    self.chatbot = Chatbot(config=config)
-                # Error initializing chatbot
-                except Exception as e:
-                    logging.warning('Error initializing chatbot! ' + str(e))
+                # Create list of processes and start times
+                processes_and_times = []
+
+                # Get default config
+                default_config = self.get_chatbot_config()
+
+                while True:
+                    # Create and start processes
+                    while len(self.proxy_list) > 0 \
+                            and len(processes_and_times) < int(self.settings['proxy']['max_number_of_processes']):
+                        proxy = self.proxy_list.pop(0)
+                        process = multiprocessing.Process(target=initialize_chatbot,
+                                                          args=(proxy,
+                                                                default_config,
+                                                                self.chatbots_and_proxies_queue,))
+                        process.start()
+                        time_started = time.time()
+                        processes_and_times.append((process, time_started))
+                        logging.info('Started new initialization process for proxy: ' + proxy + '. PID: '
+                                     + str(process.pid) + ' Total: ' + str(len(processes_and_times)) + ' processes')
+
+                        # Limit connection intervals
+                        time.sleep(0.5)
+
+                    # Wait some time each cycle
+                    time.sleep(0.5)
+
+                    # No more proxies
+                    if len(self.proxy_list) == 0:
+                        # Get new proxy list in auto mode
+                        if self.settings['proxy']['auto']:
+                            self.proxy_get()
+
+                        # Exit if manual mode and no more processes
+                        elif len(processes_and_times) == 0:
+                            logging.info('Cannot connect with manual proxy. Exiting loop...')
+                            kill_all_processes(processes_and_times)
+                            break
+
+                    # Check chatbots
+                    try:
+                        # Get from queue
+                        chatbot_, proxy_ = self.chatbots_and_proxies_queue.get(block=False)
+
+                        # Found initialized one
+                        if chatbot_ is not None and proxy_ is not None and len(proxy_) > 0:
+                            self.chatbot = chatbot_
+                            self.current_proxy = proxy_
+                    except:
+                        pass
+
+                    # Kill all processes and exit from loop
+                    if self.chatbot is not None and self.current_proxy is not None:
+                        kill_all_processes(processes_and_times)
+                        logging.info('Found working proxy: ' + self.current_proxy + ' exiting loop...')
+                        break
+
+                    # Check timeouts
+                    for i in range(len(processes_and_times)):
+                        process_, time_ = processes_and_times[i]
+                        if process_ is not None and time_ is not None:
+                            # Kill on timeout or exit
+                            if time.time() - time_ > int(self.settings['proxy']['initialization_timeout']) \
+                                    or not process_.is_alive():
+                                if process_.is_alive():
+                                    logging.info('Killing process with PID: ' + str(process_.pid) + ' due to timeout')
+                                    try:
+                                        process_.kill()
+                                        process_.join()
+                                    except:
+                                        logging.warning('Error killing process with PID: ' + str(process_.pid))
+                                processes_and_times[i] = (None, None)
+
+                    # Remove Nones
+                    processes_and_times = [i for i in processes_and_times if i[0] is not None]
 
                 # Sleep 1 second to limit connections interval
                 time.sleep(1)
