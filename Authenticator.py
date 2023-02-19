@@ -97,7 +97,6 @@ class Authenticator:
                     # Check data and append to list
                     if len(ip.split('.')) == 4 and len(port) > 1 and \
                             (is_https or not self.settings['proxy']['https_only']):
-
                         # proxies_list.append(('https://' if is_https else 'http://') + ip + ':' + port)
                         self.proxy_list.append('http://' + ip + ':' + port)
                 except:
@@ -173,9 +172,27 @@ class Authenticator:
                     if self.settings['proxy']['auto']:
                         # Already have proxy_list -> get new proxy from it
                         if self.proxy_list_index < len(self.proxy_list) - 1:
+                            # If half list checked
+                            if self.proxy_list_index >= len(self.proxy_list) // 2:
+                                # Try to get new proxies
+                                logging.info('Trying to update proxy-list...')
+                                proxy_list_old = self.proxy_list
+                                proxy_list_index_old = self.proxy_list_index
+                                self.proxy_get()
+
+                                # Check if new proxies are identical or empty
+                                if proxy_list_old == self.proxy_list or len(self.proxy_list) == 0:
+                                    # Restore previous
+                                    logging.info('New proxies are identical or empty. Restoring previous...')
+                                    self.proxy_list = proxy_list_old
+                                    self.proxy_list_index = proxy_list_index_old
+
+                            # Switch to next proxy
                             self.proxy_list_index += 1
                             logging.info('Loading next proxy: ' + str(self.proxy_list_index + 1) + '/'
                                          + str(len(self.proxy_list)))
+
+                            # Load proxy
                             proxy = self.proxy_list[self.proxy_list_index]
 
                         # No proxy or all checked
