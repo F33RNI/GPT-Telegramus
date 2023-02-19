@@ -56,7 +56,7 @@ class BotHandler:
         # Check settings and messages
         if self.settings is not None and self.messages is not None:
             # Initialize queue
-            self.requests_queue = queue.Queue(maxsize=self.settings['queue_max'])
+            self.requests_queue = queue.Queue(maxsize=self.settings['telegram']['queue_max'])
 
         # Settings or messages are None
         else:
@@ -69,7 +69,7 @@ class BotHandler:
         """
         try:
             # Build bot
-            application = ApplicationBuilder().token(self.settings['telegram_api_key']) \
+            application = ApplicationBuilder().token(self.settings['telegram']['api_key']) \
                 .write_timeout(30).read_timeout(30).build()
             application.add_handler(CommandHandler(BOT_COMMAND_START, self.bot_command_start))
             application.add_handler(CommandHandler(BOT_COMMAND_HELP, self.bot_command_help))
@@ -117,11 +117,13 @@ class BotHandler:
             self.requests_queue.put(container)
 
             # Send confirmation message
-            await context.bot.send_message(chat_id=chat_id, text=str(self.messages['queue_accepted'])
-                                           .format(str(self.requests_queue.qsize()
-                                                       + (1 if self.ai_handler.
-                                                          processing_container is not None else 0)),
-                                                   str(self.settings['queue_max'])).replace('\\n', '\n'))
+            if self.settings['telegram']['show_queue_message']:
+                await context.bot.send_message(chat_id=chat_id, text=str(self.messages['queue_accepted'])
+                                               .format(str(self.requests_queue.qsize()
+                                                           + (1 if self.ai_handler.
+                                                              processing_container is not None else 0)),
+                                                       str(self.settings['telegram']['queue_max']))
+                                               .replace('\\n', '\n'))
         # Queue overflow
         else:
             await context.bot.send_message(chat_id=chat_id,
@@ -219,17 +221,17 @@ class BotHandler:
                     container = self.requests_queue.queue[i]
                     text_request = container.request
                     text_from = container.user_name
-                    message += str(i + 1) + '. ' + text_from + ', ' + \
-                               RequestResponseContainer.REQUEST_NAMES[container.request_type] \
-                               + ': ' + text_request + '\n\n'
+                    message += str(i + 1) + '. ' + text_from + ', '
+                    message += RequestResponseContainer.REQUEST_NAMES[container.request_type]
+                    message += ': ' + text_request + '\n\n'
 
             # Current request
             if processing_container is not None:
                 if len(message) > 0:
                     i += 1
-                message += str(i + 1) + '. ' + processing_container.user_name + ', ' + \
-                           RequestResponseContainer.REQUEST_NAMES[processing_container.request_type] \
-                           + ': ' + processing_container.request + '\n\n'
+                message += str(i + 1) + '. ' + processing_container.user_name + ', '
+                message += RequestResponseContainer.REQUEST_NAMES[processing_container.request_type]
+                message += ': ' + processing_container.request + '\n\n'
 
             # Send queue stats
             await context.bot.send_message(chat_id=chat_id, text=str(self.messages['queue_stats'])
@@ -284,23 +286,24 @@ class BotHandler:
                     escape_char = MARKDOWN_ESCAPE[i]
                     message = message.replace(escape_char, '\\' + escape_char)
 
-                await telegram.Bot(self.settings['telegram_api_key']).sendMessage(chat_id=chat_id,
-                                                                                  text=message,
-                                                                                  reply_to_message_id=
-                                                                                  reply_to_message_id,
-                                                                                  parse_mode='MarkdownV2')
+                await telegram.Bot(self.settings['telegram']['api_key'])\
+                    .sendMessage(chat_id=chat_id,
+                                 text=message,
+                                 reply_to_message_id=reply_to_message_id,
+                                 parse_mode='MarkdownV2')
 
             # Error parsing markdown
             except Exception as e:
                 logging.info(e)
-                await telegram.Bot(self.settings['telegram_api_key']).sendMessage(chat_id=chat_id,
-                                                                                  text=message.replace('\\n', '\n'),
-                                                                                  reply_to_message_id=
-                                                                                  reply_to_message_id)
+                await telegram.Bot(self.settings['telegram']['api_key'])\
+                    .sendMessage(chat_id=chat_id,
+                                 text=message.replace('\\n', '\n'),
+                                 reply_to_message_id=reply_to_message_id)
         else:
-            await telegram.Bot(self.settings['telegram_api_key']).sendMessage(chat_id=chat_id,
-                                                                              text=message.replace('\\n', '\n'),
-                                                                              reply_to_message_id=reply_to_message_id)
+            await telegram.Bot(self.settings['telegram']['api_key'])\
+                .sendMessage(chat_id=chat_id,
+                             text=message.replace('\\n', '\n'),
+                             reply_to_message_id=reply_to_message_id)
 
     def response_loop(self):
         """
@@ -317,12 +320,12 @@ class BotHandler:
                 if response.request_type == RequestResponseContainer.REQUEST_TYPE_CHATGPT:
                     asyncio.run(self.send_reply(response.chat_id, response.response, response.message_id, True))
 
-                # DALLE
+                # DALL-E
                 else:
-                    asyncio.run(telegram.Bot(self.settings['telegram_api_key']).sendPhoto(chat_id=response.chat_id,
-                                                                                          photo=response.response,
-                                                                                          reply_to_message_id
-                                                                                          =response.message_id))
+                    asyncio.run(telegram.Bot(self.settings['telegram']['api_key'])
+                                .sendPhoto(chat_id=response.chat_id,
+                                           photo=response.response,
+                                           reply_to_message_id=response.message_id))
             else:
                 asyncio.run(self.send_reply(response.chat_id,
                                             str(self.messages['gpt_error']).format(response.response)
