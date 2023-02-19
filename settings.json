@@ -28,7 +28,7 @@
     "manual_proxy": "http://IP:PORT",
     "check_interval_seconds": 300,
     "check_message": "1+1",
-    "check_message_timeout": 120,
+    "check_message_timeout": 240,
     "check_reply_must_include": "2"
   },
 
