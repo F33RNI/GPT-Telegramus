@@ -19,7 +19,6 @@ import logging
 import random
 import threading
 import time
-import urllib
 from urllib import request
 
 from revChatGPT.V1 import Chatbot
@@ -27,25 +26,6 @@ from revChatGPT.V1 import Chatbot
 import useragents
 
 PROXY_FROM_URL = 'http://free-proxy-list.net/'
-
-
-def is_bad_proxy(pip):
-    logging.info('Checking proxy ' + pip + '...')
-    try:
-        proxy_handler = urllib.request.ProxyHandler({'http': pip})
-        opener = urllib.request.build_opener(proxy_handler)
-        opener.addheaders = [('User-agent', 'Mozilla/5.0')]
-        urllib.request.install_opener(opener)
-        req = urllib.request.Request('https://openai.com/')  # change the URL to test here
-        urllib.request.urlopen(req)
-    except urllib.error.HTTPError as e:
-        logging.warning('Error checking proxy ' + str(e.code))
-        return e.code
-    except Exception as e_:
-        logging.warning('Error checking proxy! ' + str(e_))
-        return True
-    logging.info('Seems OK')
-    return False
 
 
 class Authenticator:
@@ -118,8 +98,7 @@ class Authenticator:
                     if len(ip.split('.')) == 4 and len(port) > 1 and \
                             (is_https or not self.settings['proxy']['https_only']):
 
-                        #if not is_bad_proxy(ip + ':' + port):
-                            #proxies_list.append(('https://' if is_https else 'http://') + ip + ':' + port)
+                        # proxies_list.append(('https://' if is_https else 'http://') + ip + ':' + port)
                         self.proxy_list.append('http://' + ip + ':' + port)
                 except:
                     pass
@@ -188,6 +167,8 @@ class Authenticator:
                         # Already have proxy_list -> get new proxy from it
                         if self.proxy_list_index < len(self.proxy_list) - 1:
                             self.proxy_list_index += 1
+                            logging.info('Loading next proxy: ' + str(self.proxy_list_index + 1) + '/'
+                                         + str(len(self.proxy_list)))
                             proxy = self.proxy_list[self.proxy_list_index]
 
                         # No proxy or all checked
@@ -196,8 +177,8 @@ class Authenticator:
                             self.proxy_get()
 
                             # Get proxy from list
-                            if self.proxy_list_index < len(self.proxy_list):
-                                proxy = self.proxy_list[self.proxy_list_index]
+                            if len(self.proxy_list) > 0:
+                                proxy = self.proxy_list[0]
 
                     # Manual proxy
                     else:
