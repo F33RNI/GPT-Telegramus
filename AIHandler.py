@@ -182,7 +182,8 @@ class AIHandler:
             # Error
             except Exception as e:
                 # Wake up authenticator check loop from sleep
-                self.authenticator.chatbot_working = False
+                if not self.authenticator.chatbot_too_many_requests:
+                    self.authenticator.chatbot_working = False
 
                 # Print error message
                 error_message = str(e)
