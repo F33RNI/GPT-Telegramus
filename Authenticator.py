@@ -70,6 +70,7 @@ class Authenticator:
         self.settings = settings
 
         self.chatbot = None
+        self.chatbot_locked = False
         self.chatbot_working = False
         self.chatbots_and_proxies_queue = multiprocessing.Queue(maxsize=int(self.settings['proxy']
                                                                             ['max_number_of_processes']) * 2)
@@ -159,6 +160,10 @@ class Authenticator:
             check_successful = False
             if self.chatbot is not None:
                 try:
+                    # Wait for response for previous question
+                    while self.chatbot_locked:
+                        time.sleep(1)
+
                     # Ask test message
                     logging.info('Asking test question: ' + str(self.settings['proxy']['check_message']).strip())
                     chatbot_response = ''

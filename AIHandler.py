@@ -102,6 +102,9 @@ class AIHandler:
                         time.sleep(1)
                         chatbot = self.authenticator.chatbot
 
+                    # Lock chatbot
+                    self.authenticator.chatbot_locked = True
+
                     # Log request
                     logging.info('Asking: ' + str(container.request))
 
@@ -199,6 +202,9 @@ class AIHandler:
 
             # Clear processing container
             self.processing_container = None
+
+            # Release lock
+            self.authenticator.chatbot_locked = False
 
         # Loop finished
         logging.warning('AIHandler loop finished')
