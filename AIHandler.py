@@ -21,6 +21,7 @@ import time
 
 import openai
 
+import Authenticator
 import RequestResponseContainer
 
 EMPTY_RESPONSE_ERROR_MESSAGE = 'Empty response or unhandled error!'
@@ -96,11 +97,19 @@ class AIHandler:
                         api_response = None
                         raise Exception(ERROR_CHATGPT_DISABLED)
 
+                    # Too many requests in 1 hour
+                    if self.authenticator.chatbot_too_many_requests:
+                        raise Exception(Authenticator.TOO_MANY_REQUESTS_MESSAGE)
+
                     # Wait for chatbot
                     chatbot = self.authenticator.chatbot
                     while not self.authenticator.chatbot_working or chatbot is None:
                         time.sleep(1)
                         chatbot = self.authenticator.chatbot
+
+                        # Too many requests in 1 hour
+                        if self.authenticator.chatbot_too_many_requests:
+                            raise Exception(Authenticator.TOO_MANY_REQUESTS_MESSAGE)
 
                     # Lock chatbot
                     self.authenticator.chatbot_locked = True

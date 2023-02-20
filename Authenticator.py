@@ -28,6 +28,8 @@ import useragents
 
 PROXY_FROM_URL = 'http://free-proxy-list.net/'
 
+TOO_MANY_REQUESTS_MESSAGE = 'Too many requests in 1 hour'
+
 
 def kill_all_processes(processes_and_times):
     """
@@ -71,6 +73,7 @@ class Authenticator:
 
         self.chatbot = None
         self.chatbot_locked = False
+        self.chatbot_too_many_requests = False
         self.chatbot_working = False
         self.chatbots_and_proxies_queue = multiprocessing.Queue(maxsize=int(self.settings['proxy']
                                                                             ['max_number_of_processes']) * 2)
@@ -171,6 +174,7 @@ class Authenticator:
                                                  conversation_id=self.conversation_id,
                                                  timeout=int(self.settings['proxy']['check_message_timeout'])):
                         # Get response
+                        logging.warning(str(data))
                         chatbot_response = data['message']
 
                         # Store conversation_id
@@ -180,11 +184,25 @@ class Authenticator:
                     # Check response
                     if str(self.settings['proxy']['check_reply_must_include']).strip() in chatbot_response:
                         check_successful = True
+                        self.chatbot_too_many_requests = False
                     else:
                         raise Exception('No ' + self.settings['proxy']['check_reply_must_include'] + ' in response!')
 
                 except Exception as e:
-                    logging.warning('Error checking chatbot! ' + str(e))
+                    # Too many requests in 1 hour
+                    if TOO_MANY_REQUESTS_MESSAGE in str(e):
+                        logging.warning(str(e))
+
+                        # Wait before next try
+                        wait_seconds = int(self.settings['chatgpt_dialog']['too_many_requests_wait_time_seconds'])
+                        logging.warning('Waiting ' + str(wait_seconds) + ' seconds...')
+                        self.chatbot_too_many_requests = True
+                        time.sleep(wait_seconds)
+
+                    # Other error
+                    else:
+                        self.chatbot_too_many_requests = False
+                        logging.warning('Error checking chatbot! ' + str(e))
 
             # Sleep for next cycle in check is successful
             if check_successful:

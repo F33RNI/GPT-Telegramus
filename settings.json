@@ -47,7 +47,8 @@
   "__comment15__": "WHEN YOU START FOR THE FIRST TIME, LEAVE THEM BLANK, ASK A QUESTION AND LOOK IN THE CONSOLE",
   "chatgpt_dialog": {
     "conversation_id": "",
-    "parent_id": ""
+    "parent_id": "",
+    "too_many_requests_wait_time_seconds": 600
   },
 
   "__comment16__": "PROVIDE YOUR BOT API KEY FROM https://t.me/BotFather",
