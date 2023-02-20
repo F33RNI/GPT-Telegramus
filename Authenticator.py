@@ -174,7 +174,6 @@ class Authenticator:
                                                  conversation_id=self.conversation_id,
                                                  timeout=int(self.settings['proxy']['check_message_timeout'])):
                         # Get response
-                        logging.warning(str(data))
                         chatbot_response = data['message']
 
                         # Store conversation_id
