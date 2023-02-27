@@ -22,8 +22,6 @@ import threading
 import time
 from urllib import request
 
-from revChatGPT.V1 import Chatbot
-
 import useragents
 
 PROXY_FROM_URL = 'http://free-proxy-list.net/'
@@ -58,6 +56,7 @@ def initialize_chatbot(proxy, config, chatbots_and_proxies_queue):
         config_['proxy'] = proxy
 
         # Initialize chatbot
+        from revChatGPT.V1 import Chatbot
         chatbot = Chatbot(config=config_)
 
         # Append working chatbot and proxy
@@ -71,11 +70,12 @@ class Authenticator:
     def __init__(self, settings):
         self.settings = settings
 
+        self.api_type = 0
         self.chatbot = None
         self.chatbot_locked = False
         self.chatbot_too_many_requests = False
         self.chatbot_working = False
-        self.chatbots_and_proxies_queue = multiprocessing.Queue(maxsize=int(self.settings['proxy']
+        self.chatbots_and_proxies_queue = multiprocessing.Queue(maxsize=int(self.settings['chatgpt_api_1']['proxy']
                                                                             ['max_number_of_processes']) * 2)
         self.current_proxy = None
         self.conversation_id = None
@@ -87,27 +87,57 @@ class Authenticator:
         Starts background thread
         :return:
         """
-        # No proxy
-        if int(self.settings['proxy']['check_interval_seconds']) <= 0 or not self.settings['proxy']['enabled']:
-            logging.info('Proxy checks disabled. Initializing chatbot...')
-            if self.chatbot is None:
-                try:
-                    self.chatbot = Chatbot(config=self.get_chatbot_config())
-                    self.chatbot_working = True
+        # Official API
+        if int(self.settings['modules']['chatgpt_api_type']) == 0:
+            self.api_type = 0
+            # Proxy
+            proxy_ = str(self.settings['chatgpt_api_0']['proxy'])
+            if len(proxy_) > 0:
+                self.current_proxy = proxy_
+            try:
+                from revChatGPT.V0 import Chatbot
+                # Initialize chatbot
+                self.chatbot = Chatbot(str(self.settings['chatgpt_api_0']['open_ai_api_key']),
+                                       engine=str(self.settings['chatgpt_api_0']['engine']),
+                                       proxy=proxy_)
+                self.chatbot_working = True
 
-                # Error initializing chatbot
-                except Exception as e:
-                    logging.warning('Error initializing chatbot!' + str(e))
-                    self.chatbot_working = False
-            return
+            # Error initializing chatbot
+            except Exception as e:
+                logging.warning('Error initializing chatbot!' + str(e))
+                self.chatbot_working = False
 
-        # Set flag
-        self.check_loop_running = True
+        # revChatGPT API version 1
+        elif int(self.settings['modules']['chatgpt_api_type']) == 1:
+            self.api_type = 1
+            # No proxy
+            if int(self.settings['chatgpt_api_1']['proxy']['check_interval_seconds']) <= 0 \
+                    or not self.settings['chatgpt_api_1']['proxy']['enabled']:
+                logging.info('Proxy checks disabled. Initializing chatbot...')
+                if self.chatbot is None:
+                    try:
+                        from revChatGPT.V1 import Chatbot
+                        self.chatbot = Chatbot(config=self.get_chatbot_config())
+                        self.chatbot_working = True
 
-        # Start thread
-        thread = threading.Thread(target=self.proxy_checker_loop)
-        thread.start()
-        logging.info('Checking thread: ' + thread.name)
+                    # Error initializing chatbot
+                    except Exception as e:
+                        logging.warning('Error initializing chatbot!' + str(e))
+                        self.chatbot_working = False
+                return
+
+            # Set flag
+            self.check_loop_running = True
+
+            # Start thread
+            thread = threading.Thread(target=self.proxy_checker_loop)
+            thread.start()
+            logging.info('Checking thread: ' + thread.name)
+
+        # Other than 0 or 1
+        else:
+            logging.error('Wrong chatgpt_api_type!')
+            raise Exception('Wrong chatgpt_api_type')
 
     def proxy_get(self):
         """
@@ -137,7 +167,7 @@ class Authenticator:
 
                     # Check data and append to list
                     if len(ip.split('.')) == 4 and len(port) > 1 and \
-                            (is_https or not self.settings['proxy']['https_only']):
+                            (is_https or not self.settings['chatgpt_api_1']['proxy']['https_only']):
                         # proxies_list.append(('https://' if is_https else 'http://') + ip + ':' + port)
                         self.proxy_list.append('http://' + ip + ':' + port)
                 except:
@@ -168,11 +198,13 @@ class Authenticator:
                         time.sleep(1)
 
                     # Ask test message
-                    logging.info('Asking test question: ' + str(self.settings['proxy']['check_message']).strip())
+                    logging.info('Asking test question: ' + str(self.settings['chatgpt_api_1']
+                                                                ['proxy']['check_message']).strip())
                     chatbot_response = ''
-                    for data in self.chatbot.ask(str(self.settings['proxy']['check_message']).strip(),
+                    for data in self.chatbot.ask(str(self.settings['chatgpt_api_1']['proxy']['check_message']).strip(),
                                                  conversation_id=self.conversation_id,
-                                                 timeout=int(self.settings['proxy']['check_message_timeout'])):
+                                                 timeout=int(self.settings['chatgpt_api_1']
+                                                             ['proxy']['check_message_timeout'])):
                         # Get response
                         chatbot_response = data['message']
 
@@ -181,11 +213,13 @@ class Authenticator:
                             self.conversation_id = data['conversation_id']
 
                     # Check response
-                    if str(self.settings['proxy']['check_reply_must_include']).strip() in chatbot_response:
+                    if str(self.settings['chatgpt_api_1']['proxy']['check_reply_must_include']).strip() \
+                            in chatbot_response:
                         check_successful = True
                         self.chatbot_too_many_requests = False
                     else:
-                        raise Exception('No ' + self.settings['proxy']['check_reply_must_include'] + ' in response!')
+                        raise Exception('No ' + self.settings['chatgpt_api_1']['proxy']['check_reply_must_include']
+                                        + ' in response!')
 
                 except Exception as e:
                     # Too many requests in 1 hour
@@ -213,7 +247,8 @@ class Authenticator:
 
                 # Sleep and check for self.chatbot_working
                 sleep_started_time = time.time()
-                while time.time() - sleep_started_time < int(self.settings['proxy']['check_interval_seconds']):
+                while time.time() - sleep_started_time \
+                        < int(self.settings['chatgpt_api_1']['proxy']['check_interval_seconds']):
                     if not self.chatbot_working:
                         logging.info('Sleep interrupted!')
                         break
@@ -222,15 +257,15 @@ class Authenticator:
             # Check is not successful
             else:
                 # Get proxy
-                if self.settings['proxy']['enabled']:
+                if self.settings['chatgpt_api_1']['proxy']['enabled']:
                     # Auto proxy
-                    if self.settings['proxy']['auto']:
+                    if self.settings['chatgpt_api_1']['proxy']['auto']:
                         # Get new proxy list
                         if len(self.proxy_list) <= 0:
                             self.proxy_get()
                     # Manual proxy
                     else:
-                        self.proxy_list = [self.settings['proxy']['manual_proxy']]
+                        self.proxy_list = [self.settings['chatgpt_api_1']['proxy']['manual_proxy']]
                 # Proxy disabled
                 else:
                     break
@@ -249,7 +284,8 @@ class Authenticator:
                 while True:
                     # Create and start processes
                     while len(self.proxy_list) > 0 \
-                            and len(processes_and_times) < int(self.settings['proxy']['max_number_of_processes']):
+                            and len(processes_and_times) \
+                            < int(self.settings['chatgpt_api_1']['proxy']['max_number_of_processes']):
                         proxy = self.proxy_list.pop(0)
                         process = multiprocessing.Process(target=initialize_chatbot,
                                                           args=(proxy,
@@ -270,7 +306,7 @@ class Authenticator:
                     # No more proxies
                     if len(self.proxy_list) == 0:
                         # Get new proxy list in auto mode
-                        if self.settings['proxy']['auto']:
+                        if self.settings['chatgpt_api_1']['proxy']['auto']:
                             self.proxy_get()
 
                         # Exit if manual mode and no more processes
@@ -302,7 +338,8 @@ class Authenticator:
                         process_, time_ = processes_and_times[i]
                         if process_ is not None and time_ is not None:
                             # Kill on timeout or exit
-                            if time.time() - time_ > int(self.settings['proxy']['initialization_timeout']) \
+                            if time.time() - time_ \
+                                    > int(self.settings['chatgpt_api_1']['proxy']['initialization_timeout']) \
                                     or not process_.is_alive():
                                 if process_.is_alive():
                                     logging.info('Killing process with PID: ' + str(process_.pid) + ' due to timeout')
@@ -332,17 +369,18 @@ class Authenticator:
         config = {}
 
         # Use email/password
-        if len(self.settings['chatgpt_auth']['email']) > 0 and len(self.settings['chatgpt_auth']['password']) > 0:
-            config['email'] = self.settings['chatgpt_auth']['email']
-            config['password'] = self.settings['chatgpt_auth']['password']
+        if len(self.settings['chatgpt_api_1']['chatgpt_auth']['email']) > 0 \
+                and len(self.settings['chatgpt_api_1']['chatgpt_auth']['password']) > 0:
+            config['email'] = self.settings['chatgpt_api_1']['chatgpt_auth']['email']
+            config['password'] = self.settings['chatgpt_api_1']['chatgpt_auth']['password']
 
         # Use session_token
-        elif len(self.settings['chatgpt_auth']['session_token']) > 0:
-            config['session_token'] = self.settings['chatgpt_auth']['session_token']
+        elif len(self.settings['chatgpt_api_1']['chatgpt_auth']['session_token']) > 0:
+            config['session_token'] = self.settings['chatgpt_api_1']['chatgpt_auth']['session_token']
 
         # Use access_token
-        elif len(self.settings['chatgpt_auth']['access_token']) > 0:
-            config['access_token'] = self.settings['chatgpt_auth']['access_token']
+        elif len(self.settings['chatgpt_api_1']['chatgpt_auth']['access_token']) > 0:
+            config['access_token'] = self.settings['chatgpt_api_1']['chatgpt_auth']['access_token']
 
         # No credentials
         else:

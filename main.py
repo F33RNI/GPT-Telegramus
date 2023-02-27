@@ -27,7 +27,7 @@ import AIHandler
 import Authenticator
 import BotHandler
 
-TELEGRAMUS_VERSION = 'beta_1.6.1'
+TELEGRAMUS_VERSION = 'beta_1.7.0'
 
 # Logging level (INFO for debug, WARN for release)
 LOGGING_LEVEL = logging.INFO
