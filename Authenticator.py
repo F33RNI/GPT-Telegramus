@@ -17,6 +17,7 @@
 import copy
 import logging
 import multiprocessing
+import os
 import random
 import threading
 import time
@@ -45,7 +46,7 @@ def kill_all_processes(processes_and_times):
                 logging.warning('Error killing process with PID: ' + str(process_.pid))
 
 
-def initialize_chatbot(proxy, config, chatbots_and_proxies_queue):
+def initialize_chatbot(base_url, proxy, config, chatbots_and_proxies_queue):
     """
     Pops first proxy and tries to initialize chatbot
     :return:
@@ -56,6 +57,8 @@ def initialize_chatbot(proxy, config, chatbots_and_proxies_queue):
         config_['proxy'] = proxy
 
         # Initialize chatbot
+        if base_url is not None and len(str(base_url)) > 0:
+            os.environ['CHATGPT_BASE_URL'] = str(base_url)
         from revChatGPT.V1 import Chatbot
         chatbot = Chatbot(config=config_)
 
@@ -116,6 +119,9 @@ class Authenticator:
                 logging.info('Proxy checks disabled. Initializing chatbot...')
                 if self.chatbot is None:
                     try:
+                        if len(str(self.settings['chatgpt_api_1']['chatgpt_auth']['base_url'])) > 0:
+                            os.environ['CHATGPT_BASE_URL'] \
+                                = str(self.settings['chatgpt_api_1']['chatgpt_auth']['base_url'])
                         from revChatGPT.V1 import Chatbot
                         self.chatbot = Chatbot(config=self.get_chatbot_config())
                         self.chatbot_working = True
@@ -288,7 +294,9 @@ class Authenticator:
                             < int(self.settings['chatgpt_api_1']['proxy']['max_number_of_processes']):
                         proxy = self.proxy_list.pop(0)
                         process = multiprocessing.Process(target=initialize_chatbot,
-                                                          args=(proxy,
+                                                          args=(str(self.settings['chatgpt_api_1']
+                                                                    ['chatgpt_auth']['base_url']),
+                                                                proxy,
                                                                 default_config,
                                                                 self.chatbots_and_proxies_queue,))
                         process.start()

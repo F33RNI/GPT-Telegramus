@@ -22,18 +22,20 @@
     "__comment07__": "YOU CAN USE EMAIL/PASSWORD",
     "__comment08__": "OR SESSION_TOKEN (FROM COOKIES ON chat.openai.com AS __Secure-next-auth.session-token)",
     "__comment09__": "OR ACCESS_TOKEN (https://chat.openai.com/api/auth/session)",
+    "__comment10__": "PROVIDE PROXY BASE URL (LEAVE EMPTY FOR DEFAULT VALUE OR TRY https://apps.openai.com/)",
     "chatgpt_auth": {
       "email": "",
       "password": "",
       "session_token": "",
-      "access_token": ""
+      "access_token": "",
+      "base_url": "https://apps.openai.com/"
     },
 
-    "__comment10__": "PROXIES TO BYPASS COUNTRY RESTRICTIONS",
-    "__comment11__": "IN AUTO MODE, PROXIES WILL BE REQUESTED FROM http://free-proxy-list.net/",
-    "__comment12__": "IF AUTO IS FALSE, SPECIFY PROXY IN THE http://IP:PORT FORMAT",
-    "__comment13__": "SPECIFY THE INTERVAL HOW LONG TO CHECK THE PROXY BY ASKING A QUESTION. OR SET 0 TO DISABLE CHECK",
-    "__comment14__": "SPECIFY THE QUESTION WHICH THE APP WILL ASK AND THE TEXT WHICH SHOULD BE IN THE ANSWER",
+    "__comment11__": "PROXIES TO BYPASS COUNTRY RESTRICTIONS",
+    "__comment12__": "IN AUTO MODE, PROXIES WILL BE REQUESTED FROM http://free-proxy-list.net/",
+    "__comment13__": "IF AUTO IS FALSE, SPECIFY PROXY IN THE http://IP:PORT FORMAT",
+    "__comment14__": "SPECIFY THE INTERVAL HOW LONG TO CHECK THE PROXY BY ASKING A QUESTION. OR SET 0 TO DISABLE CHECK",
+    "__comment15__": "SPECIFY THE QUESTION WHICH THE APP WILL ASK AND THE TEXT WHICH SHOULD BE IN THE ANSWER",
     "proxy": {
       "enabled": false,
       "auto": true,
@@ -47,8 +49,8 @@
       "initialization_timeout": 60
     },
 
-    "__comment15__": "SPECIFY YOUR INITIAL CONVERSATION_ID and PARENT_ID TO CONTINUE THE DIALOGUE",
-    "__comment16__": "WHEN YOU START FOR THE FIRST TIME, LEAVE THEM BLANK, ASK A QUESTION AND LOOK IN THE CONSOLE",
+    "__comment16__": "SPECIFY YOUR INITIAL CONVERSATION_ID and PARENT_ID TO CONTINUE THE DIALOGUE",
+    "__comment17__": "WHEN YOU START FOR THE FIRST TIME, LEAVE THEM BLANK, ASK A QUESTION AND LOOK IN THE CONSOLE",
     "chatgpt_dialog": {
       "conversation_id": "",
       "parent_id": "",
@@ -56,17 +58,17 @@
     }
   },
 
-  "__comment17__": "PROVIDE YOUR API_KEY FROM https://platform.openai.com/account/api-keys FOR REQUESTS TO DALL-E",
-  "__comment18__": "SPECIFY FORMAT OF GENERATED IMAGES (256x256 or 512x512 or 1024x1024)",
-  "__comment19__": "SPECIFY IS PROXY NEEDED FOR DALLE (SAME PROXY AS FOR CHATGPT)",
+  "__comment18__": "PROVIDE YOUR API_KEY FROM https://platform.openai.com/account/api-keys FOR REQUESTS TO DALL-E",
+  "__comment19__": "SPECIFY FORMAT OF GENERATED IMAGES (256x256 or 512x512 or 1024x1024)",
+  "__comment20__": "SPECIFY IS PROXY NEEDED FOR DALLE (SAME PROXY AS FOR CHATGPT)",
   "dalle": {
     "open_ai_api_key": "",
     "image_size": "512x512",
     "use_proxy": true
   },
 
-  "__comment20__": "PROVIDE YOUR BOT API KEY FROM https://t.me/BotFather",
-  "__comment21__": "SPECIFY THE SIZE OF THE REQUEST QUEUE AND WHETHER TO SHOW A MESSAGE ABOUT ADDING TO THE QUEUE",
+  "__comment21__": "PROVIDE YOUR BOT API KEY FROM https://t.me/BotFather",
+  "__comment22__": "SPECIFY THE SIZE OF THE REQUEST QUEUE AND WHETHER TO SHOW A MESSAGE ABOUT ADDING TO THE QUEUE",
   "telegram": {
     "api_key": "",
     "queue_max": 5,
