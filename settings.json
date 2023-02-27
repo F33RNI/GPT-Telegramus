@@ -3,7 +3,7 @@
   "__comment02__": "SPECIFY revChatGPT API TYPE: 0 USES OPENAI API KEY, 1 USES EMAIL/PASS BUT BETTER AND FREE",
   "modules": {
     "chatgpt": true,
-    "chatgpt_api_type": 0,
+    "chatgpt_api_type": 1,
     "dalle": true
   },
 
@@ -19,10 +19,10 @@
   "__comment05__": "API TYPE 1 USES revChatGPT TO ACCESS SAME MODEL AS OFFICIAL WEBSITE AND ALSO IT'S FREE",
   "chatgpt_api_1": {
     "__comment06__": "PROVIDE YOUR OPENAI ACCOUNT DETAILS BELOW TO USE CHATGPT (IF ENABLED)",
-    "__comment07__": "YOU CAN USE EMAIL/PASSWORD",
+    "__comment07__": "GO TO https://chat.openai.com/api/auth/session AND PASTE accessToken BELOW",
     "__comment08__": "OR SESSION_TOKEN (FROM COOKIES ON chat.openai.com AS __Secure-next-auth.session-token)",
-    "__comment09__": "OR ACCESS_TOKEN (https://chat.openai.com/api/auth/session)",
-    "__comment10__": "PROVIDE PROXY BASE URL (LEAVE EMPTY FOR DEFAULT VALUE OR TRY https://apps.openai.com/)",
+    "__comment09__": "OR YOU CAN USE EMAIL/PASSWORD (MAY NOT WORKING)",
+    "__comment10__": "PROVIDE BASE URL (LEAVE EMPTY FOR DEFAULT VALUE OR TRY https://apps.openai.com/)",
     "chatgpt_auth": {
       "email": "",
       "password": "",
