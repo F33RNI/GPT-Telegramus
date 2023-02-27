@@ -49,14 +49,15 @@ Support the project by buying and listening to my music 🎵
 1. Install Python and pip
 2. Download source code
 3. Install requirements `pip install -r requirements.txt --upgrade`
-4. For **API type 0** (Official API, more "stupid" model, uses credits):
+4. For **API type 1** (recommended) (revChatGPT API V1, free, uses same model as official website):
+   1. Create account at OpenAI. Make sure you have access to https://chat.openai.com/
+   2. Open https://chat.openai.com/api/auth/session
+   3. Copy value of `accessToken` into `access_token` in `chatgpt_auth` in `chatgpt_api_1` in `settings.json` file
+   4. If you have conversation id you can specify it in `conversation_id` in `chatgpt_dialog` in `chatgpt_api_1` in `settings.json` file
+   5. Configure proxy if needed
+5. For **API type 0** (Official API, more "stupid" model, uses credits):
    1. Generate API Key https://platform.openai.com/account/api-keys and paste it into `open_ai_api_key` in `chatgpt_api_0` in `settings.json` file 
    2. If you have conversation id you can specify it in `existing_conversation_id` in `chatgpt_api_0` in `settings.json` file
-5. For **API type 1** (revChatGPT API V1, free, uses same model as official website):
-   1. Create account at OpenAI using email and password
-   2. Type OpenAI account email and password into `email` and `password` in `chatgpt_auth` in `chatgpt_api_1` in `settings.json` file
-   3. If you have conversation id you can specify it in `conversation_id` in `chatgpt_dialog` in `chatgpt_api_1` in `settings.json` file
-   4. Configure proxy if needed
 6. For DALL-E, generate API Key https://platform.openai.com/account/api-keys
 7. Type Generated OpenAI API Key into `open_ai_api_key` in `dalle` in `settings.json` file
 8. Create bot at https://t.me/BotFather
