@@ -93,6 +93,7 @@ def parse_args():
                         default=os.getenv('TELEGRAMUS_SETTINGS_FILE', SETTINGS_FILE))
     parser.add_argument('--messages', type=str, help='messages.json file location',
                         default=os.getenv('TELEGRAMUS_MESSAGES_FILE', MESSAGES_FILE))
+    parser.add_argument('--version', action='version', version=TELEGRAMUS_VERSION)
     return parser.parse_args()
 
 
