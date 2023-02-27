@@ -97,50 +97,81 @@ class AIHandler:
                         api_response = None
                         raise Exception(ERROR_CHATGPT_DISABLED)
 
-                    # Too many requests in 1 hour
-                    if self.authenticator.chatbot_too_many_requests:
-                        raise Exception(Authenticator.TOO_MANY_REQUESTS_MESSAGE)
+                    # API type 0
+                    if self.authenticator.api_type == 0:
+                        # Initialize conversation id
+                        if len(str(self.settings['chatgpt_api_0']['existing_conversation_id'])) > 0:
+                            self.conversation_id = str(self.settings['chatgpt_api_0']['existing_conversation_id'])
+                            logging.info('Conversation id: ' + str(self.conversation_id))
+                        else:
+                            self.conversation_id = None
 
-                    # Wait for chatbot
-                    chatbot = self.authenticator.chatbot
-                    while not self.authenticator.chatbot_working or chatbot is None:
-                        time.sleep(1)
+                        # Get chatbot from Authenticator class
                         chatbot = self.authenticator.chatbot
 
+                        # Ask
+                        for data in chatbot.ask_stream(str(container.request), conversation_id=self.conversation_id):
+                            # Initialize response
+                            if api_response is None:
+                                api_response = ''
+
+                            # Append response
+                            api_response += str(data)
+
+                        # Remove tags
+                        api_response = api_response.replace('<|im_end|>', '').replace('<|im_start|>', '')
+
+                    # API type 1
+                    elif self.authenticator.api_type == 1:
                         # Too many requests in 1 hour
                         if self.authenticator.chatbot_too_many_requests:
                             raise Exception(Authenticator.TOO_MANY_REQUESTS_MESSAGE)
 
-                    # Lock chatbot
-                    self.authenticator.chatbot_locked = True
+                        # Wait for chatbot
+                        chatbot = self.authenticator.chatbot
+                        while not self.authenticator.chatbot_working or chatbot is None:
+                            time.sleep(1)
+                            chatbot = self.authenticator.chatbot
 
-                    # Log request
-                    logging.info('Asking: ' + str(container.request))
+                            # Too many requests in 1 hour
+                            if self.authenticator.chatbot_too_many_requests:
+                                raise Exception(Authenticator.TOO_MANY_REQUESTS_MESSAGE)
 
-                    # Initialize conversation_id and parent_id
-                    if self.conversation_id is None:
-                        self.conversation_id = str(self.settings['chatgpt_dialog']['conversation_id']) if \
-                            len(str(self.settings['chatgpt_dialog']['conversation_id'])) > 0 else None
-                        logging.info('Initial conversation id: ' + str(self.conversation_id))
-                    if self.parent_id is None:
-                        self.parent_id = str(self.settings['chatgpt_dialog']['parent_id']) if \
-                            len(str(self.settings['chatgpt_dialog']['parent_id'])) > 0 else None
-                        logging.info('Initial parent id: ' + str(self.parent_id))
+                        # Lock chatbot
+                        self.authenticator.chatbot_locked = True
 
-                    # Ask
-                    for data in chatbot.ask(str(container.request),
-                                            conversation_id=self.conversation_id,
-                                            parent_id=self.parent_id):
-                        # Get last response
-                        api_response = data['message']
+                        # Log request
+                        logging.info('Asking: ' + str(container.request))
 
-                        # Store conversation_id
-                        if data['conversation_id'] is not None:
-                            self.conversation_id = data['conversation_id']
+                        # Initialize conversation_id and parent_id
+                        if self.conversation_id is None:
+                            if len(str(self.settings['chatgpt_api_1']['chatgpt_dialog']['conversation_id'])) > 0:
+                                self.conversation_id \
+                                    = str(self.settings['chatgpt_api_1']['chatgpt_dialog']['conversation_id'])
+                                logging.info('Initial conversation id: ' + str(self.conversation_id))
+                        if self.parent_id is None:
+                            if len(str(self.settings['chatgpt_api_1']['chatgpt_dialog']['parent_id'])) > 0:
+                                self.parent_id = str(self.settings['chatgpt_api_1']['chatgpt_dialog']['parent_id'])
+                                logging.info('Initial parent id: ' + str(self.parent_id))
 
-                    # Log conversation id and parent id
-                    logging.info('Current conversation id: ' + str(self.conversation_id)
-                                 + '\tParent id: ' + str(self.parent_id))
+                        # Ask
+                        for data in chatbot.ask(str(container.request),
+                                                conversation_id=self.conversation_id,
+                                                parent_id=self.parent_id):
+                            # Get last response
+                            api_response = data['message']
+
+                            # Store conversation_id
+                            if data['conversation_id'] is not None:
+                                self.conversation_id = data['conversation_id']
+
+                        # Log conversation id and parent id
+                        logging.info('Current conversation id: ' + str(self.conversation_id)
+                                     + '\tParent id: ' + str(self.parent_id))
+
+                    # Wrong api type
+                    else:
+                        raise Exception('Wrong chatgpt_api_type')
 
                     # Log response
                     logging.info(str(api_response))
