@@ -49,54 +49,70 @@ Support the project by buying and listening to my music 🎵
 1. Install Python and pip
 2. Download source code
 3. Install requirements `pip install -r requirements.txt --upgrade`
-4. Create account at OpenAI using email and password
-5. Type OpenAI account email and password into `email` and `password` in `chatgpt_auth` in `settings.json` file
+4. For **API type 0** (Official API, more "stupid" model, uses credits):
+   1. Generate API Key https://platform.openai.com/account/api-keys and paste it into `open_ai_api_key` in `chatgpt_api_0` in `settings.json` file 
+   2. If you have conversation id you can specify it in `existing_conversation_id` in `chatgpt_api_0` in `settings.json` file
+5. For **API type 1** (revChatGPT API V1, free, uses same model as official website):
+   1. Create account at OpenAI using email and password
+   2. Type OpenAI account email and password into `email` and `password` in `chatgpt_auth` in `chatgpt_api_1` in `settings.json` file
+   3. If you have conversation id you can specify it in `conversation_id` in `chatgpt_dialog` in `chatgpt_api_1` in `settings.json` file
+   4. Configure proxy if needed
 6. For DALL-E, generate API Key https://platform.openai.com/account/api-keys
 7. Type Generated OpenAI API Key into `open_ai_api_key` in `dalle` in `settings.json` file
 8. Create bot at https://t.me/BotFather
 9. Type Bot's token into `api_key` in `telegram` in `settings.json` file
-10. If you have conversation id you can specify it in `conversation_id` in `chatgpt_dialog` in `settings.json` file
-11. Run main script `python main.py`
+10. Run main script `python main.py`
 
 Example `settings.json`:
 ```json
 {
   "modules": {
     "chatgpt": true,
+    "chatgpt_api_type": 0,
     "dalle": true
   },
-   
-  "chatgpt_auth": {
-    "email": "myemail@domain.com",
-    "password": "12345qwerty",
-    "session_token": "",
-    "access_token": ""
+  
+  "chatgpt_api_0": {
+    "open_ai_api_key": "sk-2xxxxxxXXxXXXxxXXXxxXXXXXXXXXXXxxxxxxxxxxxxxxxXX",
+    "engine": "text-davinci-003",
+    "existing_conversation_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "proxy": ""
   },
-   
-  "proxy": {
-    "enabled": true,
-    "auto": true,
-    "https_only": true,
-    "manual_proxy": "http://111.222.123.111:443",
-    "check_interval_seconds": 300,
-    "check_message": "1+1",
-    "check_message_timeout": 120,
-    "check_reply_must_include": "2",
-    "max_number_of_processes": 5,
-    "initialization_timeout": 60
+  
+  "chatgpt_api_1": {
+    "chatgpt_auth": {
+      "email": "myemail@domain.com",
+      "password": "12345qwerty",
+      "session_token": "",
+      "access_token": ""
+    },
+	
+    "proxy": {
+      "enabled": true,
+      "auto": true,
+      "https_only": true,
+      "manual_proxy": "http://111.222.123.111:443",
+      "check_interval_seconds": 300,
+      "check_message": "1+1",
+      "check_message_timeout": 240,
+      "check_reply_must_include": "2",
+      "max_number_of_processes": 5,
+      "initialization_timeout": 60
+    },
+	
+    "chatgpt_dialog": {
+      "conversation_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "parent_id": "",
+      "too_many_requests_wait_time_seconds": 600
+    }
   },
-   
+  
   "dalle": {
-    "open_ai_api_key": "sk-1xxxxxxXXxXXXxxXXXxxXXXXXXXXXXXxxxxxxxxxxxxxxxXX",
+    "open_ai_api_key": "sk-2xxxxxxXXxXXXxxXXXxxXXXXXXXXXXXxxxxxxxxxxxxxxxXX",
     "image_size": "512x512",
     "use_proxy": true
   },
-   
-  "chatgpt_dialog": {
-    "conversation_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-    "parent_id": ""
-  },
-   
+  
   "telegram": {
     "api_key": "1234567890:XXXxXxxXxxXXxxXXX-XXXXXXXxXxxxXxXxX",
     "queue_max": 5,
