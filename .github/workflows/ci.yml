@@ -39,6 +39,6 @@ jobs:
         tags: |
           ghcr.io/${{ steps.lowercaseRepo.outputs.lowercase }}:${{ env.SHORT_SHA }}
           ghcr.io/${{ steps.lowercaseRepo.outputs.lowercase }}:${{ env.TAG }}
-        platforms: linux/amd64,linux/arm64
+        platforms: linux/amd64
         cache-from: type=gha
         cache-to: type=gha,mode=max

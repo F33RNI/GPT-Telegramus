@@ -16,10 +16,12 @@
 """
 
 import argparse
+import datetime
 import json
 import logging
 import os
 import signal
+import sys
 
 import psutil
 
@@ -27,14 +29,15 @@ import AIHandler
 import Authenticator
 import BotHandler
 
-TELEGRAMUS_VERSION = 'beta_1.7.2'
+TELEGRAMUS_VERSION = 'beta_1.8.0'
 
 # Logging level (INFO for debug, WARN for release)
 LOGGING_LEVEL = logging.INFO
 
-# JSON Files
+# Files and directories
 SETTINGS_FILE = 'settings.json'
 MESSAGES_FILE = 'messages.json'
+LOGS_DIR = 'logs'
 
 
 def logging_setup():
@@ -42,9 +45,30 @@ def logging_setup():
     Sets up logging format and level
     :return:
     """
-    logging.basicConfig(encoding='utf-8', format='%(asctime)s %(levelname)-8s %(message)s',
-                        level=LOGGING_LEVEL,
-                        datefmt='%Y-%m-%d %H:%M:%S')
+    # Create logs directory
+    if not os.path.exists(LOGS_DIR):
+        os.makedirs(LOGS_DIR)
+
+    # Create logs formatter
+    log_formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+
+    # Setup logging into file
+    file_handler = logging.FileHandler(os.path.join(LOGS_DIR,
+                                                    datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + '.log'),
+                                       encoding='utf-8')
+    file_handler.setFormatter(log_formatter)
+
+    # Setup logging into console
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(log_formatter)
+
+    # Add all handlers and setup level
+    root_logger = logging.getLogger()
+    root_logger.addHandler(file_handler)
+    root_logger.addHandler(console_handler)
+    root_logger.setLevel(LOGGING_LEVEL)
+
+    # Log test message
     logging.info('logging setup is complete')
 
 
@@ -106,7 +130,7 @@ def main():
     logging_setup()
 
     # Connect interrupt signal
-    signal.signal(signal.SIGINT, exit_)
+    #signal.signal(signal.SIGINT, exit_)
 
     # Parse arguments and load settings and messages
     args = parse_args()
@@ -121,8 +145,8 @@ def main():
     # Set requests_queue to ai_handler
     ai_handler.requests_queue = bot_handler.requests_queue
 
-    # Start checker loop
-    authenticator.start_check_loop()
+    # Initialize chatbot and start checker loop
+    authenticator.start_chatbot()
 
     # Start AIHandler
     ai_handler.thread_start()
