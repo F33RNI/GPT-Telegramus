@@ -16,10 +16,13 @@
 """
 
 import argparse
+import datetime
 import json
+import locale
 import logging
 import os
 import signal
+import sys
 
 import psutil
 
@@ -32,9 +35,10 @@ TELEGRAMUS_VERSION = 'beta_1.8.0'
 # Logging level (INFO for debug, WARN for release)
 LOGGING_LEVEL = logging.INFO
 
-# JSON Files
+# Files and directories
 SETTINGS_FILE = 'settings.json'
 MESSAGES_FILE = 'messages.json'
+LOGS_DIR = 'logs'
 
 
 def logging_setup():
@@ -42,9 +46,30 @@ def logging_setup():
     Sets up logging format and level
     :return:
     """
-    logging.basicConfig(encoding='utf-8', format='%(asctime)s %(levelname)-8s %(message)s',
-                        level=LOGGING_LEVEL,
-                        datefmt='%Y-%m-%d %H:%M:%S')
+    # Create logs directory
+    if not os.path.exists(LOGS_DIR):
+        os.makedirs(LOGS_DIR)
+
+    # Create logs formatter
+    log_formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+
+    # Setup logging into file
+    file_handler = logging.FileHandler(os.path.join(LOGS_DIR,
+                                                    datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + '.log'),
+                                       encoding='utf-8')
+    file_handler.setFormatter(log_formatter)
+
+    # Setup logging into console
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(log_formatter)
+
+    # Add all handlers and setup level
+    root_logger = logging.getLogger()
+    root_logger.addHandler(file_handler)
+    root_logger.addHandler(console_handler)
+    root_logger.setLevel(LOGGING_LEVEL)
+
+    # Log test message
     logging.info('logging setup is complete')
 
 
