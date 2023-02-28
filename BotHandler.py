@@ -34,6 +34,7 @@ BOT_COMMAND_HELP = 'help'
 BOT_COMMAND_QUEUE = 'queue'
 BOT_COMMAND_GPT = 'gpt'
 BOT_COMMAND_DRAW = 'draw'
+BOT_COMMAND_RESTART = 'restart'
 
 # List of markdown chars to escape with \\
 MARKDOWN_ESCAPE = ['_', '*', '[', ']', '(', ')', '~', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
@@ -44,6 +45,8 @@ class BotHandler:
         self.settings = settings
         self.messages = messages
         self.ai_handler = ai_handler
+        self.application = None
+        self.event_loop = None
 
         # Response loop running flag
         self.response_loop_running = False
@@ -71,18 +74,22 @@ class BotHandler:
         while True:
             try:
                 # Build bot
-                application = ApplicationBuilder().token(self.settings['telegram']['api_key']) \
-                    .write_timeout(30).read_timeout(30).build()
-                application.add_handler(CommandHandler(BOT_COMMAND_START, self.bot_command_start))
-                application.add_handler(CommandHandler(BOT_COMMAND_HELP, self.bot_command_help))
-                application.add_handler(CommandHandler(BOT_COMMAND_QUEUE, self.bot_command_queue))
-                application.add_handler(CommandHandler(BOT_COMMAND_GPT, self.bot_command_gpt))
-                application.add_handler(CommandHandler(BOT_COMMAND_DRAW, self.bot_command_draw))
-                application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), self.bot_read_message))
+                builder = ApplicationBuilder().token(self.settings['telegram']['api_key'])
+                builder.write_timeout(30)
+                builder.read_timeout(30)
+                self.application = builder.build()
+                self.application.add_handler(CommandHandler(BOT_COMMAND_START, self.bot_command_start))
+                self.application.add_handler(CommandHandler(BOT_COMMAND_HELP, self.bot_command_help))
+                self.application.add_handler(CommandHandler(BOT_COMMAND_QUEUE, self.bot_command_queue))
+                self.application.add_handler(CommandHandler(BOT_COMMAND_GPT, self.bot_command_gpt))
+                self.application.add_handler(CommandHandler(BOT_COMMAND_DRAW, self.bot_command_draw))
+                self.application.add_handler(CommandHandler(BOT_COMMAND_RESTART, self.bot_command_restart))
+                self.application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), self.bot_read_message))
 
                 # Start bot
-                asyncio.set_event_loop(asyncio.new_event_loop())
-                asyncio.run(application.run_polling())
+                self.event_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(self.event_loop)
+                self.event_loop.run_until_complete(self.application.run_polling())
             except Exception as e:
                 logging.error('Telegram bot error! ' + str(e))
             logging.info('Restarting bot polling after 5 seconds...')
@@ -158,6 +165,47 @@ class BotHandler:
                                                text=str(self.messages['gpt_no_message']).replace('\\n', '\n'))
             except Exception as e:
                 logging.error('Error sending message! ' + str(e))
+
+    async def bot_command_restart(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """
+        /restart command
+        :param update:
+        :param context:
+        :return:
+        """
+        user = update.message.from_user
+        chat_id = update.effective_chat.id
+        logging.info('/restart command from user ' + str(user.full_name) + ' request: ' + ' '.join(context.args))
+
+        logging.info('Restarting...')
+        try:
+            await context.bot.send_message(chat_id=chat_id, text=str(self.messages['restarting']).replace('\\n', '\n'))
+        except Exception as e:
+            logging.error('Error sending message! ' + str(e))
+
+        # Restart chatbot
+        self.ai_handler.authenticator.stop_chatbot()
+        self.ai_handler.authenticator.start_chatbot()
+        time.sleep(1)
+
+        # Restart telegram bot
+        if self.event_loop is not None:
+            self.event_loop.stop()
+            try:
+                self.event_loop.close()
+            except:
+                pass
+
+        # Sleep some time again
+        time.sleep(10)
+
+        # Done
+        logging.info('Restarting done')
+        try:
+            await context.bot.send_message(chat_id=chat_id,
+                                           text=str(self.messages['restarting_done']).replace('\\n', '\n'))
+        except Exception as e:
+            logging.error('Error sending message! ' + str(e))
 
     async def bot_command_draw(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
@@ -235,8 +283,13 @@ class BotHandler:
             except Exception as e:
                 logging.error('Error sending message! ' + str(e))
         else:
-            i = 0
             message = ''
+
+            # Current request
+            if processing_container is not None:
+                message += '1. ' + processing_container.user_name + ', '
+                message += RequestResponseContainer.REQUEST_NAMES[processing_container.request_type]
+                message += ': ' + processing_container.request + '\n\n'
 
             # From queue
             if not self.requests_queue.empty():
@@ -244,17 +297,10 @@ class BotHandler:
                     container = self.requests_queue.queue[i]
                     text_request = container.request
                     text_from = container.user_name
-                    message += str(i + 1) + '. ' + text_from + ', '
+                    queue_index = (i + 1) if processing_container is not None else i
+                    message += str(queue_index + 1) + '. ' + text_from + ', '
                     message += RequestResponseContainer.REQUEST_NAMES[container.request_type]
                     message += ': ' + text_request + '\n\n'
-
-            # Current request
-            if processing_container is not None:
-                if len(message) > 0:
-                    i += 1
-                message += str(i + 1) + '. ' + processing_container.user_name + ', '
-                message += RequestResponseContainer.REQUEST_NAMES[processing_container.request_type]
-                message += ': ' + processing_container.request + '\n\n'
 
             # Send queue stats
             try:
@@ -320,7 +366,7 @@ class BotHandler:
                     message = message.replace(escape_char, '\\' + escape_char)
 
                 try:
-                    await telegram.Bot(self.settings['telegram']['api_key'])\
+                    await telegram.Bot(self.settings['telegram']['api_key']) \
                         .sendMessage(chat_id=chat_id,
                                      text=message,
                                      reply_to_message_id=reply_to_message_id,
@@ -332,7 +378,7 @@ class BotHandler:
             except Exception as e:
                 logging.info(e)
                 try:
-                    await telegram.Bot(self.settings['telegram']['api_key'])\
+                    await telegram.Bot(self.settings['telegram']['api_key']) \
                         .sendMessage(chat_id=chat_id,
                                      text=message.replace('\\n', '\n'),
                                      reply_to_message_id=reply_to_message_id)
@@ -340,7 +386,7 @@ class BotHandler:
                     logging.error('Error sending message! ' + str(e))
         else:
             try:
-                await telegram.Bot(self.settings['telegram']['api_key'])\
+                await telegram.Bot(self.settings['telegram']['api_key']) \
                     .sendMessage(chat_id=chat_id,
                                  text=message.replace('\\n', '\n'),
                                  reply_to_message_id=reply_to_message_id)

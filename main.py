@@ -18,7 +18,6 @@
 import argparse
 import datetime
 import json
-import locale
 import logging
 import os
 import signal
@@ -131,7 +130,7 @@ def main():
     logging_setup()
 
     # Connect interrupt signal
-    signal.signal(signal.SIGINT, exit_)
+    #signal.signal(signal.SIGINT, exit_)
 
     # Parse arguments and load settings and messages
     args = parse_args()
@@ -146,8 +145,8 @@ def main():
     # Set requests_queue to ai_handler
     ai_handler.requests_queue = bot_handler.requests_queue
 
-    # Start checker loop
-    authenticator.start_check_loop()
+    # Initialize chatbot and start checker loop
+    authenticator.start_chatbot()
 
     # Start AIHandler
     ai_handler.thread_start()

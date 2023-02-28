@@ -85,9 +85,9 @@ class Authenticator:
         self.proxy_list = []
         self.check_loop_running = False
 
-    def start_check_loop(self):
+    def start_chatbot(self):
         """
-        Starts background thread
+        Initializes chatbot and starts background proxy checker thread if needed
         :return:
         """
         # Official API
@@ -144,6 +144,27 @@ class Authenticator:
         else:
             logging.error('Wrong chatgpt_api_type!')
             raise Exception('Wrong chatgpt_api_type')
+
+    def stop_chatbot(self):
+        """
+        Stops background handler and removes chatbot
+        :return:
+        """
+        logging.info('Stopping chatbot...')
+        # Clear loop flag
+        self.check_loop_running = False
+        self.chatbot_working = False
+
+        # Sleep some time
+        time.sleep(10)
+
+        # Remove old chatbot
+        try:
+            if self.chatbot is not None:
+                del self.chatbot
+                self.chatbot = None
+        except Exception as e:
+            logging.warning('Error clearing chatbot! ' + str(e))
 
     def proxy_get(self):
         """
@@ -260,6 +281,10 @@ class Authenticator:
                         break
                     time.sleep(1)
 
+                # Exit if thread stopped
+                if not self.check_loop_running:
+                    break
+
             # Check is not successful
             else:
                 # Get proxy
@@ -288,6 +313,11 @@ class Authenticator:
                 default_config = self.get_chatbot_config()
 
                 while True:
+                    # Exit if thread stopped
+                    if not self.check_loop_running:
+                        kill_all_processes(processes_and_times)
+                        break
+
                     # Create and start processes
                     while len(self.proxy_list) > 0 \
                             and len(processes_and_times) \

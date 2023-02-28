@@ -9,5 +9,7 @@
   "queue_stats": "Queue:\\n\\n{0}",
   "queue_accepted": "Added to the queue. Position: {0}/{1}",
   "gpt_error": "Error: {0}\\n\\nMake another request or try again later =(",
-  "reset": "Reset command sent"
+  "reset": "Reset command sent",
+  "restarting": "Restarting in progress...\\nPlease wait",
+  "restarting_done": "The restart is completed"
 }
