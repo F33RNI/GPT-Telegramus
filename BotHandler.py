@@ -319,24 +319,33 @@ class BotHandler:
                     escape_char = MARKDOWN_ESCAPE[i]
                     message = message.replace(escape_char, '\\' + escape_char)
 
-                await telegram.Bot(self.settings['telegram']['api_key'])\
-                    .sendMessage(chat_id=chat_id,
-                                 text=message,
-                                 reply_to_message_id=reply_to_message_id,
-                                 parse_mode='MarkdownV2')
+                try:
+                    await telegram.Bot(self.settings['telegram']['api_key'])\
+                        .sendMessage(chat_id=chat_id,
+                                     text=message,
+                                     reply_to_message_id=reply_to_message_id,
+                                     parse_mode='MarkdownV2')
+                except Exception as e:
+                    logging.error('Error sending message! ' + str(e))
 
             # Error parsing markdown
             except Exception as e:
                 logging.info(e)
+                try:
+                    await telegram.Bot(self.settings['telegram']['api_key'])\
+                        .sendMessage(chat_id=chat_id,
+                                     text=message.replace('\\n', '\n'),
+                                     reply_to_message_id=reply_to_message_id)
+                except Exception as e:
+                    logging.error('Error sending message! ' + str(e))
+        else:
+            try:
                 await telegram.Bot(self.settings['telegram']['api_key'])\
                     .sendMessage(chat_id=chat_id,
                                  text=message.replace('\\n', '\n'),
                                  reply_to_message_id=reply_to_message_id)
-        else:
-            await telegram.Bot(self.settings['telegram']['api_key'])\
-                .sendMessage(chat_id=chat_id,
-                             text=message.replace('\\n', '\n'),
-                             reply_to_message_id=reply_to_message_id)
+            except Exception as e:
+                logging.error('Error sending message! ' + str(e))
 
     def response_loop(self):
         """
