@@ -163,6 +163,8 @@ Note: make shure you don't delete argumensts `{0}` in message and please restart
 
 ## Running in Docker
 
+**WARNING: not tested and not recommended**
+
 1. Install Docker
 2. Clone repo
 3. Build container
@@ -216,6 +218,7 @@ If you have proxy that definitely works you can specify it in `manual_proxy` in 
 - `/queue` - Shows requests queue
 - `/gpt YOUR REQUEST` - Request to ChatGPT
 - `/draw YOUR REQUEST` - Request to DALLE
+- `/restart` - Restart chatGPT and Telegram Bot (not tested properly)
 - Or just type your request as message without `/gpt` command
 
 ----------
