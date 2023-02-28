@@ -68,7 +68,6 @@ class BotHandler:
         Starts bot (blocking)
         :return:
         """
-        application = None
         while True:
             try:
                 # Build bot
@@ -82,7 +81,8 @@ class BotHandler:
                 application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), self.bot_read_message))
 
                 # Start bot
-                application.run_polling()
+                asyncio.set_event_loop(asyncio.new_event_loop())
+                asyncio.run(application.run_polling())
             except Exception as e:
                 logging.error('Telegram bot error! ' + str(e))
             logging.info('Restarting bot polling after 5 seconds...')
