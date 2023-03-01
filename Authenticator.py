@@ -254,7 +254,8 @@ class Authenticator:
                         logging.warning(str(e))
 
                         # Wait before next try
-                        wait_seconds = int(self.settings['chatgpt_dialog']['too_many_requests_wait_time_seconds'])
+                        wait_seconds = \
+                            int(self.settings['chatgpt_api_1']['proxy']['too_many_requests_wait_time_seconds'])
                         logging.warning('Waiting ' + str(wait_seconds) + ' seconds...')
                         self.chatbot_too_many_requests = True
                         time.sleep(wait_seconds)

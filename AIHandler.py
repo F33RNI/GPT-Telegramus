@@ -18,11 +18,13 @@ import logging
 import queue
 import threading
 import time
+import uuid
 
 import openai
 
 import Authenticator
 import RequestResponseContainer
+from JSONReaderWriter import load_json, save_json
 
 EMPTY_RESPONSE_ERROR_MESSAGE = 'Empty response or unhandled error!'
 ERROR_CHATGPT_DISABLED = 'ChatGPT module is disabled in settings.json'
@@ -30,8 +32,9 @@ ERROR_DALLE_DISABLED = 'DALL-E module is disabled in settings.json'
 
 
 class AIHandler:
-    def __init__(self, settings, authenticator):
+    def __init__(self, settings, chats_file, authenticator):
         self.settings = settings
+        self.chats_file = chats_file
         self.authenticator = authenticator
 
         # Loop running flag
@@ -45,10 +48,6 @@ class AIHandler:
 
         # Requests queue
         self.requests_queue = None
-
-        # Conversation id and parent id to continue dialog
-        self.conversation_id = None
-        self.parent_id = None
 
         # Check settings
         if self.settings is not None:
@@ -67,6 +66,63 @@ class AIHandler:
         thread = threading.Thread(target=self.gpt_loop)
         thread.start()
         logging.info('AIHandler thread: ' + thread.name)
+
+    def get_chat(self, chat_id: int):
+        """
+        Retrieves conversation_id and parent_id for given chat_id or None if not exists
+        :param chat_id:
+        :return: (conversation_id, parent_id)
+        """
+        logging.info('Loading conversation_id for chat_id ' + str(chat_id))
+        chats = load_json(self.chats_file)
+        if chats is not None and str(chat_id) in chats:
+            chat = chats[str(chat_id)]
+            conversation_id = None
+            parent_id = None
+            if 'conversation_id' in chat:
+                conversation_id = chat['conversation_id']
+            if 'parent_id' in chat:
+                parent_id = chat['parent_id']
+
+            return conversation_id, parent_id
+        else:
+            return None, None
+
+    def set_chat(self, chat_id: int, conversation_id=None, parent_id=None):
+        """
+        Saves conversation ID and parent ID or Nones to remove it
+        :param chat_id:
+        :param conversation_id:
+        :param parent_id:
+        :return:
+        """
+        logging.info('Saving conversation_id ' + str(conversation_id) + ' and parent_id '
+                     + str(parent_id) + ' for chat_id ' + str(chat_id))
+        chats = load_json(self.chats_file)
+        if chats is not None:
+            if str(chat_id) in chats:
+                # Save or delete conversation_id
+                if conversation_id is not None and len(conversation_id) > 0:
+                    chats[str(chat_id)]['conversation_id'] = conversation_id
+                elif 'conversation_id' in chats[str(chat_id)]:
+                    del chats[str(chat_id)]['conversation_id']
+
+                # Save or delete parent_id
+                if parent_id is not None and len(parent_id) > 0:
+                    chats[str(chat_id)]['parent_id'] = parent_id
+                elif 'parent_id' in chats[str(chat_id)]:
+                    del chats[str(chat_id)]['parent_id']
+
+            # New chat
+            else:
+                chats[str(chat_id)] = {}
+                if conversation_id is not None and len(conversation_id) > 0:
+                    chats[str(chat_id)]['conversation_id'] = conversation_id
+                if parent_id is not None and len(parent_id) > 0:
+                    chats[str(chat_id)]['parent_id'] = parent_id
+        else:
+            chats = {}
+        save_json(self.chats_file, chats)
 
     def gpt_loop(self):
         """
@@ -99,24 +155,32 @@ class AIHandler:
 
                     # API type 0
                     if self.authenticator.api_type == 0:
-                        # Initialize conversation id
-                        if len(str(self.settings['chatgpt_api_0']['existing_conversation_id'])) > 0:
-                            self.conversation_id = str(self.settings['chatgpt_api_0']['existing_conversation_id'])
-                            logging.info('Conversation id: ' + str(self.conversation_id))
-                        else:
-                            self.conversation_id = None
+                        # Get conversation_id
+                        conversation_id, parent_id = self.get_chat(container.chat_id)
 
                         # Get chatbot from Authenticator class
                         chatbot = self.authenticator.chatbot
 
+                        # Reset chat
+                        chatbot.reset()
+
                         # Ask
-                        for data in chatbot.ask_stream(str(container.request), conversation_id=self.conversation_id):
+                        for data in chatbot.ask_stream(str(container.request), conversation_id=conversation_id):
                             # Initialize response
                             if api_response is None:
                                 api_response = ''
 
                             # Append response
                             api_response += str(data)
+
+                        # Generate and save conversation ID
+                        try:
+                            if conversation_id is None:
+                                conversation_id = str(uuid.uuid4())
+                            chatbot.save_conversation(conversation_id)
+                            self.set_chat(container.chat_id, conversation_id, parent_id)
+                        except Exception as e:
+                            logging.warning('Error saving conversation! ' + str(e))
 
                         # Remove tags
                         api_response = api_response.replace('<|im_end|>', '').replace('<|im_start|>', '')
@@ -140,34 +204,36 @@ class AIHandler:
                         # Lock chatbot
                         self.authenticator.chatbot_locked = True
 
-                        # Log request
-                        logging.info('Asking: ' + str(container.request))
+                        # Get conversation_id and parent_id
+                        conversation_id, parent_id = self.get_chat(container.chat_id)
 
-                        # Initialize conversation_id and parent_id
-                        if self.conversation_id is None:
-                            if len(str(self.settings['chatgpt_api_1']['chatgpt_dialog']['conversation_id'])) > 0:
-                                self.conversation_id \
-                                    = str(self.settings['chatgpt_api_1']['chatgpt_dialog']['conversation_id'])
-                                logging.info('Initial conversation id: ' + str(self.conversation_id))
-                        if self.parent_id is None:
-                            if len(str(self.settings['chatgpt_api_1']['chatgpt_dialog']['parent_id'])) > 0:
-                                self.parent_id = str(self.settings['chatgpt_api_1']['chatgpt_dialog']['parent_id'])
-                                logging.info('Initial parent id: ' + str(self.parent_id))
+                        # Log request
+                        logging.info('Asking: ' + str(container.request)
+                                     + ', conversation_id: ' + str(conversation_id) + ', parent_id: ' + str(parent_id))
+
+                        # Reset chat
+                        chatbot.reset_chat()
 
                         # Ask
                         for data in chatbot.ask(str(container.request),
-                                                conversation_id=self.conversation_id,
-                                                parent_id=self.parent_id):
+                                                conversation_id=conversation_id,
+                                                parent_id=parent_id):
                             # Get last response
                             api_response = data['message']
 
                             # Store conversation_id
-                            if data['conversation_id'] is not None:
-                                self.conversation_id = data['conversation_id']
+                            if 'conversation_id' in data and data['conversation_id'] is not None:
+                                conversation_id = data['conversation_id']
+
+                            # Store parent_id
+                            if 'parent_id' in data and data['parent_id'] is not None:
+                                parent_id = data['parent_id']
 
                         # Log conversation id and parent id
-                        logging.info('Current conversation id: ' + str(self.conversation_id)
-                                     + '\tParent id: ' + str(self.parent_id))
+                        logging.info('Current conversation_id: ' + conversation_id + ', parent_id: ' + parent_id)
+
+                        # Save conversation id
+                        self.set_chat(container.chat_id, conversation_id, parent_id)
 
                     # Wrong api type
                     else:
