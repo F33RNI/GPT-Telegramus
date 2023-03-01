@@ -12,7 +12,6 @@
   "chatgpt_api_0": {
     "open_ai_api_key": "",
     "engine": "text-davinci-003",
-    "existing_conversation_id": "",
     "proxy": ""
   },
 
@@ -46,29 +45,22 @@
       "check_message_timeout": 240,
       "check_reply_must_include": "2",
       "max_number_of_processes": 5,
-      "initialization_timeout": 60
-    },
-
-    "__comment16__": "SPECIFY YOUR INITIAL CONVERSATION_ID and PARENT_ID TO CONTINUE THE DIALOGUE",
-    "__comment17__": "WHEN YOU START FOR THE FIRST TIME, LEAVE THEM BLANK, ASK A QUESTION AND LOOK IN THE CONSOLE",
-    "chatgpt_dialog": {
-      "conversation_id": "",
-      "parent_id": "",
+      "initialization_timeout": 60,
       "too_many_requests_wait_time_seconds": 600
     }
   },
 
-  "__comment18__": "PROVIDE YOUR API_KEY FROM https://platform.openai.com/account/api-keys FOR REQUESTS TO DALL-E",
-  "__comment19__": "SPECIFY FORMAT OF GENERATED IMAGES (256x256 or 512x512 or 1024x1024)",
-  "__comment20__": "SPECIFY IS PROXY NEEDED FOR DALLE (SAME PROXY AS FOR CHATGPT)",
+  "__comment16__": "PROVIDE YOUR API_KEY FROM https://platform.openai.com/account/api-keys FOR REQUESTS TO DALL-E",
+  "__comment17__": "SPECIFY FORMAT OF GENERATED IMAGES (256x256 or 512x512 or 1024x1024)",
+  "__comment18__": "SPECIFY IS PROXY NEEDED FOR DALLE (SAME PROXY AS FOR CHATGPT)",
   "dalle": {
     "open_ai_api_key": "",
     "image_size": "512x512",
     "use_proxy": true
   },
 
-  "__comment21__": "PROVIDE YOUR BOT API KEY FROM https://t.me/BotFather",
-  "__comment22__": "SPECIFY THE SIZE OF THE REQUEST QUEUE AND WHETHER TO SHOW A MESSAGE ABOUT ADDING TO THE QUEUE",
+  "__comment19__": "PROVIDE YOUR BOT API KEY FROM https://t.me/BotFather",
+  "__comment20__": "SPECIFY THE SIZE OF THE REQUEST QUEUE AND WHETHER TO SHOW A MESSAGE ABOUT ADDING TO THE QUEUE",
   "telegram": {
     "api_key": "",
     "queue_max": 5,

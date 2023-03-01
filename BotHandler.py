@@ -26,7 +26,6 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 
 import RequestResponseContainer
-from AIHandler import AIHandler
 from main import TELEGRAMUS_VERSION
 
 BOT_COMMAND_START = 'start'
@@ -34,6 +33,7 @@ BOT_COMMAND_HELP = 'help'
 BOT_COMMAND_QUEUE = 'queue'
 BOT_COMMAND_GPT = 'gpt'
 BOT_COMMAND_DRAW = 'draw'
+BOT_COMMAND_CLEAR = 'clear'
 BOT_COMMAND_RESTART = 'restart'
 
 # List of markdown chars to escape with \\
@@ -41,9 +41,10 @@ MARKDOWN_ESCAPE = ['_', '*', '[', ']', '(', ')', '~', '>', '#', '+', '-', '=', '
 
 
 class BotHandler:
-    def __init__(self, settings, messages, ai_handler: AIHandler):
+    def __init__(self, settings, messages, chats_file, ai_handler):
         self.settings = settings
         self.messages = messages
+        self.chats_file = chats_file
         self.ai_handler = ai_handler
         self.application = None
         self.event_loop = None
@@ -83,6 +84,7 @@ class BotHandler:
                 self.application.add_handler(CommandHandler(BOT_COMMAND_QUEUE, self.bot_command_queue))
                 self.application.add_handler(CommandHandler(BOT_COMMAND_GPT, self.bot_command_gpt))
                 self.application.add_handler(CommandHandler(BOT_COMMAND_DRAW, self.bot_command_draw))
+                self.application.add_handler(CommandHandler(BOT_COMMAND_CLEAR, self.bot_command_clear))
                 self.application.add_handler(CommandHandler(BOT_COMMAND_RESTART, self.bot_command_restart))
                 self.application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), self.bot_read_message))
 
@@ -165,6 +167,34 @@ class BotHandler:
                                                text=str(self.messages['gpt_no_message']).replace('\\n', '\n'))
             except Exception as e:
                 logging.error('Error sending message! ' + str(e))
+
+    async def bot_command_clear(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """
+        /clear command
+        :param update:
+        :param context:
+        :return:
+        """
+        user = update.message.from_user
+        chat_id = update.effective_chat.id
+        logging.info('/clear command from user ' + str(user.full_name) + ' request: ' + ' '.join(context.args))
+
+        # Delete conversation
+        if self.ai_handler.authenticator.api_type == 1:
+            conversation_id, _ = self.ai_handler.get_chat(chat_id)
+            if conversation_id is not None and len(conversation_id) > 0:
+                try:
+                    self.ai_handler.authenticator.chatbot.delete_conversation(conversation_id)
+                except Exception as e:
+                    logging.warning('Error deleting conversation ' + str(conversation_id) + ' ' + str(e))
+
+        # Clear conversation ID and parent ID
+        self.ai_handler.set_chat(chat_id, None, None)
+
+        try:
+            await context.bot.send_message(chat_id=chat_id, text=str(self.messages['chat_reset']).replace('\\n', '\n'))
+        except Exception as e:
+            logging.error('Error sending message! ' + str(e))
 
     async def bot_command_restart(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
