@@ -29,7 +29,7 @@ import Authenticator
 import BotHandler
 from JSONReaderWriter import load_json
 
-TELEGRAMUS_VERSION = 'beta_1.9.0'
+TELEGRAMUS_VERSION = 'beta_2.0.0'
 
 # Logging level (INFO for debug, WARN for release)
 LOGGING_LEVEL = logging.INFO
@@ -37,7 +37,7 @@ LOGGING_LEVEL = logging.INFO
 # Files and directories
 SETTINGS_FILE = 'settings.json'
 MESSAGES_FILE = 'messages.json'
-CHATS_FILE = 'chats.json'
+CHATS_DIR = 'chats'
 LOGS_DIR = 'logs'
 
 
@@ -96,8 +96,8 @@ def parse_args():
                         default=os.getenv('TELEGRAMUS_SETTINGS_FILE', SETTINGS_FILE))
     parser.add_argument('--messages', type=str, help='messages.json file location',
                         default=os.getenv('TELEGRAMUS_MESSAGES_FILE', MESSAGES_FILE))
-    parser.add_argument('--chats', type=str, help='chats.json file location',
-                        default=os.getenv('TELEGRAMUS_CHATS_FILE', CHATS_FILE))
+    parser.add_argument('--chats', type=str, help='chats directory location',
+                        default=os.getenv('TELEGRAMUS_CHATS_DIR', CHATS_DIR))
     parser.add_argument('--version', action='version', version=TELEGRAMUS_VERSION)
     return parser.parse_args()
 
@@ -121,7 +121,7 @@ def main():
     # Initialize classes
     authenticator = Authenticator.Authenticator(settings)
     ai_handler = AIHandler.AIHandler(settings, args.chats, authenticator)
-    bot_handler = BotHandler.BotHandler(settings, messages, args.chats, ai_handler)
+    bot_handler = BotHandler.BotHandler(settings, messages, ai_handler)
 
     # Set requests_queue to ai_handler
     ai_handler.requests_queue = bot_handler.requests_queue

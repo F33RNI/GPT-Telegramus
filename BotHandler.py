@@ -41,10 +41,9 @@ MARKDOWN_ESCAPE = ['_', '*', '[', ']', '(', ')', '~', '>', '#', '+', '-', '=', '
 
 
 class BotHandler:
-    def __init__(self, settings, messages, chats_file, ai_handler):
+    def __init__(self, settings, messages, ai_handler):
         self.settings = settings
         self.messages = messages
-        self.chats_file = chats_file
         self.ai_handler = ai_handler
         self.application = None
         self.event_loop = None
@@ -180,13 +179,12 @@ class BotHandler:
         logging.info('/clear command from user ' + str(user.full_name) + ' request: ' + ' '.join(context.args))
 
         # Delete conversation
-        if self.ai_handler.authenticator.api_type == 1:
-            conversation_id, _ = self.ai_handler.get_chat(chat_id)
-            if conversation_id is not None and len(conversation_id) > 0:
-                try:
-                    self.ai_handler.authenticator.chatbot.delete_conversation(conversation_id)
-                except Exception as e:
-                    logging.warning('Error deleting conversation ' + str(conversation_id) + ' ' + str(e))
+        conversation_id, _ = self.ai_handler.get_chat(chat_id)
+        if conversation_id is not None and len(conversation_id) > 0:
+            try:
+                self.ai_handler.delete_conversation(conversation_id)
+            except Exception as e:
+                logging.warning('Error removing conversation ' + str(conversation_id) + ' ' + str(e))
 
         # Clear conversation ID and parent ID
         self.ai_handler.set_chat(chat_id, None, None)
