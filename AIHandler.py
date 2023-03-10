@@ -36,9 +36,9 @@ CONVERSATION_DIR_OR_FILE = 'conversations'
 
 
 class AIHandler:
-    def __init__(self, settings, chats_file, authenticator):
+    def __init__(self, settings, chats_dir, authenticator):
         self.settings = settings
-        self.chats_file = chats_file
+        self.chats_dir = chats_dir
         self.authenticator = authenticator
 
         # Loop running flag
@@ -63,6 +63,10 @@ class AIHandler:
         Starts background thread
         :return:
         """
+        # Create chats directory if not exists
+        if not os.path.exists(self.chats_dir):
+            os.makedirs(self.chats_dir)
+
         # Set flag
         self.loop_running = True
 
@@ -78,7 +82,7 @@ class AIHandler:
         :return: (conversation_id, parent_id)
         """
         logging.info('Loading conversation_id for chat_id ' + str(chat_id))
-        chats = load_json(self.chats_file)
+        chats = load_json(os.path.join(self.chats_dir, 'chats.json'))
         if chats is not None and str(chat_id) in chats:
             chat = chats[str(chat_id)]
             conversation_id = None
@@ -102,7 +106,7 @@ class AIHandler:
         """
         logging.info('Saving conversation_id ' + str(conversation_id) + ' and parent_id '
                      + str(parent_id) + ' for chat_id ' + str(chat_id))
-        chats = load_json(self.chats_file)
+        chats = load_json(os.path.join(self.chats_dir, 'chats.json'))
         if chats is not None:
             if str(chat_id) in chats:
                 # Save or delete conversation_id
@@ -126,7 +130,7 @@ class AIHandler:
                     chats[str(chat_id)]['parent_id'] = parent_id
         else:
             chats = {}
-        save_json(self.chats_file, chats)
+        save_json(os.path.join(self.chats_dir, 'chats.json'), chats)
 
     def save_conversation(self, chatbot_, conversation_id) -> None:
         """
@@ -139,13 +143,13 @@ class AIHandler:
         # API type 0
         if int(self.settings['modules']['chatgpt_api_type']) == 0:
             conversations_file = CONVERSATION_DIR_OR_FILE + '.json'
-            chatbot_.conversations.save(conversations_file)
+            chatbot_.conversations.save(os.path.join(self.chats_dir, conversations_file))
 
         # API type 3
         elif int(self.settings['modules']['chatgpt_api_type']) == 3:
-            if not os.path.exists(CONVERSATION_DIR_OR_FILE):
-                os.makedirs(CONVERSATION_DIR_OR_FILE)
-            conversation_file = os.path.join(CONVERSATION_DIR_OR_FILE, conversation_id + '.json')
+            if not os.path.exists(os.path.join(self.chats_dir, CONVERSATION_DIR_OR_FILE)):
+                os.makedirs(os.path.join(self.chats_dir, CONVERSATION_DIR_OR_FILE))
+            conversation_file = os.path.join(self.chats_dir, CONVERSATION_DIR_OR_FILE, conversation_id + '.json')
             chatbot_.save(conversation_file, conversation_id)
 
     def load_conversation(self, chatbot_, conversation_id) -> None:
@@ -160,12 +164,15 @@ class AIHandler:
             # API type 0
             if int(self.settings['modules']['chatgpt_api_type']) == 0:
                 conversations_file = CONVERSATION_DIR_OR_FILE + '.json'
-                chatbot_.conversations.load(conversations_file)
+                chatbot_.conversations.load(os.path.join(self.chats_dir, conversations_file))
 
             # API type 3
             elif int(self.settings['modules']['chatgpt_api_type']) == 3:
-                conversation_file = os.path.join(CONVERSATION_DIR_OR_FILE, conversation_id + '.json')
-                chatbot_.load(conversation_file, conversation_id)
+                conversation_file = os.path.join(self.chats_dir, CONVERSATION_DIR_OR_FILE, conversation_id + '.json')
+                if os.path.exists(conversation_file):
+                    chatbot_.load(conversation_file, conversation_id)
+                else:
+                    logging.warning('File ' + conversation_file + ' not exists!')
         except Exception as e:
             logging.warning('Error loading conversation ' + conversation_id + ' ' + str(e))
 
@@ -181,7 +188,7 @@ class AIHandler:
             if int(self.settings['modules']['chatgpt_api_type']) == 0:
                 self.authenticator.chatbot.reset()
                 try:
-                    conversations_file = CONVERSATION_DIR_OR_FILE + '.json'
+                    conversations_file = os.path.join(self.chats_dir, CONVERSATION_DIR_OR_FILE + '.json')
                     self.authenticator.chatbot.conversations.remove_conversation(conversations_file)
                     self.authenticator.chatbot.conversations.save(conversations_file)
                 except Exception as e:
@@ -213,8 +220,9 @@ class AIHandler:
 
             # Delete conversation file if exists
             try:
-                conversation_file = os.path.join(CONVERSATION_DIR_OR_FILE, conversation_id + '.json')
+                conversation_file = os.path.join(self.chats_dir, CONVERSATION_DIR_OR_FILE, conversation_id + '.json')
                 if os.path.exists(conversation_file):
+                    logging.info('Removing ' + conversation_file + ' file')
                     os.remove(conversation_file)
             except Exception as e:
                 logging.error('Error removing conversation file for conversation ' + conversation_id, e)
