@@ -29,7 +29,7 @@ import Authenticator
 import BotHandler
 from JSONReaderWriter import load_json
 
-TELEGRAMUS_VERSION = 'beta_1.9.0'
+TELEGRAMUS_VERSION = 'beta_2.0.0'
 
 # Logging level (INFO for debug, WARN for release)
 LOGGING_LEVEL = logging.INFO

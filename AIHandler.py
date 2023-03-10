@@ -14,7 +14,9 @@
  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  OTHER DEALINGS IN THE SOFTWARE.
 """
+import asyncio
 import logging
+import os
 import queue
 import threading
 import time
@@ -29,6 +31,8 @@ from JSONReaderWriter import load_json, save_json
 EMPTY_RESPONSE_ERROR_MESSAGE = 'Empty response or unhandled error!'
 ERROR_CHATGPT_DISABLED = 'ChatGPT module is disabled in settings.json'
 ERROR_DALLE_DISABLED = 'DALL-E module is disabled in settings.json'
+
+CONVERSATION_DIR_OR_FILE = 'conversations'
 
 
 class AIHandler:
@@ -124,6 +128,99 @@ class AIHandler:
             chats = {}
         save_json(self.chats_file, chats)
 
+    def save_conversation(self, chatbot_, conversation_id) -> None:
+        """
+        Saves conversation
+        :param chatbot_:
+        :param conversation_id:
+        :return:
+        """
+        logging.info('Saving conversation ' + conversation_id)
+        # API type 0
+        if int(self.settings['modules']['chatgpt_api_type']) == 0:
+            conversations_file = CONVERSATION_DIR_OR_FILE + '.json'
+            chatbot_.conversations.save(conversations_file)
+
+        # API type 3
+        elif int(self.settings['modules']['chatgpt_api_type']) == 3:
+            if not os.path.exists(CONVERSATION_DIR_OR_FILE):
+                os.makedirs(CONVERSATION_DIR_OR_FILE)
+            conversation_file = os.path.join(CONVERSATION_DIR_OR_FILE, conversation_id + '.json')
+            chatbot_.save(conversation_file, conversation_id)
+
+    def load_conversation(self, chatbot_, conversation_id) -> None:
+        """
+        Loads conversation
+        :param chatbot_:
+        :param conversation_id:
+        :return:
+        """
+        logging.info('Loading conversation ' + conversation_id)
+        try:
+            # API type 0
+            if int(self.settings['modules']['chatgpt_api_type']) == 0:
+                conversations_file = CONVERSATION_DIR_OR_FILE + '.json'
+                chatbot_.conversations.load(conversations_file)
+
+            # API type 3
+            elif int(self.settings['modules']['chatgpt_api_type']) == 3:
+                conversation_file = os.path.join(CONVERSATION_DIR_OR_FILE, conversation_id + '.json')
+                chatbot_.load(conversation_file, conversation_id)
+        except Exception as e:
+            logging.warning('Error loading conversation ' + conversation_id + ' ' + str(e))
+
+    def delete_conversation(self, conversation_id) -> None:
+        """
+        Deletes conversation
+        :param conversation_id:
+        :return:
+        """
+        logging.info('Deleting conversation ' + conversation_id)
+        try:
+            # API type 0
+            if int(self.settings['modules']['chatgpt_api_type']) == 0:
+                self.authenticator.chatbot.reset()
+                try:
+                    conversations_file = CONVERSATION_DIR_OR_FILE + '.json'
+                    self.authenticator.chatbot.conversations.remove_conversation(conversations_file)
+                    self.authenticator.chatbot.conversations.save(conversations_file)
+                except Exception as e:
+                    logging.error('Error deleting conversation ' + conversation_id, e)
+
+            # API type 1
+            elif int(self.settings['modules']['chatgpt_api_type']) == 1:
+                self.authenticator.chatbot.reset_chat()
+                try:
+                    self.authenticator.chatbot.delete_conversation(conversation_id)
+                except Exception as e:
+                    logging.error('Error deleting conversation ' + conversation_id, e)
+
+            # API type 2
+            elif int(self.settings['modules']['chatgpt_api_type']) == 2:
+                self.authenticator.chatbot.reset_chat()
+                try:
+                    self.authenticator.chatbot.conversations.remove(conversation_id)
+                except Exception as e:
+                    logging.error('Error deleting conversation ' + conversation_id, e)
+
+            # API type 3
+            elif int(self.settings['modules']['chatgpt_api_type']) == 3:
+                self.authenticator.chatbot.reset(conversation_id)
+
+            # Wrong API type
+            else:
+                raise Exception('Wrong chatgpt_api_type')
+
+            # Delete conversation file if exists
+            try:
+                conversation_file = os.path.join(CONVERSATION_DIR_OR_FILE, conversation_id + '.json')
+                if os.path.exists(conversation_file):
+                    os.remove(conversation_file)
+            except Exception as e:
+                logging.error('Error removing conversation file for conversation ' + conversation_id, e)
+        except Exception as e:
+            logging.warning('Error loading conversation ' + conversation_id + ' ' + str(e))
+
     def gpt_loop(self):
         """
         Background loop for handling requests
@@ -153,16 +250,45 @@ class AIHandler:
                         api_response = None
                         raise Exception(ERROR_CHATGPT_DISABLED)
 
-                    # API type 0
-                    if self.authenticator.api_type == 0:
-                        # Get conversation_id
-                        conversation_id, parent_id = self.get_chat(container.chat_id)
+                    # Too many requests in 1 hour
+                    if self.authenticator.chatbot_too_many_requests:
+                        raise Exception(Authenticator.TOO_MANY_REQUESTS_MESSAGE)
 
-                        # Get chatbot from Authenticator class
+                    # Wait for chatbot
+                    chatbot = self.authenticator.chatbot
+                    while not self.authenticator.chatbot_working or chatbot is None:
+                        time.sleep(1)
                         chatbot = self.authenticator.chatbot
 
-                        # Reset chat
+                        # Too many requests in 1 hour
+                        if self.authenticator.chatbot_too_many_requests:
+                            raise Exception(Authenticator.TOO_MANY_REQUESTS_MESSAGE)
+
+                    # Lock chatbot
+                    self.authenticator.chatbot_locked = True
+
+                    # Get conversation_id and parent_id
+                    conversation_id, parent_id = self.get_chat(container.chat_id)
+
+                    # Log request
+                    logging.info('Asking: ' + str(container.request)
+                                 + ', conversation_id: ' + str(conversation_id) + ', parent_id: ' + str(parent_id))
+
+                    # API type 0
+                    if int(self.settings['modules']['chatgpt_api_type']) == 0:
+                        # Reset current chat
                         chatbot.reset()
+
+                        # Try to load conversation
+                        if conversation_id is not None:
+                            self.load_conversation(chatbot, conversation_id)
+
+                        # Try to load conversation
+                        if conversation_id is not None:
+                            try:
+                                chatbot.load_conversation(conversation_id)
+                            except Exception as e:
+                                logging.warning('Error loading conversation with id: ' + conversation_id + ' ' + str(e))
 
                         # Ask
                         for data in chatbot.ask_stream(str(container.request), conversation_id=conversation_id):
@@ -178,6 +304,7 @@ class AIHandler:
                             if conversation_id is None:
                                 conversation_id = str(uuid.uuid4())
                             chatbot.save_conversation(conversation_id)
+                            self.save_conversation(chatbot, conversation_id)
                             self.set_chat(container.chat_id, conversation_id, parent_id)
                         except Exception as e:
                             logging.warning('Error saving conversation! ' + str(e))
@@ -186,32 +313,8 @@ class AIHandler:
                         api_response = api_response.replace('<|im_end|>', '').replace('<|im_start|>', '')
 
                     # API type 1
-                    elif self.authenticator.api_type == 1:
-                        # Too many requests in 1 hour
-                        if self.authenticator.chatbot_too_many_requests:
-                            raise Exception(Authenticator.TOO_MANY_REQUESTS_MESSAGE)
-
-                        # Wait for chatbot
-                        chatbot = self.authenticator.chatbot
-                        while not self.authenticator.chatbot_working or chatbot is None:
-                            time.sleep(1)
-                            chatbot = self.authenticator.chatbot
-
-                            # Too many requests in 1 hour
-                            if self.authenticator.chatbot_too_many_requests:
-                                raise Exception(Authenticator.TOO_MANY_REQUESTS_MESSAGE)
-
-                        # Lock chatbot
-                        self.authenticator.chatbot_locked = True
-
-                        # Get conversation_id and parent_id
-                        conversation_id, parent_id = self.get_chat(container.chat_id)
-
-                        # Log request
-                        logging.info('Asking: ' + str(container.request)
-                                     + ', conversation_id: ' + str(conversation_id) + ', parent_id: ' + str(parent_id))
-
-                        # Reset chat
+                    elif int(self.settings['modules']['chatgpt_api_type']) == 1:
+                        # Reset current chat
                         chatbot.reset_chat()
 
                         # Ask
@@ -230,17 +333,64 @@ class AIHandler:
                                 parent_id = data['parent_id']
 
                         # Log conversation id and parent id
-                        logging.info('Current conversation_id: ' + conversation_id + ', parent_id: ' + parent_id)
+                        logging.info('Current conversation_id: ' + str(conversation_id)
+                                     + ', parent_id: ' + str(parent_id))
 
                         # Save conversation id
                         self.set_chat(container.chat_id, conversation_id, parent_id)
 
+                    # API type 2
+                    elif int(self.settings['modules']['chatgpt_api_type']) == 2:
+                        # Make async function sync
+                        api_responses_ = []
+                        conversation_ids_ = []
+
+                        async def ask_async(request_, conversation_id_):
+                            async for data_ in chatbot.ask(request_, conversation_id=conversation_id_):
+                                # Get last response
+                                api_responses_.append(data_['message'])
+
+                                # Store conversation_id
+                                if 'conversation_id' in data_ and data_['conversation_id'] is not None:
+                                    conversation_ids_.append(data_['conversation_id'])
+
+                        # Ask
+                        loop = asyncio.new_event_loop()
+                        loop.run_until_complete(ask_async(str(container.request), conversation_id))
+
+                        # Log conversation id and parent id
+                        logging.info('Current conversation_id: ' + str(conversation_id)
+                                     + ', parent_id: ' + str(parent_id))
+
+                        # Save conversation id
+                        self.set_chat(container.chat_id, conversation_id, parent_id)
+
+                    # API type 3
+                    elif int(self.settings['modules']['chatgpt_api_type']) == 3:
+                        # Generate conversation ID
+                        if conversation_id is None:
+                            conversation_id = str(uuid.uuid4())
+
+                        # Try to load conversation
+                        else:
+                            self.load_conversation(chatbot, conversation_id)
+
+                        # Ask
+                        for data in chatbot.ask(str(container.request), convo_id=conversation_id):
+                            # Initialize response
+                            if api_response is None:
+                                api_response = ''
+
+                            # Append response
+                            api_response += str(data)
+
+                        # Save conversation id
+                        self.save_conversation(chatbot, conversation_id)
+                        self.set_chat(container.chat_id, conversation_id)
+
                     # Wrong api type
                     else:
                         raise Exception('Wrong chatgpt_api_type')
-
-                    # Log response
-                    logging.info(str(api_response))
 
                 # DALL-E
                 else:

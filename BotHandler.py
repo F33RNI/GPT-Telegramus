@@ -180,13 +180,13 @@ class BotHandler:
         logging.info('/clear command from user ' + str(user.full_name) + ' request: ' + ' '.join(context.args))
 
         # Delete conversation
-        if self.ai_handler.authenticator.api_type == 1:
+        if int(self.settings['modules']['chatgpt_api_type']) == 1:
             conversation_id, _ = self.ai_handler.get_chat(chat_id)
             if conversation_id is not None and len(conversation_id) > 0:
                 try:
-                    self.ai_handler.authenticator.chatbot.delete_conversation(conversation_id)
+                    self.ai_handler.delete_conversation(conversation_id)
                 except Exception as e:
-                    logging.warning('Error deleting conversation ' + str(conversation_id) + ' ' + str(e))
+                    logging.warning('Error removing conversation ' + str(conversation_id) + ' ' + str(e))
 
         # Clear conversation ID and parent ID
         self.ai_handler.set_chat(chat_id, None, None)
