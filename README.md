@@ -50,17 +50,19 @@ Support the project by buying and listening to my music 🎵
 2. Download source code
 3. Install requirements `pip install -r requirements.txt --upgrade`
 4. For **API type 3** (recommended) (revChatGPT API V3, official chatGPT API):
-   1. Generate API Key https://platform.openai.com/account/api-keys and paste it into `api_key` in `chatgpt_auth` in `settings.json` file
-   2. Configure proxy if needed in `proxy` in `settings.json` file
+   1. Set `chatgpt_api_type` to `3` in `modules` in `settings.json` file
+   2. Generate API Key https://platform.openai.com/account/api-keys and paste it into `api_key` in `chatgpt_auth` in `settings.json` file
+   3. Configure proxy if needed in `proxy` in `settings.json` file
 5. For **API type 0** (revChatGPT API V0, Official API, more "stupid" model, uses credits):
-   1. Generate API Key https://platform.openai.com/account/api-keys and paste it into `api_key` in `chatgpt_auth` in `settings.json` file
-   2. Configure proxy if needed in `proxy` in `settings.json` file
+   1. Set `chatgpt_api_type` to `0` in `modules` in `settings.json` file
+   2. Generate API Key https://platform.openai.com/account/api-keys and paste it into `api_key` in `chatgpt_auth` in `settings.json` file
+   3. Configure proxy if needed in `proxy` in `settings.json` file
 6. For **API type 1** (revChatGPT API V1, free, uses same model as official website):
-   1. Create account at OpenAI. Make sure you have access to https://chat.openai.com/
-   2. Open https://chat.openai.com/api/auth/session
-   3. Copy value of `accessToken` into `access_token` in `chatgpt_auth` in `chatgpt_api_1` in `settings.json` file
-   4. Configure proxy if needed in `proxy` in `settings.json` file
-
+   1. Set `chatgpt_api_type` to `1` in `modules` in `settings.json` file
+   2. Make sure you have access to https://chat.openai.com/
+   3. Open https://chat.openai.com/api/auth/session
+   4. Copy value of `accessToken` into `access_token` in `chatgpt_auth` in `chatgpt_api_1` in `settings.json` file
+   5. Configure proxy if needed in `proxy` in `settings.json` file
 7. For DALL-E, generate API Key https://platform.openai.com/account/api-keys
 8. Type Generated OpenAI API Key into `open_ai_api_key` in `dalle` in `settings.json` file
 9. Create bot at https://t.me/BotFather
@@ -228,6 +230,8 @@ Chat histories for each telegram chat (to prevent history collision) are stored 
   - File `chats.json` saves `conversation_id` and `parent_id` (for API V1)
 - For `"chatgpt_api_type": 3` conversation histories will be saved in `conversations` directory inside `chats` directory.
 - For `"chatgpt_api_type": 0` conversation histories will be saved in `conversations.json` file inside `chats` directory.
+
+To remove conversation use `/clear` command in telegram chat
 
 *p.s. Might not work properly =)*
 
