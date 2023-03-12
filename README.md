@@ -53,16 +53,16 @@ Support the project by buying and listening to my music 🎵
    1. Set `chatgpt_api_type` to `3` in `modules` in `settings.json` file
    2. Generate API Key https://platform.openai.com/account/api-keys and paste it into `api_key` in `chatgpt_auth` in `settings.json` file
    3. Configure proxy if needed in `proxy` in `settings.json` file
-5. For **API type 0** (revChatGPT API V0, Official API, more "stupid" model, uses credits):
-   1. Set `chatgpt_api_type` to `0` in `modules` in `settings.json` file
-   2. Generate API Key https://platform.openai.com/account/api-keys and paste it into `api_key` in `chatgpt_auth` in `settings.json` file
-   3. Configure proxy if needed in `proxy` in `settings.json` file
-6. For **API type 1** (revChatGPT API V1, free, uses same model as official website):
+5. For **API type 1** (revChatGPT API V1, free, uses same model as official website):
    1. Set `chatgpt_api_type` to `1` in `modules` in `settings.json` file
    2. Make sure you have access to https://chat.openai.com/
    3. Open https://chat.openai.com/api/auth/session
    4. Copy value of `accessToken` into `access_token` in `chatgpt_auth` in `chatgpt_api_1` in `settings.json` file
    5. Configure proxy if needed in `proxy` in `settings.json` file
+6. For **API type 0** (revChatGPT API V0, Official API, more "stupid" model, uses credits):
+   1. Set `chatgpt_api_type` to `0` in `modules` in `settings.json` file
+   2. Generate API Key https://platform.openai.com/account/api-keys and paste it into `api_key` in `chatgpt_auth` in `settings.json` file
+   3. Configure proxy if needed in `proxy` in `settings.json` file
 7. For DALL-E, generate API Key https://platform.openai.com/account/api-keys
 8. Type Generated OpenAI API Key into `open_ai_api_key` in `dalle` in `settings.json` file
 9. Create bot at https://t.me/BotFather
@@ -74,7 +74,7 @@ Example `settings.json`:
 {
   "modules": {
     "chatgpt": true,
-    "chatgpt_api_type": 3,
+    "chatgpt_api_type": 1,
     "dalle": true
   },
 
@@ -86,7 +86,7 @@ Example `settings.json`:
     "email": "",
     "password": "",
     "session_token": "",
-    "access_token": "",
+    "access_token": "XXxXxXx........XxxXXx",
 
     "base_url": ""
   },
