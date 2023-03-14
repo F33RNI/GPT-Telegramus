@@ -15,6 +15,7 @@
  OTHER DEALINGS IN THE SOFTWARE.
 """
 import asyncio
+import json
 import logging
 import os
 import queue
@@ -132,35 +133,54 @@ class AIHandler:
             chats = {}
         save_json(os.path.join(self.chats_dir, 'chats.json'), chats)
 
-    def save_conversation(self, chatbot_, conversation_id) -> None:
+    def save_conversation(self, chatbot_, conversation_id) -> bool:
         """
         Saves conversation
         :param chatbot_:
         :param conversation_id:
-        :return:
+        :return: True if no error
         """
-        logging.info('Saving conversation ' + conversation_id)
-        # API type 0
-        if int(self.settings['modules']['chatgpt_api_type']) == 0:
-            conversations_file = CONVERSATION_DIR_OR_FILE + '.json'
-            chatbot_.conversations.save(os.path.join(self.chats_dir, conversations_file))
+        logging.info('Saving conversation ' + str(conversation_id))
+        try:
+            if conversation_id is None:
+                logging.info('conversation_id is None. Skipping saving')
+                return False
 
-        # API type 3
-        elif int(self.settings['modules']['chatgpt_api_type']) == 3:
-            if not os.path.exists(os.path.join(self.chats_dir, CONVERSATION_DIR_OR_FILE)):
-                os.makedirs(os.path.join(self.chats_dir, CONVERSATION_DIR_OR_FILE))
-            conversation_file = os.path.join(self.chats_dir, CONVERSATION_DIR_OR_FILE, conversation_id + '.json')
-            chatbot_.save(conversation_file, conversation_id)
+            # API type 0
+            if int(self.settings['modules']['chatgpt_api_type']) == 0:
+                conversations_file = CONVERSATION_DIR_OR_FILE + '.json'
+                chatbot_.conversations.save(os.path.join(self.chats_dir, conversations_file))
 
-    def load_conversation(self, chatbot_, conversation_id) -> None:
+            # API type 3
+            elif int(self.settings['modules']['chatgpt_api_type']) == 3:
+                # Create conversation directory
+                if not os.path.exists(os.path.join(self.chats_dir, CONVERSATION_DIR_OR_FILE)):
+                    os.makedirs(os.path.join(self.chats_dir, CONVERSATION_DIR_OR_FILE))
+
+                # Save as json file
+                conversation_file = os.path.join(self.chats_dir, CONVERSATION_DIR_OR_FILE,
+                                                 conversation_id + '.json')
+                with open(conversation_file, 'w', encoding='utf-8') as json_file:
+                    json.dump(chatbot_.conversation, json_file, indent=4)
+                    json_file.close()
+        except Exception as e:
+            logging.error('Error saving conversation ' + str(conversation_id) + ' ' + str(e), e, exc_info=True)
+            return False
+        return True
+
+    def load_conversation(self, chatbot_, conversation_id) -> bool:
         """
         Loads conversation
         :param chatbot_:
         :param conversation_id:
-        :return:
+        :return: True if no error
         """
-        logging.info('Loading conversation ' + conversation_id)
+        logging.info('Loading conversation ' + str(conversation_id))
         try:
+            if conversation_id is None:
+                logging.info('conversation_id is None. Skipping loading')
+                return False
+
             # API type 0
             if int(self.settings['modules']['chatgpt_api_type']) == 0:
                 conversations_file = CONVERSATION_DIR_OR_FILE + '.json'
@@ -170,11 +190,16 @@ class AIHandler:
             elif int(self.settings['modules']['chatgpt_api_type']) == 3:
                 conversation_file = os.path.join(self.chats_dir, CONVERSATION_DIR_OR_FILE, conversation_id + '.json')
                 if os.path.exists(conversation_file):
-                    chatbot_.load(conversation_file, conversation_id)
+                    # Load from json file
+                    with open(conversation_file, 'r', encoding='utf-8') as json_file:
+                        chatbot_.conversation = json.load(json_file)
+                        json_file.close()
                 else:
                     logging.warning('File ' + conversation_file + ' not exists!')
         except Exception as e:
-            logging.warning('Error loading conversation ' + conversation_id + ' ' + str(e))
+            logging.warning('Error loading conversation ' + str(conversation_id) + ' ' + str(e))
+            return False
+        return True
 
     def delete_conversation(self, conversation_id) -> None:
         """
@@ -289,7 +314,8 @@ class AIHandler:
 
                         # Try to load conversation
                         if conversation_id is not None:
-                            self.load_conversation(chatbot, conversation_id)
+                            if not self.load_conversation(chatbot, conversation_id):
+                                conversation_id = None
 
                         # Try to load conversation
                         if conversation_id is not None:
@@ -312,7 +338,8 @@ class AIHandler:
                             if conversation_id is None:
                                 conversation_id = str(uuid.uuid4())
                             chatbot.save_conversation(conversation_id)
-                            self.save_conversation(chatbot, conversation_id)
+                            if not self.save_conversation(chatbot, conversation_id):
+                                conversation_id = None
                             self.set_chat(container.chat_id, conversation_id, parent_id)
                         except Exception as e:
                             logging.warning('Error saving conversation! ' + str(e))
@@ -375,13 +402,13 @@ class AIHandler:
 
                     # API type 3
                     elif int(self.settings['modules']['chatgpt_api_type']) == 3:
+                        # Try to load conversation
+                        if not self.load_conversation(chatbot, conversation_id):
+                            conversation_id = None
+
                         # Generate conversation ID
                         if conversation_id is None:
                             conversation_id = str(uuid.uuid4())
-
-                        # Try to load conversation
-                        else:
-                            self.load_conversation(chatbot, conversation_id)
 
                         # Ask
                         for data in chatbot.ask(str(container.request), convo_id=conversation_id):
@@ -393,8 +420,13 @@ class AIHandler:
                             api_response += str(data)
 
                         # Save conversation id
-                        self.save_conversation(chatbot, conversation_id)
+                        if not self.save_conversation(chatbot, conversation_id):
+                            conversation_id = None
                         self.set_chat(container.chat_id, conversation_id)
+
+                        # Reset conversation
+                        if conversation_id is not None:
+                            chatbot.reset(conversation_id)
 
                     # Wrong api type
                     else:
