@@ -68,8 +68,10 @@
 
   "__comment14__": "PROVIDE YOUR BOT API KEY FROM https://t.me/BotFather",
   "__comment15__": "SPECIFY THE SIZE OF THE REQUEST QUEUE AND WHETHER TO SHOW A MESSAGE ABOUT ADDING TO THE QUEUE",
+  "__comment16__": "SPECIFY THE chat_id OF THOSE WHO CAN USE ADMINISTRATOR COMMANDS",
   "telegram": {
     "api_key": "",
+    "admin_ids": [],
     "queue_max": 5,
     "show_queue_message": true
   }

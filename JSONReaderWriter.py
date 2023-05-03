@@ -26,17 +26,17 @@ def load_json(file_name: str):
     """
     try:
         if os.path.exists(file_name):
-            logging.info('Loading ' + file_name + '...')
-            messages_file = open(file_name, encoding='utf-8')
+            logging.info("Loading " + file_name + "...")
+            messages_file = open(file_name, encoding="utf-8")
             json_content = json.load(messages_file)
             messages_file.close()
             if json_content is not None and len(str(json_content)) > 0:
-                logging.info('Loaded json: ' + str(json_content))
+                logging.info("Loaded json: " + str(json_content))
             else:
                 json_content = None
-                logging.error('Error loading json data from file ' + file_name)
+                logging.error("Error loading json data from file " + file_name)
         else:
-            logging.warning('No ' + file_name + ' file! Returning empty json')
+            logging.warning("No " + file_name + " file! Returning empty json")
             return {}
     except Exception as e:
         json_content = None
@@ -55,7 +55,7 @@ def save_json(file_name: str, content):
     :param content: JSON dictionary
     :return:
     """
-    logging.info('Saving to ' + file_name + '...')
-    file = open(file_name, 'w')
+    logging.info("Saving to " + file_name + "...")
+    file = open(file_name, "w")
     json.dump(content, file, indent=4)
     file.close()

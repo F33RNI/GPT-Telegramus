@@ -28,16 +28,16 @@ from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, Messa
 import RequestResponseContainer
 from main import TELEGRAMUS_VERSION
 
-BOT_COMMAND_START = 'start'
-BOT_COMMAND_HELP = 'help'
-BOT_COMMAND_QUEUE = 'queue'
-BOT_COMMAND_GPT = 'gpt'
-BOT_COMMAND_DRAW = 'draw'
-BOT_COMMAND_CLEAR = 'clear'
-BOT_COMMAND_RESTART = 'restart'
+BOT_COMMAND_START = "start"
+BOT_COMMAND_HELP = "help"
+BOT_COMMAND_QUEUE = "queue"
+BOT_COMMAND_GPT = "gpt"
+BOT_COMMAND_DRAW = "draw"
+BOT_COMMAND_CLEAR = "clear"
+BOT_COMMAND_RESTART = "restart"
 
 # List of markdown chars to escape with \\
-MARKDOWN_ESCAPE = ['_', '*', '[', ']', '(', ')', '~', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
+MARKDOWN_ESCAPE = ["_", "*", "[", "]", "(", ")", "~", ">", "#", "+", "-", "=", "|", "{", "}", ".", "!"]
 
 
 class BotHandler:
@@ -60,11 +60,11 @@ class BotHandler:
         # Check settings and messages
         if self.settings is not None and self.messages is not None:
             # Initialize queue
-            self.requests_queue = queue.Queue(maxsize=self.settings['telegram']['queue_max'])
+            self.requests_queue = queue.Queue(maxsize=self.settings["telegram"]["queue_max"])
 
         # Settings or messages are None
         else:
-            logging.error('Error starting BotHandler class due to wrong settings or messages')
+            logging.error("Error starting BotHandler class due to wrong settings or messages")
 
     def bot_start(self):
         """
@@ -74,7 +74,7 @@ class BotHandler:
         while True:
             try:
                 # Build bot
-                builder = ApplicationBuilder().token(self.settings['telegram']['api_key'])
+                builder = ApplicationBuilder().token(self.settings["telegram"]["api_key"])
                 builder.write_timeout(30)
                 builder.read_timeout(30)
                 self.application = builder.build()
@@ -92,10 +92,10 @@ class BotHandler:
                 asyncio.set_event_loop(self.event_loop)
                 self.event_loop.run_until_complete(self.application.run_polling())
             except Exception as e:
-                logging.error('Telegram bot error! ' + str(e))
-            logging.info('Restarting bot polling after 5 seconds...')
+                logging.error("Telegram bot error! " + str(e))
+            logging.info("Restarting bot polling after 5 seconds...")
             time.sleep(5)
-            logging.info('Restarting bot polling ...')
+            logging.info("Restarting bot polling ...")
 
     def reply_thread_start(self):
         """
@@ -108,7 +108,7 @@ class BotHandler:
         # Start thread
         thread = threading.Thread(target=self.response_loop)
         thread.start()
-        logging.info('Responses handler background thread: ' + thread.name)
+        logging.info("Responses handler background thread: " + thread.name)
 
     async def create_request(self, request: str, update: Update, context: ContextTypes.DEFAULT_TYPE, request_type: int):
         """
@@ -133,19 +133,19 @@ class BotHandler:
                 self.requests_queue.put(container)
 
                 # Send confirmation message
-                if self.settings['telegram']['show_queue_message']:
-                    await context.bot.send_message(chat_id=chat_id, text=str(self.messages['queue_accepted'])
+                if self.settings["telegram"]["show_queue_message"]:
+                    await context.bot.send_message(chat_id=chat_id, text=str(self.messages["queue_accepted"])
                                                    .format(str(self.requests_queue.qsize()
                                                                + (1 if self.ai_handler.
                                                                   processing_container is not None else 0)),
-                                                           str(self.settings['telegram']['queue_max']))
-                                                   .replace('\\n', '\n'))
+                                                           str(self.settings["telegram"]["queue_max"]))
+                                                   .replace("\\n", "\n"))
             # Queue overflow
             else:
                 await context.bot.send_message(chat_id=chat_id,
-                                               text=str(self.messages['queue_overflow']).replace('\\n', '\n'))
+                                               text=str(self.messages["queue_overflow"]).replace("\\n", "\n"))
         except Exception as e:
-            logging.error('Error creating request / sending message! ' + str(e))
+            logging.error("Error creating request / sending message! " + str(e))
 
     async def bot_read_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
@@ -163,9 +163,9 @@ class BotHandler:
         else:
             try:
                 await context.bot.send_message(chat_id=chat_id,
-                                               text=str(self.messages['gpt_no_message']).replace('\\n', '\n'))
+                                               text=str(self.messages["gpt_no_message"]).replace("\\n", "\n"))
             except Exception as e:
-                logging.error('Error sending message! ' + str(e))
+                logging.error("Error sending message! " + str(e))
 
     async def bot_command_clear(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
@@ -176,7 +176,7 @@ class BotHandler:
         """
         user = update.message.from_user
         chat_id = update.effective_chat.id
-        logging.info('/clear command from user ' + str(user.full_name) + ' request: ' + ' '.join(context.args))
+        logging.info("/clear command from user " + str(user.full_name) + " request: " + " ".join(context.args))
 
         # Delete conversation
         conversation_id, _ = self.ai_handler.get_chat(chat_id)
@@ -184,15 +184,15 @@ class BotHandler:
             try:
                 self.ai_handler.delete_conversation(conversation_id)
             except Exception as e:
-                logging.warning('Error removing conversation ' + str(conversation_id) + ' ' + str(e))
+                logging.warning("Error removing conversation " + str(conversation_id) + " " + str(e))
 
         # Clear conversation ID and parent ID
         self.ai_handler.set_chat(chat_id, None, None)
 
         try:
-            await context.bot.send_message(chat_id=chat_id, text=str(self.messages['chat_reset']).replace('\\n', '\n'))
+            await context.bot.send_message(chat_id=chat_id, text=str(self.messages["chat_reset"]).replace("\\n", "\n"))
         except Exception as e:
-            logging.error('Error sending message! ' + str(e))
+            logging.error("Error sending message! " + str(e))
 
     async def bot_command_restart(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
@@ -203,13 +203,13 @@ class BotHandler:
         """
         user = update.message.from_user
         chat_id = update.effective_chat.id
-        logging.info('/restart command from user ' + str(user.full_name) + ' request: ' + ' '.join(context.args))
+        logging.info("/restart command from user " + str(user.full_name) + " request: " + " ".join(context.args))
 
-        logging.info('Restarting...')
+        logging.info("Restarting...")
         try:
-            await context.bot.send_message(chat_id=chat_id, text=str(self.messages['restarting']).replace('\\n', '\n'))
+            await context.bot.send_message(chat_id=chat_id, text=str(self.messages["restarting"]).replace("\\n", "\n"))
         except Exception as e:
-            logging.error('Error sending message! ' + str(e))
+            logging.error("Error sending message! " + str(e))
 
         # Restart chatbot
         self.ai_handler.authenticator.stop_chatbot()
@@ -228,12 +228,12 @@ class BotHandler:
         time.sleep(10)
 
         # Done
-        logging.info('Restarting done')
+        logging.info("Restarting done")
         try:
             await context.bot.send_message(chat_id=chat_id,
-                                           text=str(self.messages['restarting_done']).replace('\\n', '\n'))
+                                           text=str(self.messages["restarting_done"]).replace("\\n", "\n"))
         except Exception as e:
-            logging.error('Error sending message! ' + str(e))
+            logging.error("Error sending message! " + str(e))
 
     async def bot_command_draw(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
@@ -244,24 +244,24 @@ class BotHandler:
         """
         user = update.message.from_user
         chat_id = update.effective_chat.id
-        logging.info('/draw command from user ' + str(user.full_name) + ' request: ' + ' '.join(context.args))
+        logging.info("/draw command from user " + str(user.full_name) + " request: " + " ".join(context.args))
 
         try:
             if len(context.args) > 0:
                 # Combine all arguments to text
-                request = str(' '.join(context.args)).strip()
+                request = str(" ".join(context.args)).strip()
                 if len(request) > 0:
                     await self.create_request(request, update, context, RequestResponseContainer.REQUEST_TYPE_DALLE)
                 # No text
                 else:
                     await context.bot.send_message(chat_id=chat_id,
-                                                   text=str(self.messages['draw_no_text']).replace('\\n', '\n'))
+                                                   text=str(self.messages["draw_no_text"]).replace("\\n", "\n"))
             # No text
             else:
                 await context.bot.send_message(chat_id=chat_id,
-                                               text=str(self.messages['draw_no_text']).replace('\\n', '\n'))
+                                               text=str(self.messages["draw_no_text"]).replace("\\n", "\n"))
         except Exception as e:
-            logging.error('Error sending message! ' + str(e))
+            logging.error("Error sending message! " + str(e))
 
     async def bot_command_gpt(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
@@ -272,24 +272,24 @@ class BotHandler:
         """
         user = update.message.from_user
         chat_id = update.effective_chat.id
-        logging.info('/gpt command from user ' + str(user.full_name) + ' request: ' + ' '.join(context.args))
+        logging.info("/gpt command from user " + str(user.full_name) + " request: " + " ".join(context.args))
 
         try:
             if len(context.args) > 0:
                 # Combine all arguments to text
-                request = str(' '.join(context.args)).strip()
+                request = str(" ".join(context.args)).strip()
                 if len(request) > 0:
                     await self.create_request(request, update, context, RequestResponseContainer.REQUEST_TYPE_CHATGPT)
                 # No text
                 else:
                     await context.bot.send_message(chat_id=chat_id,
-                                                   text=str(self.messages['gpt_no_text']).replace('\\n', '\n'))
+                                                   text=str(self.messages["gpt_no_text"]).replace("\\n", "\n"))
             # No text
             else:
                 await context.bot.send_message(chat_id=chat_id,
-                                               text=str(self.messages['gpt_no_text']).replace('\\n', '\n'))
+                                               text=str(self.messages["gpt_no_text"]).replace("\\n", "\n"))
         except Exception as e:
-            logging.error('Error sending message! ' + str(e))
+            logging.error("Error sending message! " + str(e))
 
     async def bot_command_queue(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
@@ -301,23 +301,23 @@ class BotHandler:
         user = update.message.from_user
         chat_id = update.effective_chat.id
         processing_container = self.ai_handler.processing_container
-        logging.info('/queue command from user ' + str(user.full_name))
+        logging.info("/queue command from user " + str(user.full_name))
 
         # Queue is empty
         if self.requests_queue.empty() and processing_container is None:
             try:
                 await context.bot.send_message(chat_id=chat_id,
-                                               text=str(self.messages['queue_empty']).replace('\\n', '\n'))
+                                               text=str(self.messages["queue_empty"]).replace("\\n", "\n"))
             except Exception as e:
-                logging.error('Error sending message! ' + str(e))
+                logging.error("Error sending message! " + str(e))
         else:
-            message = ''
+            message = ""
 
             # Current request
             if processing_container is not None:
-                message += '1. ' + processing_container.user_name + ', '
+                message += "1. " + processing_container.user_name + ", "
                 message += RequestResponseContainer.REQUEST_NAMES[processing_container.request_type]
-                message += ': ' + processing_container.request + '\n\n'
+                message += ": " + processing_container.request + "\n\n"
 
             # From queue
             if not self.requests_queue.empty():
@@ -326,16 +326,16 @@ class BotHandler:
                     text_request = container.request
                     text_from = container.user_name
                     queue_index = (i + 1) if processing_container is not None else i
-                    message += str(queue_index + 1) + '. ' + text_from + ', '
+                    message += str(queue_index + 1) + ". " + text_from + ", "
                     message += RequestResponseContainer.REQUEST_NAMES[container.request_type]
-                    message += ': ' + text_request + '\n\n'
+                    message += ": " + text_request + "\n\n"
 
             # Send queue stats
             try:
-                await context.bot.send_message(chat_id=chat_id, text=str(self.messages['queue_stats'])
-                                               .format(message).replace('\\n', '\n'))
+                await context.bot.send_message(chat_id=chat_id, text=str(self.messages["queue_stats"])
+                                               .format(message).replace("\\n", "\n"))
             except Exception as e:
-                logging.error('Error sending message! ' + str(e))
+                logging.error("Error sending message! " + str(e))
 
     async def bot_command_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
@@ -346,14 +346,14 @@ class BotHandler:
         """
         user = update.message.from_user
         chat_id = update.effective_chat.id
-        logging.info('/help command from user ' + str(user.full_name))
+        logging.info("/help command from user " + str(user.full_name))
 
         # Send help message
         try:
             await context.bot.send_message(chat_id=chat_id,
-                                           text=str(self.messages['help_message']).replace('\\n', '\n'))
+                                           text=str(self.messages["help_message"]).replace("\\n", "\n"))
         except Exception as e:
-            logging.error('Error sending message! ' + str(e))
+            logging.error("Error sending message! " + str(e))
 
     async def bot_command_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
@@ -364,14 +364,14 @@ class BotHandler:
         """
         user = update.message.from_user
         chat_id = update.effective_chat.id
-        logging.info('/start command from user ' + str(user.full_name))
+        logging.info("/start command from user " + str(user.full_name))
 
         # Send start message
         try:
-            await context.bot.send_message(chat_id=chat_id, text=str(self.messages['start_message'])
-                                           .format(TELEGRAMUS_VERSION).replace('\\n', '\n'))
+            await context.bot.send_message(chat_id=chat_id, text=str(self.messages["start_message"])
+                                           .format(TELEGRAMUS_VERSION).replace("\\n", "\n"))
         except Exception as e:
-            logging.error('Error sending message! ' + str(e))
+            logging.error("Error sending message! " + str(e))
 
         # Send help message
         await self.bot_command_help(update, context)
@@ -391,35 +391,35 @@ class BotHandler:
                 # Escape all chars with \\
                 for i in range(len(MARKDOWN_ESCAPE)):
                     escape_char = MARKDOWN_ESCAPE[i]
-                    message = message.replace(escape_char, '\\' + escape_char)
+                    message = message.replace(escape_char, "\\" + escape_char)
 
                 try:
-                    await telegram.Bot(self.settings['telegram']['api_key']) \
+                    await telegram.Bot(self.settings["telegram"]["api_key"]) \
                         .sendMessage(chat_id=chat_id,
                                      text=message,
                                      reply_to_message_id=reply_to_message_id,
-                                     parse_mode='MarkdownV2')
+                                     parse_mode="MarkdownV2")
                 except Exception as e:
-                    logging.error('Error sending message! ' + str(e))
+                    logging.error("Error sending message! " + str(e))
 
             # Error parsing markdown
             except Exception as e:
                 logging.info(e)
                 try:
-                    await telegram.Bot(self.settings['telegram']['api_key']) \
+                    await telegram.Bot(self.settings["telegram"]["api_key"]) \
                         .sendMessage(chat_id=chat_id,
-                                     text=message.replace('\\n', '\n'),
+                                     text=message.replace("\\n", "\n"),
                                      reply_to_message_id=reply_to_message_id)
                 except Exception as e:
-                    logging.error('Error sending message! ' + str(e))
+                    logging.error("Error sending message! " + str(e))
         else:
             try:
-                await telegram.Bot(self.settings['telegram']['api_key']) \
+                await telegram.Bot(self.settings["telegram"]["api_key"]) \
                     .sendMessage(chat_id=chat_id,
-                                 text=message.replace('\\n', '\n'),
+                                 text=message.replace("\\n", "\n"),
                                  reply_to_message_id=reply_to_message_id)
             except Exception as e:
-                logging.error('Error sending message! ' + str(e))
+                logging.error("Error sending message! " + str(e))
 
     def response_loop(self):
         """
@@ -438,16 +438,16 @@ class BotHandler:
 
                 # DALL-E
                 else:
-                    asyncio.run(telegram.Bot(self.settings['telegram']['api_key'])
+                    asyncio.run(telegram.Bot(self.settings["telegram"]["api_key"])
                                 .sendPhoto(chat_id=response.chat_id,
                                            photo=response.response,
                                            reply_to_message_id=response.message_id))
             else:
                 asyncio.run(self.send_reply(response.chat_id,
-                                            str(self.messages['gpt_error']).format(response.response)
-                                            .replace('\\n', '\n'),
+                                            str(self.messages["gpt_error"]).format(response.response)
+                                            .replace("\\n", "\n"),
                                             response.message_id, False))
 
         # Loop finished
-        logging.warning('Response loop finished')
+        logging.warning("Response loop finished")
         self.response_loop_running = False

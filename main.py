@@ -29,16 +29,16 @@ import Authenticator
 import BotHandler
 from JSONReaderWriter import load_json
 
-TELEGRAMUS_VERSION = 'beta_3.0.0'
+TELEGRAMUS_VERSION = "beta_3.0.0"
 
 # Logging level (INFO for debug, WARN for release)
 LOGGING_LEVEL = logging.INFO
 
 # Files and directories
-SETTINGS_FILE = 'settings.json'
-MESSAGES_FILE = 'messages.json'
-CHATS_DIR = 'chats'
-LOGS_DIR = 'logs'
+SETTINGS_FILE = "settings.json"
+MESSAGES_FILE = "messages.json"
+CHATS_DIR = "chats"
+LOGS_DIR = "logs"
 
 
 def logging_setup():
@@ -51,12 +51,12 @@ def logging_setup():
         os.makedirs(LOGS_DIR)
 
     # Create logs formatter
-    log_formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    log_formatter = logging.Formatter("%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 
     # Setup logging into file
     file_handler = logging.FileHandler(os.path.join(LOGS_DIR,
-                                                    datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + '.log'),
-                                       encoding='utf-8')
+                                                    datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + ".log"),
+                                       encoding="utf-8")
     file_handler.setFormatter(log_formatter)
 
     # Setup logging into console
@@ -70,7 +70,7 @@ def logging_setup():
     root_logger.setLevel(LOGGING_LEVEL)
 
     # Log test message
-    logging.info('logging setup is complete')
+    logging.info("logging setup is complete")
 
 
 def exit_(signum, frame):
@@ -80,7 +80,7 @@ def exit_(signum, frame):
     :param frame:
     :return:
     """
-    logging.warning('Killing all threads...')
+    logging.warning("Killing all threads...")
     current_system_pid = os.getpid()
     psutil.Process(current_system_pid).terminate()
     exit(0)
@@ -92,13 +92,13 @@ def parse_args():
     :return:
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--settings', type=str, help='settings.json file location',
-                        default=os.getenv('TELEGRAMUS_SETTINGS_FILE', SETTINGS_FILE))
-    parser.add_argument('--messages', type=str, help='messages.json file location',
-                        default=os.getenv('TELEGRAMUS_MESSAGES_FILE', MESSAGES_FILE))
-    parser.add_argument('--chats', type=str, help='chats directory location',
-                        default=os.getenv('TELEGRAMUS_CHATS_DIR', CHATS_DIR))
-    parser.add_argument('--version', action='version', version=TELEGRAMUS_VERSION)
+    parser.add_argument("--settings", type=str, help="settings.json file location",
+                        default=os.getenv("TELEGRAMUS_SETTINGS_FILE", SETTINGS_FILE))
+    parser.add_argument("--messages", type=str, help="messages.json file location",
+                        default=os.getenv("TELEGRAMUS_MESSAGES_FILE", MESSAGES_FILE))
+    parser.add_argument("--chats", type=str, help="chats directory location",
+                        default=os.getenv("TELEGRAMUS_CHATS_DIR", CHATS_DIR))
+    parser.add_argument("--version", action="version", version=TELEGRAMUS_VERSION)
     return parser.parse_args()
 
 
@@ -142,5 +142,5 @@ def main():
     exit_(None, None)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
