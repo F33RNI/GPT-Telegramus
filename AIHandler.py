@@ -32,6 +32,7 @@ from JSONReaderWriter import load_json, save_json
 EMPTY_RESPONSE_ERROR_MESSAGE = 'Empty response or unhandled error!'
 ERROR_CHATGPT_DISABLED = 'ChatGPT module is disabled in settings.json'
 ERROR_DALLE_DISABLED = 'DALL-E module is disabled in settings.json'
+ERROR_EDGEGPT_DISABLED = 'EdgeGPT module is disabled in settings.json'
 
 CONVERSATION_DIR_OR_FILE = 'conversations'
 
