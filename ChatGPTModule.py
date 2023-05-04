@@ -126,6 +126,7 @@ class ChatGPTModule:
 
             # Increment requests_total for statistics
             request_response.user["requests_total"] += 1
+            self.users_handler.save_user(request_response.user)
 
             # Cooldown to prevent 429 Too Many Requests
             if time.time() - self._last_request_time <= self._cooldown_seconds:

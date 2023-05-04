@@ -21,13 +21,17 @@ import threading
 import time
 
 import ChatGPTModule
+import DALLEModule
 import RequestResponseContainer
 
 
 class QueueHandler:
-    def __init__(self, config: dict, chatgpt_module: ChatGPTModule.ChatGPTModule):
+    def __init__(self, config: dict,
+                 chatgpt_module: ChatGPTModule.ChatGPTModule,
+                 dalle_module: DALLEModule.DALLEModule):
         self.config = config
         self.chatgpt_module = chatgpt_module
+        self.dalle_module = dalle_module
 
         self.requests_queue = queue.Queue(maxsize=self.config["telegram"]["queue_max"])
         self.responses_queue = queue.Queue(maxsize=self.config["telegram"]["queue_max"])
@@ -106,6 +110,10 @@ class QueueHandler:
                 # ChatGPT
                 if request_response.request_type == RequestResponseContainer.REQUEST_TYPE_CHATGPT:
                     self.chatgpt_module.process_request(request_response)
+
+                # DALL-E
+                elif request_response.request_type == RequestResponseContainer.REQUEST_TYPE_DALLE:
+                    self.dalle_module.process_request(request_response)
 
                 # Wrong API type
                 else:

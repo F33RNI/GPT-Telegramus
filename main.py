@@ -23,6 +23,7 @@ import sys
 
 import BotHandler
 import ChatGPTModule
+import DALLEModule
 import QueueHandler
 import UsersHandler
 from JSONReaderWriter import load_json
@@ -106,12 +107,16 @@ def main():
 
     # Initialize classes
     user_handler = UsersHandler.UsersHandler(settings, messages)
+
     chatgpt_module = ChatGPTModule.ChatGPTModule(settings, messages, user_handler)
-    queue_handler = QueueHandler.QueueHandler(settings, chatgpt_module)
+    dalle_module = DALLEModule.DALLEModule(settings, messages, user_handler)
+
+    queue_handler = QueueHandler.QueueHandler(settings, chatgpt_module, dalle_module)
     bot_handler = BotHandler.BotHandler(settings, messages, user_handler, queue_handler, chatgpt_module)
 
     # Initialize modules
     chatgpt_module.initialize()
+    dalle_module.initialize()
 
     # Start processing loop in thread
     queue_handler.start_processing_loop()
