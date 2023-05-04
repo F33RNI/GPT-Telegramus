@@ -16,6 +16,7 @@
 """
 
 import argparse
+import asyncio
 import datetime
 import logging
 import os
@@ -24,6 +25,7 @@ import sys
 import BotHandler
 import ChatGPTModule
 import DALLEModule
+import EdgeGPTModule
 import QueueHandler
 import UsersHandler
 from JSONReaderWriter import load_json
@@ -110,13 +112,16 @@ def main():
 
     chatgpt_module = ChatGPTModule.ChatGPTModule(settings, messages, user_handler)
     dalle_module = DALLEModule.DALLEModule(settings, messages, user_handler)
+    edgegpt_module = EdgeGPTModule.EdgeGPTModule(settings, messages, user_handler)
 
-    queue_handler = QueueHandler.QueueHandler(settings, chatgpt_module, dalle_module)
-    bot_handler = BotHandler.BotHandler(settings, messages, user_handler, queue_handler, chatgpt_module)
+    queue_handler = QueueHandler.QueueHandler(settings, chatgpt_module, dalle_module, edgegpt_module)
+    bot_handler = BotHandler.BotHandler(settings, messages, user_handler, queue_handler,
+                                        chatgpt_module, edgegpt_module)
 
     # Initialize modules
     chatgpt_module.initialize()
     dalle_module.initialize()
+    edgegpt_module.initialize()
 
     # Start processing loop in thread
     queue_handler.start_processing_loop()
@@ -126,6 +131,7 @@ def main():
 
     # If we're here, exit requested
     chatgpt_module.exit()
+    edgegpt_module.exit()
     queue_handler.stop_processing_loop()
     logging.info("GPT-Telegramus exited successfully")
 

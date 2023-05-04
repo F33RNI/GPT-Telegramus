@@ -22,16 +22,19 @@ import time
 
 import ChatGPTModule
 import DALLEModule
+import EdgeGPTModule
 import RequestResponseContainer
 
 
 class QueueHandler:
     def __init__(self, config: dict,
                  chatgpt_module: ChatGPTModule.ChatGPTModule,
-                 dalle_module: DALLEModule.DALLEModule):
+                 dalle_module: DALLEModule.DALLEModule,
+                 edgegpt_module: EdgeGPTModule.EdgeGPTModule):
         self.config = config
         self.chatgpt_module = chatgpt_module
         self.dalle_module = dalle_module
+        self.edgegpt_module = edgegpt_module
 
         self.requests_queue = queue.Queue(maxsize=self.config["telegram"]["queue_max"])
         self.responses_queue = queue.Queue(maxsize=self.config["telegram"]["queue_max"])
@@ -114,6 +117,10 @@ class QueueHandler:
                 # DALL-E
                 elif request_response.request_type == RequestResponseContainer.REQUEST_TYPE_DALLE:
                     self.dalle_module.process_request(request_response)
+
+                # EdgeGPT
+                elif request_response.request_type == RequestResponseContainer.REQUEST_TYPE_EDGEGPT:
+                    self.edgegpt_module.process_request(request_response)
 
                 # Wrong API type
                 else:

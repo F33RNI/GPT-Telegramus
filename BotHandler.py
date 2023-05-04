@@ -26,6 +26,7 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 
 import ChatGPTModule
+import EdgeGPTModule
 import QueueHandler
 import RequestResponseContainer
 import UsersHandler
@@ -50,6 +51,7 @@ BOT_COMMAND_ADMIN_BROADCAST = "broadcast"
 
 # List of markdown chars to escape with \\
 MARKDOWN_ESCAPE = ["_", "*", "[", "]", "(", ")", "~", ">", "#", "+", "-", "=", "|", "{", "}", ".", "!"]
+MARKDOWN_ESCAPE_MINIMUM = ["_", "[", "]", "(", ")", "~", ">", "#", "+", "-", "=", "|", "{", "}", ".", "!"]
 
 # After how many seconds restart bot polling if error occurs
 RESTART_ON_ERROR_DELAY = 30
@@ -74,12 +76,14 @@ class BotHandler:
     def __init__(self, config: dict, messages: dict,
                  users_handler: UsersHandler.UsersHandler,
                  queue_handler: QueueHandler.QueueHandler,
-                 chatgpt_module: ChatGPTModule.ChatGPTModule):
+                 chatgpt_module: ChatGPTModule.ChatGPTModule,
+                 edgegpt_module: EdgeGPTModule.EdgeGPTModule):
         self.config = config
         self.messages = messages
         self.users_handler = users_handler
         self.queue_handler = queue_handler
         self.chatgpt_module = chatgpt_module
+        self.edgegpt_module = edgegpt_module
 
         self._application = None
         self._event_loop = None
@@ -343,6 +347,10 @@ class BotHandler:
         logging.info("Restarting")
         await _send_safe(user["user_id"], self.messages["restarting"], context)
 
+        # Restart EdgeGPT module
+        self.edgegpt_module.exit()
+        self.edgegpt_module.initialize()
+
         # Restart ChatGPT module
         self.chatgpt_module.exit()
         self.chatgpt_module.initialize()
@@ -445,7 +453,10 @@ class BotHandler:
         if user["banned"]:
             return
 
-        # Clear and send confirmation
+        # Clear EdgeGPT
+        self.edgegpt_module.clear_conversation()
+
+        # Clear ChatGPT and send confirmation
         if self.chatgpt_module.clear_conversation_for_user(user):
             await _send_safe(user["user_id"], self.messages["chat_cleared"], context)
         else:
@@ -503,9 +514,14 @@ class BotHandler:
             user["module"] = request_type
             self.users_handler.save_user(user)
 
-        # Extract user default module in message mode
         else:
-            request_type = user["module"]
+            # Automatically adjust message module
+            if self.config["modules"]["auto_module"]:
+                request_type = user["module"]
+
+            # Always use default module
+            else:
+                request_type = self.config["modules"]["default_module"]
 
         # Check request
         if not request_message or len(request_message) <= 0:
@@ -617,23 +633,39 @@ class BotHandler:
         if markdown:
             # Try parse markdown
             try:
-                # Escape all chars with \\
-                for i in range(len(MARKDOWN_ESCAPE)):
-                    escape_char = MARKDOWN_ESCAPE[i]
-                    message = message.replace(escape_char, "\\" + escape_char)
-
+                # Firstly, try without escaping
                 try:
-                    await telegram.Bot(self.config["telegram"]["api_key"]) \
-                        .sendMessage(chat_id=chat_id,
-                                     text=message,
-                                     reply_to_message_id=reply_to_message_id,
-                                     parse_mode="MarkdownV2")
-                except Exception as e:
-                    logging.error("Error sending message!", exc_info=e)
+                    # Escape some chars with \\
+                    for i in range(len(MARKDOWN_ESCAPE_MINIMUM)):
+                        escape_char = MARKDOWN_ESCAPE_MINIMUM[i]
+                        message = message.replace(escape_char, "\\" + escape_char)
+
+                    try:
+                        await telegram.Bot(self.config["telegram"]["api_key"]) \
+                            .sendMessage(chat_id=chat_id,
+                                         text=message,
+                                         reply_to_message_id=reply_to_message_id,
+                                         parse_mode="MarkdownV2")
+                    except Exception as e:
+                        logging.error("Error sending message!", exc_info=e)
+                except:
+                    # Escape all chars with \\
+                    for i in range(len(MARKDOWN_ESCAPE)):
+                        escape_char = MARKDOWN_ESCAPE[i]
+                        message = message.replace(escape_char, "\\" + escape_char)
+
+                    try:
+                        await telegram.Bot(self.config["telegram"]["api_key"]) \
+                            .sendMessage(chat_id=chat_id,
+                                         text=message,
+                                         reply_to_message_id=reply_to_message_id,
+                                         parse_mode="MarkdownV2")
+                    except Exception as e:
+                        logging.error("Error sending message!", exc_info=e)
 
             # Error parsing markdown - send as plain message
             except Exception as e:
-                logging.info(e)
+                logging.info("Error parsing markdown", exc_info=e)
                 try:
                     await telegram.Bot(self.config["telegram"]["api_key"]) \
                         .sendMessage(chat_id=chat_id,
@@ -706,8 +738,7 @@ class BotHandler:
                 # Response error
                 else:
                     asyncio.run(self._send_reply(request_response.user["user_id"],
-                                                 self.messages["response_error"].replace("\\n", "\n")
-                                                 .format(request_response.response),
+                                                 str(request_response.response),
                                                  request_response.message_id, False))
             # Exit requested
             except KeyboardInterrupt:

@@ -11,7 +11,10 @@
         "chatgpt_api_type": 3,
 
         "__comment04__": "Default module for handling user messages (see RequestResponseContainer.py)",
-        "default_module": 0
+        "default_module": 0,
+
+        "__comment05__": "Automatically change user module to handle plain messages after specific command",
+        "auto_module": false
     },
 
     "__comment02__": "CHATGPT  SETTINGS",
@@ -43,7 +46,7 @@
     },
 
     "__comment03__": "EDGEGPT SETTINGS",
-    "edgegpt_auth": {
+    "edgegpt": {
         "__comment01__": "AUTHORIZATION FOR EDGE-GPT. https://github.com/acheong08/EdgeGPT#getting-authentication-required",
         "cookie_file": "EdgeGPT_cookies.json",
         "wss_link": "",

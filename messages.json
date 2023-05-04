@@ -1,6 +1,6 @@
 {
   "start_message": "Hello, choomba!\\n\\nGPT-Telegramus version {0}\\n\\nAuthor: Fern Lane\\nContributors: Sergey Krashevich\\nChatGPT API: acheong08\\nEdgeGPT API: acheong08\\n\\nSupport the project by buying my music: https://f3rni.bandcamp.com",
-  "help_message": "/start - Welcome message and bot version\\n/help - Show this message\\n/chatgpt <request> - ChatGPT request\\n/edgegpt <request> - EdgeGPT request\\n/dalle <request> - Draw a picture with DALLE\\n/clear - Clear chat history (for ChatGPT only)\\n/chatid - Show your chat_id\\n\\nOr just send a text message",
+  "help_message": "/start - Welcome message and bot version\\n/help - Show this message\\n/chatgpt <request> - ChatGPT request\\n/edgegpt <request> - EdgeGPT request\\n/dalle <request> - Draw a picture with DALLE\\n/clear - Clear chat history (for ChatGPT and EdgeGPT)\\n/chatid - Show your chat_id\\n\\nOr just send a text message",
   "help_message_admin": "Admin commands:\\n/queue - Show requests queue\\n/restart - Restart GPT-Telegramus in case of error\\n/users - Show list of all users\\n/ban <id> [reason] - Ban a user by their id with reason (optional)\\n/unban <id> - Unban a user by their id\\n/broadcast <message> - Send text message to everyone except banned users",
   "empty_request": "Empty request, choomba!",
   "permissions_deny": "You do not have permission for this command!",
