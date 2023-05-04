@@ -16,9 +16,9 @@
 """
 import asyncio
 import logging
+from asyncio import AbstractEventLoop
 
 import EdgeGPT
-import nest_asyncio
 
 import UsersHandler
 from RequestResponseContainer import RequestResponseContainer
@@ -45,13 +45,18 @@ class EdgeGPTModule:
                 logging.warning("EdgeGPT module disabled in config file!")
                 return
 
+            # Create asyncio event loop
+            if asyncio.get_event_loop() is None:
+                asyncio.set_event_loop(asyncio.new_event_loop())
+
             # Initialize EdgeGPT chatbot
             self._chatbot = EdgeGPT.Chatbot()
             proxy = self.config["edgegpt"]["proxy"]
             if len(proxy) > 0:
-                asyncio.run(self._chatbot.create(cookie_path=self.config["edgegpt"]["cookie_file"], proxy=proxy))
+                asyncio.create_task(self._chatbot.create(cookie_path=self.config["edgegpt"]["cookie_file"],
+                                                         proxy=proxy))
             else:
-                asyncio.run(self._chatbot.create(cookie_path=self.config["edgegpt"]["cookie_file"]))
+                asyncio.create_task(self._chatbot.create(cookie_path=self.config["edgegpt"]["cookie_file"]))
 
             # Check
             if self._chatbot is not None:
@@ -150,8 +155,7 @@ class EdgeGPTModule:
         :return:
         """
         try:
-            nest_asyncio.apply()
-            asyncio.run(self._chatbot.reset())
+            asyncio.create_task(self._chatbot.reset())
         except Exception as e:
             logging.error("Error clearing EdgeGPT history!", exc_info=e)
 
@@ -163,7 +167,6 @@ class EdgeGPTModule:
         if self._chatbot is not None:
             logging.warning("Closing EdgeGPT connection")
             try:
-                nest_asyncio.apply()
-                asyncio.run(self._chatbot.close())
+                asyncio.create_task(self._chatbot.close())
             except Exception as e:
                 logging.error("Error closing EdgeGPT connection!", exc_info=e)
