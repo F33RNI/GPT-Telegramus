@@ -46,17 +46,18 @@ class EdgeGPTModule:
                 return
 
             # Create asyncio event loop
-            if asyncio.get_event_loop() is None:
-                asyncio.set_event_loop(asyncio.new_event_loop())
+            event_loop = asyncio.get_event_loop()
+            if event_loop is None:
+                event_loop = asyncio.new_event_loop()
 
             # Initialize EdgeGPT chatbot
             self._chatbot = EdgeGPT.Chatbot()
             proxy = self.config["edgegpt"]["proxy"]
             if len(proxy) > 0:
-                asyncio.create_task(self._chatbot.create(cookie_path=self.config["edgegpt"]["cookie_file"],
-                                                         proxy=proxy))
+                event_loop.create_task(self._chatbot.create(cookie_path=self.config["edgegpt"]["cookie_file"],
+                                                            proxy=proxy))
             else:
-                asyncio.create_task(self._chatbot.create(cookie_path=self.config["edgegpt"]["cookie_file"]))
+                event_loop.create_task(self._chatbot.create(cookie_path=self.config["edgegpt"]["cookie_file"]))
 
             # Check
             if self._chatbot is not None:
@@ -117,8 +118,8 @@ class EdgeGPTModule:
                 sources = edgegpt_response_raw["item"]["messages"][-1]["sourceAttributions"]
                 for i in range(len(sources)):
                     sources_str += "[{0}] {1} ({2})\n".format(i + 1,
-                                                                 sources[i]["providerDisplayName"],
-                                                                 sources[i]["seeMoreUrl"])
+                                                              sources[i]["providerDisplayName"],
+                                                              sources[i]["seeMoreUrl"])
             except:
                 pass
             if sources_str and len(sources_str) > 0:

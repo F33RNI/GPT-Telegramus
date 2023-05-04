@@ -311,12 +311,12 @@ class BotHandler:
 
         # Add them to message
         message = ""
-        for user in users:
-            message += "{0} ({1})\t{2}\t{3}\t{4}\n".format(user["user_id"],
-                                                           user["user_name"],
-                                                           user["admin"],
-                                                           user["banned"],
-                                                           user["requests_total"])
+        for user_info in users:
+            message += "{0} ({1})\t{2}\t{3}\t{4}\n".format(user_info["user_id"],
+                                                           user_info["user_name"],
+                                                           user_info["admin"],
+                                                           user_info["banned"],
+                                                           user_info["requests_total"])
 
         # Send list of users
         await _send_safe(user["user_id"], self.messages["users_admin"].format(message), context)
