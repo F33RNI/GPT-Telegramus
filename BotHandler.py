@@ -1,5 +1,5 @@
 """
- Copyright (C) 2022 Fern Lane, GPT-telegramus
+ Copyright (C) 2022 Fern Lane, GPT-Telegramus
  Licensed under the GNU Affero General Public License, Version 3.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
@@ -25,174 +25,295 @@ import telegram
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 
+import ChatGPTModule
+import QueueHandler
 import RequestResponseContainer
-from main import TELEGRAMUS_VERSION
+import UsersHandler
+from main import __version__
 
+# User commands
 BOT_COMMAND_START = "start"
 BOT_COMMAND_HELP = "help"
-BOT_COMMAND_QUEUE = "queue"
-BOT_COMMAND_GPT = "gpt"
-BOT_COMMAND_DRAW = "draw"
+BOT_COMMAND_CHATGPT = "chatgpt"
+BOT_COMMAND_EDGEGPT = "edgegpt"
+BOT_COMMAND_DALLE = "dalle"
 BOT_COMMAND_CLEAR = "clear"
-BOT_COMMAND_RESTART = "restart"
+BOT_COMMAND_CHAT_ID = "chatid"
+
+# Admin-only commands
+BOT_COMMAND_ADMIN_QUEUE = "queue"
+BOT_COMMAND_ADMIN_RESTART = "restart"
+BOT_COMMAND_ADMIN_USERS = "users"
+BOT_COMMAND_ADMIN_BAN = "ban"
+BOT_COMMAND_ADMIN_UNBAN = "unban"
+BOT_COMMAND_ADMIN_BROADCAST = "broadcast"
 
 # List of markdown chars to escape with \\
 MARKDOWN_ESCAPE = ["_", "*", "[", "]", "(", ")", "~", ">", "#", "+", "-", "=", "|", "{", "}", ".", "!"]
 
+# After how many seconds restart bot polling if error occurs
+RESTART_ON_ERROR_DELAY = 30
+
+
+async def _send_safe(chat_id: int, text: str, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Sends message without raising any error
+    :param chat_id:
+    :param context:
+    :return:
+    """
+    try:
+        await context.bot.send_message(chat_id=chat_id,
+                                       text=text.replace("\\n", "\n").replace("\\t", "\t"))
+    except Exception as e:
+        logging.error("Error sending {0} to {1}!".format(text.replace("\\n", "\n").replace("\\t", "\t"), chat_id),
+                      exc_info=e)
+
 
 class BotHandler:
-    def __init__(self, settings, messages, ai_handler):
-        self.settings = settings
+    def __init__(self, config: dict, messages: dict,
+                 users_handler: UsersHandler.UsersHandler,
+                 queue_handler: QueueHandler.QueueHandler,
+                 chatgpt_module: ChatGPTModule.ChatGPTModule):
+        self.config = config
         self.messages = messages
-        self.ai_handler = ai_handler
-        self.application = None
-        self.event_loop = None
+        self.users_handler = users_handler
+        self.queue_handler = queue_handler
+        self.chatgpt_module = chatgpt_module
 
-        # Response loop running flag
-        self.response_loop_running = False
+        self._application = None
+        self._event_loop = None
+        self._restart_requested_flag = False
+        self._exit_flag = False
+        self._response_loop_thread = None
 
-        # Requests queue
-        self.requests_queue = None
-
-        # Responses queue for AIHandler class
-        self.responses_queue = self.ai_handler.responses_queue
-
-        # Check settings and messages
-        if self.settings is not None and self.messages is not None:
-            # Initialize queue
-            self.requests_queue = queue.Queue(maxsize=self.settings["telegram"]["queue_max"])
-
-        # Settings or messages are None
-        else:
-            logging.error("Error starting BotHandler class due to wrong settings or messages")
-
-    def bot_start(self):
+    def start_bot(self):
         """
         Starts bot (blocking)
         :return:
         """
+        # Start response_loop as thread
+        self._response_loop_thread = threading.Thread(target=self._response_loop)
+        self._response_loop_thread.start()
+        logging.info("response_loop thread: {0}".format(self._response_loop_thread.name))
+
+        # Start telegram bot polling
+        logging.info("Starting telegram bot")
         while True:
             try:
                 # Build bot
-                builder = ApplicationBuilder().token(self.settings["telegram"]["api_key"])
-                builder.write_timeout(30)
-                builder.read_timeout(30)
-                self.application = builder.build()
-                self.application.add_handler(CommandHandler(BOT_COMMAND_START, self.bot_command_start))
-                self.application.add_handler(CommandHandler(BOT_COMMAND_HELP, self.bot_command_help))
-                self.application.add_handler(CommandHandler(BOT_COMMAND_QUEUE, self.bot_command_queue))
-                self.application.add_handler(CommandHandler(BOT_COMMAND_GPT, self.bot_command_gpt))
-                self.application.add_handler(CommandHandler(BOT_COMMAND_DRAW, self.bot_command_draw))
-                self.application.add_handler(CommandHandler(BOT_COMMAND_CLEAR, self.bot_command_clear))
-                self.application.add_handler(CommandHandler(BOT_COMMAND_RESTART, self.bot_command_restart))
-                self.application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), self.bot_read_message))
+                builder = ApplicationBuilder().token(self.config["telegram"]["api_key"])
+                builder.write_timeout(self.config["telegram"]["write_read_timeout"])
+                builder.read_timeout(self.config["telegram"]["write_read_timeout"])
+                self._application = builder.build()
+
+                # User commands
+                self._application.add_handler(CommandHandler(BOT_COMMAND_START, self.bot_command_start))
+                self._application.add_handler(CommandHandler(BOT_COMMAND_HELP, self.bot_command_help))
+                self._application.add_handler(CommandHandler(BOT_COMMAND_CHATGPT, self.bot_command_chatgpt))
+                self._application.add_handler(CommandHandler(BOT_COMMAND_EDGEGPT, self.bot_command_edgegpt))
+                self._application.add_handler(CommandHandler(BOT_COMMAND_DALLE, self.bot_command_dalle))
+                self._application.add_handler(CommandHandler(BOT_COMMAND_CLEAR, self.bot_command_clear))
+                self._application.add_handler(CommandHandler(BOT_COMMAND_CHAT_ID, self.bot_command_chatid))
+                self._application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), self.bot_message))
+
+                # Admin commands
+                self._application.add_handler(CommandHandler(BOT_COMMAND_ADMIN_QUEUE, self.bot_command_queue))
+                self._application.add_handler(CommandHandler(BOT_COMMAND_ADMIN_RESTART, self.bot_command_restart))
+                self._application.add_handler(CommandHandler(BOT_COMMAND_ADMIN_USERS, self.bot_command_users))
+                self._application.add_handler(CommandHandler(BOT_COMMAND_ADMIN_BAN, self.bot_command_ban))
+                self._application.add_handler(CommandHandler(BOT_COMMAND_ADMIN_UNBAN, self.bot_command_unban))
+                self._application.add_handler(CommandHandler(BOT_COMMAND_ADMIN_BROADCAST, self.bot_command_broadcast))
+
+                # Unknown command -> send help
+                self._application.add_handler(MessageHandler(filters.COMMAND, self.bot_command_help))
 
                 # Start bot
-                self.event_loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(self.event_loop)
-                self.event_loop.run_until_complete(self.application.run_polling())
+                self._event_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(self._event_loop)
+                self._event_loop.run_until_complete(self._application.run_polling())
+
+            # Exit requested
+            except KeyboardInterrupt:
+                logging.warning("KeyboardInterrupt @ bot_start")
+                break
+
+            # Bot error?
             except Exception as e:
-                logging.error("Telegram bot error! " + str(e))
-            logging.info("Restarting bot polling after 5 seconds...")
-            time.sleep(5)
-            logging.info("Restarting bot polling ...")
+                if "Event loop is closed" in str(e):
+                    if not self._restart_requested_flag:
+                        logging.warning("Stopping telegram bot")
+                        break
+                else:
+                    logging.error("Telegram bot error!", exc_info=e)
 
-    def reply_thread_start(self):
-        """
-        Starts background reply handler thread
-        :return:
-        """
-        # Set flag
-        self.response_loop_running = True
+            # Wait before restarting if needed
+            if not self._restart_requested_flag:
+                logging.info("Restarting bot polling after {0} seconds".format(RESTART_ON_ERROR_DELAY))
+                try:
+                    time.sleep(RESTART_ON_ERROR_DELAY)
+                # Exit requested while waiting for restart
+                except KeyboardInterrupt:
+                    logging.warning("KeyboardInterrupt @ bot_start")
+                    break
 
-        # Start thread
-        thread = threading.Thread(target=self.response_loop)
-        thread.start()
-        logging.info("Responses handler background thread: " + thread.name)
+            # Restart bot
+            logging.info("Restarting bot polling")
+            self._restart_requested_flag = False
 
-    async def create_request(self, request: str, update: Update, context: ContextTypes.DEFAULT_TYPE, request_type: int):
+        # If we're here, exit requested
+        self._stop_response_loop()
+        logging.warning("Telegram bot stopped")
+
+    async def bot_command_broadcast(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
-        Creates request to chatGPT
-        :param request:
+        /broadcast command
         :param update:
         :param context:
-        :param request_type:
         :return:
         """
+        # Get user
+        user = await self._user_check_get(update, context)
+
+        # Log command
+        logging.info("/broadcast command from {0} ({1})".format(user["user_name"], user["user_id"]))
+
+        # Exit if banned
+        if user["banned"]:
+            return
+
+        # Check for admin rules
+        if not user["admin"]:
+            await _send_safe(user["user_id"], self.messages["permissions_deny"], context)
+            return
+
+        # Check for message
+        if not context.args or len(context.args) < 1:
+            await _send_safe(user["user_id"], self.messages["broadcast_no_message"], context)
+            return
+
+        # Get message
+        broadcast_message = str(" ".join(context.args)).strip()
+
+        # Get list of users
+        users = self.users_handler.read_users()
+
+        # Broadcast to non-banned users
+        for user in users:
+            if not user["banned"]:
+                try:
+                    await telegram.Bot(self.config["telegram"]["api_key"]) \
+                        .sendMessage(chat_id=user["user_id"],
+                                     text=self.messages["broadcast"].replace("\\n", "\n").format(broadcast_message))
+                except Exception as e:
+                    logging.error("Error sending message!", exc_info=e)
+
+    async def bot_command_ban(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        await self.bot_command_ban_unban(True, update, context)
+
+    async def bot_command_unban(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        await self.bot_command_ban_unban(False, update, context)
+
+    async def bot_command_ban_unban(self, ban: bool, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """
+        /ban, /unban commands
+        :param ban: True to ban, False to unban
+        :param update:
+        :param context:
+        :return:
+        """
+        # Get user
+        user = await self._user_check_get(update, context)
+
+        # Log command
+        logging.info("/{0} command from {1} ({2})".format("ban" if ban else "unban",
+                                                          user["user_name"],
+                                                          user["user_id"]))
+
+        # Exit if banned
+        if user["banned"]:
+            return
+
+        # Check for admin rules
+        if not user["admin"]:
+            await _send_safe(user["user_id"], self.messages["permissions_deny"], context)
+            return
+
+        # Check user_id to ban
+        if not context.args or len(context.args) < 1:
+            await _send_safe(user["user_id"], self.messages["ban_no_user_id"], context)
+            return
         try:
-            user = update.message.from_user
-            chat_id = update.effective_chat.id
-
-            # Check queue length
-            if not self.requests_queue.full():
-                # Add request to queue
-                container = RequestResponseContainer.RequestResponseContainer(chat_id, user.full_name,
-                                                                              update.message.message_id,
-                                                                              request=request,
-                                                                              request_type=request_type)
-                self.requests_queue.put(container)
-
-                # Send confirmation message
-                if self.settings["telegram"]["show_queue_message"]:
-                    await context.bot.send_message(chat_id=chat_id, text=str(self.messages["queue_accepted"])
-                                                   .format(str(self.requests_queue.qsize()
-                                                               + (1 if self.ai_handler.
-                                                                  processing_container is not None else 0)),
-                                                           str(self.settings["telegram"]["queue_max"]))
-                                                   .replace("\\n", "\n"))
-            # Queue overflow
-            else:
-                await context.bot.send_message(chat_id=chat_id,
-                                               text=str(self.messages["queue_overflow"]).replace("\\n", "\n"))
+            ban_user_id = int(str(context.args[0]).strip())
         except Exception as e:
-            logging.error("Error creating request / sending message! " + str(e))
+            await _send_safe(user["user_id"], str(e), context)
+            return
 
-    async def bot_read_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """
-        Read message from user
-        :param update:
-        :param context:
-        :return:
-        """
-        chat_id = update.effective_chat.id
-        message = update.message.text.strip()
+        # Get ban reason
+        reason = self.messages["ban_reason_default"].replace("\\n", "\n")
+        if len(context.args) > 1:
+            reason = str(" ".join(context.args[1:])).strip()
 
-        if len(message) > 0:
-            await self.create_request(message, update, context, RequestResponseContainer.REQUEST_TYPE_CHATGPT)
-        # No message
+        # Get user to ban
+        banned_user = self.users_handler.get_user_by_id(ban_user_id)
+
+        # Ban / unban
+        banned_user["banned"] = ban
+        banned_user["ban_reason"] = reason
+
+        # Save user
+        self.users_handler.save_user(banned_user)
+
+        # Send confirmation
+        if ban:
+            await _send_safe(user["user_id"],
+                             self.messages["ban_message_admin"].format("{0} ({1})"
+                                                                       .format(banned_user["user_name"],
+                                                                               banned_user["user_id"]), reason),
+                             context)
         else:
-            try:
-                await context.bot.send_message(chat_id=chat_id,
-                                               text=str(self.messages["gpt_no_message"]).replace("\\n", "\n"))
-            except Exception as e:
-                logging.error("Error sending message! " + str(e))
+            await _send_safe(user["user_id"],
+                             self.messages["unban_message_admin"].format("{0} ({1})"
+                                                                         .format(banned_user["user_name"],
+                                                                                 banned_user["user_id"])),
+                             context)
 
-    async def bot_command_clear(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def bot_command_users(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
-        /clear command
+        /users command
         :param update:
         :param context:
         :return:
         """
-        user = update.message.from_user
-        chat_id = update.effective_chat.id
-        logging.info("/clear command from user " + str(user.full_name) + " request: " + " ".join(context.args))
+        # Get user
+        user = await self._user_check_get(update, context)
 
-        # Delete conversation
-        conversation_id, _ = self.ai_handler.get_chat(chat_id)
-        if conversation_id is not None and len(conversation_id) > 0:
-            try:
-                self.ai_handler.delete_conversation(conversation_id)
-            except Exception as e:
-                logging.warning("Error removing conversation " + str(conversation_id) + " " + str(e))
+        # Log command
+        logging.info("/users command from {0} ({1})".format(user["user_name"], user["user_id"]))
 
-        # Clear conversation ID and parent ID
-        self.ai_handler.set_chat(chat_id, None, None)
+        # Exit if banned
+        if user["banned"]:
+            return
 
-        try:
-            await context.bot.send_message(chat_id=chat_id, text=str(self.messages["chat_reset"]).replace("\\n", "\n"))
-        except Exception as e:
-            logging.error("Error sending message! " + str(e))
+        # Check for admin rules
+        if not user["admin"]:
+            await _send_safe(user["user_id"], self.messages["permissions_deny"], context)
+            return
+
+        # Get list of users
+        users = self.users_handler.read_users()
+
+        # Add them to message
+        message = ""
+        for user in users:
+            message += "{0} ({1})\t{2}\t{3}\t{4}\n".format(user["user_id"],
+                                                           user["user_name"],
+                                                           user["admin"],
+                                                           user["banned"],
+                                                           user["requests_total"])
+
+        # Send list of users
+        await _send_safe(user["user_id"], self.messages["users_admin"].format(message), context)
 
     async def bot_command_restart(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
@@ -201,182 +322,288 @@ class BotHandler:
         :param context:
         :return:
         """
-        user = update.message.from_user
-        chat_id = update.effective_chat.id
-        logging.info("/restart command from user " + str(user.full_name) + " request: " + " ".join(context.args))
+        # Get user
+        user = await self._user_check_get(update, context)
 
-        logging.info("Restarting...")
-        try:
-            await context.bot.send_message(chat_id=chat_id, text=str(self.messages["restarting"]).replace("\\n", "\n"))
-        except Exception as e:
-            logging.error("Error sending message! " + str(e))
+        # Log command
+        logging.info("/restart command from {0} ({1})".format(user["user_name"], user["user_id"]))
 
-        # Restart chatbot
-        self.ai_handler.authenticator.stop_chatbot()
-        self.ai_handler.authenticator.start_chatbot()
-        time.sleep(1)
+        # Exit if banned
+        if user["banned"]:
+            return
+
+        # Check for admin rules
+        if not user["admin"]:
+            await _send_safe(user["user_id"], self.messages["permissions_deny"], context)
+            return
+
+        # Send restarting message
+        logging.info("Restarting")
+        await _send_safe(user["user_id"], self.messages["restarting"], context)
+
+        # Restart ChatGPT module
+        self.chatgpt_module.exit()
+        self.chatgpt_module.initialize()
 
         # Restart telegram bot
-        if self.event_loop is not None:
-            self.event_loop.stop()
+        self._restart_requested_flag = True
+        self._event_loop.stop()
+        try:
+            self._event_loop.close()
+        except:
+            pass
+
+        def send_message_after_restart():
+            # Sleep while restarting
+            while self._restart_requested_flag:
+                time.sleep(1)
+
+            # Done?
+            logging.info("Restarting done")
             try:
-                self.event_loop.close()
-            except:
-                pass
+                asyncio.run(telegram.Bot(self.config["telegram"]["api_key"])
+                            .sendMessage(chat_id=user["user_id"],
+                                         text=self.messages["restarting_done"].replace("\\n", "\n")))
+            except Exception as e:
+                logging.error("Error sending message!", exc_info=e)
 
-        # Sleep some time again
-        time.sleep(10)
+        threading.Thread(target=send_message_after_restart).start()
 
-        # Done
-        logging.info("Restarting done")
-        try:
-            await context.bot.send_message(chat_id=chat_id,
-                                           text=str(self.messages["restarting_done"]).replace("\\n", "\n"))
-        except Exception as e:
-            logging.error("Error sending message! " + str(e))
-
-    async def bot_command_draw(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """
-        /draw command
-        :param update:
-        :param context:
-        :return:
-        """
-        user = update.message.from_user
-        chat_id = update.effective_chat.id
-        logging.info("/draw command from user " + str(user.full_name) + " request: " + " ".join(context.args))
-
-        try:
-            if len(context.args) > 0:
-                # Combine all arguments to text
-                request = str(" ".join(context.args)).strip()
-                if len(request) > 0:
-                    await self.create_request(request, update, context, RequestResponseContainer.REQUEST_TYPE_DALLE)
-                # No text
-                else:
-                    await context.bot.send_message(chat_id=chat_id,
-                                                   text=str(self.messages["draw_no_text"]).replace("\\n", "\n"))
-            # No text
-            else:
-                await context.bot.send_message(chat_id=chat_id,
-                                               text=str(self.messages["draw_no_text"]).replace("\\n", "\n"))
-        except Exception as e:
-            logging.error("Error sending message! " + str(e))
-
-    async def bot_command_gpt(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """
-        /gpt command
-        :param update:
-        :param context:
-        :return:
-        """
-        user = update.message.from_user
-        chat_id = update.effective_chat.id
-        logging.info("/gpt command from user " + str(user.full_name) + " request: " + " ".join(context.args))
-
-        try:
-            if len(context.args) > 0:
-                # Combine all arguments to text
-                request = str(" ".join(context.args)).strip()
-                if len(request) > 0:
-                    await self.create_request(request, update, context, RequestResponseContainer.REQUEST_TYPE_CHATGPT)
-                # No text
-                else:
-                    await context.bot.send_message(chat_id=chat_id,
-                                                   text=str(self.messages["gpt_no_text"]).replace("\\n", "\n"))
-            # No text
-            else:
-                await context.bot.send_message(chat_id=chat_id,
-                                               text=str(self.messages["gpt_no_text"]).replace("\\n", "\n"))
-        except Exception as e:
-            logging.error("Error sending message! " + str(e))
-
-    async def bot_command_queue(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def bot_command_queue(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         /queue command
         :param update:
         :param context:
         :return:
         """
-        user = update.message.from_user
-        chat_id = update.effective_chat.id
-        processing_container = self.ai_handler.processing_container
-        logging.info("/queue command from user " + str(user.full_name))
+        # Get user
+        user = await self._user_check_get(update, context)
+
+        # Log command
+        logging.info("/queue command from {0} ({1})".format(user["user_name"], user["user_id"]))
+
+        # Exit if banned
+        if user["banned"]:
+            return
+
+        # Check for admin rules
+        if not user["admin"]:
+            await _send_safe(user["user_id"], self.messages["permissions_deny"], context)
+            return
+
+        # Get queue as list
+        queue_list = self.queue_handler.get_queue_list()
 
         # Queue is empty
-        if self.requests_queue.empty() and processing_container is None:
-            try:
-                await context.bot.send_message(chat_id=chat_id,
-                                               text=str(self.messages["queue_empty"]).replace("\\n", "\n"))
-            except Exception as e:
-                logging.error("Error sending message! " + str(e))
+        if len(queue_list) == 0:
+            await _send_safe(user["user_id"], self.messages["queue_empty"], context)
         else:
             message = ""
-
-            # Current request
-            if processing_container is not None:
-                message += "1. " + processing_container.user_name + ", "
-                message += RequestResponseContainer.REQUEST_NAMES[processing_container.request_type]
-                message += ": " + processing_container.request + "\n\n"
-
-            # From queue
-            if not self.requests_queue.empty():
-                for i in range(self.requests_queue.qsize()):
-                    container = self.requests_queue.queue[i]
-                    text_request = container.request
-                    text_from = container.user_name
-                    queue_index = (i + 1) if processing_container is not None else i
-                    message += str(queue_index + 1) + ". " + text_from + ", "
-                    message += RequestResponseContainer.REQUEST_NAMES[container.request_type]
-                    message += ": " + text_request + "\n\n"
+            for i in range(len(queue_list)):
+                container = queue_list[i]
+                text_request = container.request
+                text_from = container.user["user_name"] + " (" + str(container.user["user_id"]) + ")"
+                message += str(i + 1) + ". " + text_from + ", "
+                message += RequestResponseContainer.REQUEST_NAMES[container.request_type]
+                message += ": " + text_request + "\n"
 
             # Send queue stats
-            try:
-                await context.bot.send_message(chat_id=chat_id, text=str(self.messages["queue_stats"])
-                                               .format(message).replace("\\n", "\n"))
-            except Exception as e:
-                logging.error("Error sending message! " + str(e))
+            await _send_safe(user["user_id"], message, context)
 
-    async def bot_command_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def bot_command_chatid(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """
+        /chatid command
+        :param update:
+        :param context:
+        :return:
+        """
+        # Get user
+        user = await self._user_check_get(update, context)
+
+        # Log command
+        logging.info("/chatid command from {0} ({1})".format(user["user_name"], user["user_id"]))
+
+        # Send chat id and not exit if banned
+        await _send_safe(user["user_id"], str(user["user_id"]), context)
+
+    async def bot_command_clear(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """
+        /clear command
+        :param update:
+        :param context:
+        :return:
+        """
+        # Get user
+        user = await self._user_check_get(update, context)
+
+        # Log command
+        logging.info("/clear command from {0} ({1})".format(user["user_name"], user["user_id"]))
+
+        # Exit if banned
+        if user["banned"]:
+            return
+
+        # Clear and send confirmation
+        if self.chatgpt_module.clear_conversation_for_user(user):
+            await _send_safe(user["user_id"], self.messages["chat_cleared"], context)
+        else:
+            await _send_safe(user["user_id"], self.messages["chat_not_cleared"], context)
+
+    async def bot_command_chatgpt(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.bot_command_or_message_request(RequestResponseContainer.REQUEST_TYPE_CHATGPT, update, context)
+
+    async def bot_command_edgegpt(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.bot_command_or_message_request(RequestResponseContainer.REQUEST_TYPE_EDGEGPT, update, context)
+
+    async def bot_command_dalle(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.bot_command_or_message_request(RequestResponseContainer.REQUEST_TYPE_DALLE, update, context)
+
+    async def bot_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.bot_command_or_message_request(-1, update, context)
+
+    async def bot_command_or_message_request(self, request_type: int,
+                                             update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """
+        /chatgpt, /edgegpt, /dalle or message request
+        :param request_type: -1 for message, or RequestResponseContainer.REQUEST_TYPE_...
+        :param update:
+        :param context:
+        :return:
+        """
+        # Get user
+        user = await self._user_check_get(update, context)
+
+        # Log command or message
+        if request_type == RequestResponseContainer.REQUEST_TYPE_CHATGPT:
+            logging.info("/chatgpt command from {0} ({1})".format(user["user_name"], user["user_id"]))
+        elif request_type == RequestResponseContainer.REQUEST_TYPE_EDGEGPT:
+            logging.info("/edgegpt command from {0} ({1})".format(user["user_name"], user["user_id"]))
+        elif request_type == RequestResponseContainer.REQUEST_TYPE_DALLE:
+            logging.info("/dalle command from {0} ({1})".format(user["user_name"], user["user_id"]))
+        else:
+            logging.info("Text message from {0} ({1})".format(user["user_name"], user["user_id"]))
+
+        # Exit if banned
+        if user["banned"]:
+            return
+
+        # Extract request
+        if request_type >= 0:
+            if context.args:
+                request_message = str(" ".join(context.args)).strip()
+            else:
+                request_message = ""
+        else:
+            request_message = update.message.text.strip()
+
+        # Set default user module
+        if request_type >= 0:
+            user["module"] = request_type
+            self.users_handler.save_user(user)
+
+        # Extract user default module in message mode
+        else:
+            request_type = user["module"]
+
+        # Check request
+        if not request_message or len(request_message) <= 0:
+            await _send_safe(user["user_id"], self.messages["empty_request"], context)
+            return
+
+        # Check queue
+        if self.queue_handler.requests_queue.full():
+            await _send_safe(user["user_id"], self.messages["queue_overflow"], context)
+            return
+
+        # Create request
+        request_response = RequestResponseContainer.RequestResponseContainer(user, update.message.message_id,
+                                                                             request=request_message,
+                                                                             request_type=request_type)
+
+        # Add request to the queue
+        logging.info("Adding new {0} request from {1} ({2}) to the queue".format(request_type,
+                                                                                 user["user_name"],
+                                                                                 user["user_id"]))
+        self.queue_handler.requests_queue.put(request_response, block=True)
+
+        # Send confirmation
+        if self.config["telegram"]["show_queue_message"]:
+            await _send_safe(user["user_id"],
+                             self.messages["queue_accepted"].format(len(self.queue_handler.get_queue_list()),
+                                                                    self.config["telegram"]["queue_max"]), context)
+
+    async def bot_command_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         /help command
         :param update:
         :param context:
         :return:
         """
-        user = update.message.from_user
-        chat_id = update.effective_chat.id
-        logging.info("/help command from user " + str(user.full_name))
+        # Get user
+        user = await self._user_check_get(update, context)
 
-        # Send help message
-        try:
-            await context.bot.send_message(chat_id=chat_id,
-                                           text=str(self.messages["help_message"]).replace("\\n", "\n"))
-        except Exception as e:
-            logging.error("Error sending message! " + str(e))
+        # Log command
+        logging.info("/help command from {0} ({1})".format(user["user_name"], user["user_id"]))
 
-    async def bot_command_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        # Exit if banned
+        if user["banned"]:
+            return
+
+        # Send default help message
+        await _send_safe(user["user_id"], self.messages["help_message"], context)
+
+        # Send admin help message
+        if user["admin"]:
+            await _send_safe(user["user_id"], self.messages["help_message_admin"], context)
+
+    async def bot_command_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         /start command
         :param update:
         :param context:
         :return:
         """
-        user = update.message.from_user
-        chat_id = update.effective_chat.id
-        logging.info("/start command from user " + str(user.full_name))
+        # Get user
+        user = await self._user_check_get(update, context)
+
+        # Log command
+        logging.info("/start command from {0} ({1})".format(user["user_name"], user["user_id"]))
+
+        # Exit if banned
+        if user["banned"]:
+            return
 
         # Send start message
-        try:
-            await context.bot.send_message(chat_id=chat_id, text=str(self.messages["start_message"])
-                                           .format(TELEGRAMUS_VERSION).replace("\\n", "\n"))
-        except Exception as e:
-            logging.error("Error sending message! " + str(e))
+        await _send_safe(user["user_id"], self.messages["start_message"].format(__version__), context)
 
         # Send help message
         await self.bot_command_help(update, context)
 
-    async def send_reply(self, chat_id: int, message: str, reply_to_message_id: int, markdown=False):
+    async def _user_check_get(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> dict:
+        """
+        Gets (or creates) user based on update.effective_chat.id and update.message.from_user.full_name
+        and checks if they are banned or not
+        :param update:
+        :param context:
+        :return: user as dictionary
+        """
+        # Get user (or create a new one)
+        telegram_user_name = update.message.from_user.full_name if update.message is not None else None
+        telegram_chat_id = update.effective_chat.id
+        user = self.users_handler.get_user_by_id(telegram_chat_id)
+
+        # Update user name
+        if telegram_user_name is not None:
+            user["user_name"] = str(telegram_user_name)
+            self.users_handler.save_user(user)
+
+        # Send banned info
+        if user["banned"]:
+            await _send_safe(telegram_chat_id, self.messages["ban_message_user"].format(user["ban_reason"]), context)
+
+        return user
+
+    async def _send_reply(self, chat_id: int, message: str, reply_to_message_id: int, markdown=False) -> None:
         """
         Sends reply to chat
         :param chat_id: Chat id to send to
@@ -394,60 +621,100 @@ class BotHandler:
                     message = message.replace(escape_char, "\\" + escape_char)
 
                 try:
-                    await telegram.Bot(self.settings["telegram"]["api_key"]) \
+                    await telegram.Bot(self.config["telegram"]["api_key"]) \
                         .sendMessage(chat_id=chat_id,
                                      text=message,
                                      reply_to_message_id=reply_to_message_id,
                                      parse_mode="MarkdownV2")
                 except Exception as e:
-                    logging.error("Error sending message! " + str(e))
+                    logging.error("Error sending message!", exc_info=e)
 
-            # Error parsing markdown
+            # Error parsing markdown - send as plain message
             except Exception as e:
                 logging.info(e)
                 try:
-                    await telegram.Bot(self.settings["telegram"]["api_key"]) \
+                    await telegram.Bot(self.config["telegram"]["api_key"]) \
                         .sendMessage(chat_id=chat_id,
                                      text=message.replace("\\n", "\n"),
                                      reply_to_message_id=reply_to_message_id)
                 except Exception as e:
-                    logging.error("Error sending message! " + str(e))
+                    logging.error("Error sending message!", exc_info=e)
+
+        # Markdown parsing is disabled - send as plain message
         else:
             try:
-                await telegram.Bot(self.settings["telegram"]["api_key"]) \
+                await telegram.Bot(self.config["telegram"]["api_key"]) \
                     .sendMessage(chat_id=chat_id,
                                  text=message.replace("\\n", "\n"),
                                  reply_to_message_id=reply_to_message_id)
             except Exception as e:
-                logging.error("Error sending message! " + str(e))
+                logging.error("Error sending message!", exc_info=e)
 
-    def response_loop(self):
+    def _stop_response_loop(self) -> None:
+        """
+        Stops response_loop thread
+        :return:
+        """
+        logging.warning("Stopping response_loop")
+        self._exit_flag = True
+        if self._response_loop_thread.is_alive():
+            self._response_loop_thread.join()
+
+    def _response_loop(self) -> None:
         """
         Background loop for handling responses
         :return:
         """
-        while self.response_loop_running and self.responses_queue is not None:
-            # Get response
-            response = self.responses_queue.get(block=True)
+        logging.info("Starting response_loop")
+        self._exit_flag = False
+        while not self._exit_flag:
+            try:
+                # Wait until response and get it or exit
+                request_response = None
+                while True:
+                    try:
+                        request_response = self.queue_handler.responses_queue.get(block=True, timeout=1)
+                        break
+                    except queue.Empty:
+                        if self._exit_flag:
+                            break
+                    except KeyboardInterrupt:
+                        self._exit_flag = True
+                        break
+                if self._exit_flag or request_response is None:
+                    break
 
-            # Send reply
-            if not response.error:
-                # ChatGPT
-                if response.request_type == RequestResponseContainer.REQUEST_TYPE_CHATGPT:
-                    asyncio.run(self.send_reply(response.chat_id, response.response, response.message_id, True))
+                # Send reply
+                if not request_response.error:
+                    # Text response (ChatGPT, EdgeGPT)
+                    if request_response.request_type == RequestResponseContainer.REQUEST_TYPE_CHATGPT \
+                            or request_response.request_type == RequestResponseContainer.REQUEST_TYPE_EDGEGPT:
+                        asyncio.run(self._send_reply(request_response.user["user_id"],
+                                                     request_response.response,
+                                                     request_response.message_id,
+                                                     markdown=True))
 
-                # DALL-E
+                    # Image response (DALL-E)
+                    else:
+                        asyncio.run(telegram.Bot(self.config["telegram"]["api_key"])
+                                    .sendPhoto(chat_id=request_response.user["user_id"],
+                                               photo=request_response.response,
+                                               reply_to_message_id=request_response.message_id))
+
+                # Response error
                 else:
-                    asyncio.run(telegram.Bot(self.settings["telegram"]["api_key"])
-                                .sendPhoto(chat_id=response.chat_id,
-                                           photo=response.response,
-                                           reply_to_message_id=response.message_id))
-            else:
-                asyncio.run(self.send_reply(response.chat_id,
-                                            str(self.messages["gpt_error"]).format(response.response)
-                                            .replace("\\n", "\n"),
-                                            response.message_id, False))
+                    asyncio.run(self._send_reply(request_response.user["user_id"],
+                                                 self.messages["response_error"].replace("\\n", "\n")
+                                                 .format(request_response.response),
+                                                 request_response.message_id, False))
+            # Exit requested
+            except KeyboardInterrupt:
+                logging.warning("KeyboardInterrupt @ response_loop")
+                break
 
-        # Loop finished
-        logging.warning("Response loop finished")
-        self.response_loop_running = False
+            # Oh no, error! Why?
+            except Exception as e:
+                logging.error("Error in response_loop!", exc_info=e)
+                time.sleep(1)
+
+        logging.warning("response_loop finished")

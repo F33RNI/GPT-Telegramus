@@ -1,5 +1,5 @@
 """
- Copyright (C) 2022 Fern Lane, GPT-telegramus
+ Copyright (C) 2023 Fern Lane, GPT-Telegramus
  Licensed under the GNU Affero General Public License, Version 3.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
@@ -17,14 +17,19 @@
 
 REQUEST_TYPE_CHATGPT = 0
 REQUEST_TYPE_DALLE = 1
+REQUEST_TYPE_EDGEGPT = 2
 
-REQUEST_NAMES = ["ChatGPT", "DALL-E"]
+REQUEST_NAMES = ["ChatGPT", "DALL-E", "EdgeGPT"]
 
 
 class RequestResponseContainer:
-    def __init__(self, chat_id, user_name, message_id, request="", response="", request_type=REQUEST_TYPE_CHATGPT):
-        self.chat_id = chat_id
-        self.user_name = user_name
+    def __init__(self,
+                 user: dict,
+                 message_id: int,
+                 request="",
+                 response="",
+                 request_type=REQUEST_TYPE_CHATGPT) -> None:
+        self.user = user
         self.message_id = message_id
         self.request = request
         self.response = response

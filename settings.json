@@ -1,78 +1,94 @@
 {
-  "__comment01__": "SPECIFY WHAT MODULES WILL BE INCLUDED IN TELEGRAM BOT AND revChatGPT API TYPE (currently available only 1 or 3)",
-  "__comment02__": "1 - https://github.com/acheong08/ChatGPT#v1-standard-chatgpt",
-  "__comment03__": "3 - (RECOMMENDED) https://github.com/acheong08/ChatGPT#v3-official-chat-api",
-  "modules": {
-    "chatgpt": true,
-    "chatgpt_api_type": 3,
-    "edge-gpt": true,
-    "dalle": true
-  },
+    "__comment01__": "SPECIFY WHAT MODULES WILL BE INCLUDED IN TELEGRAM BOT",
+    "modules": {
+        "chatgpt": true,
+        "edgegpt": true,
+        "dalle": true,
 
-  "__comment04__": "AUTHORIZATION FOR CHATGPT",
-  "chatgpt_auth": {
-    "__comment01__": "API_KEY FROM https://platform.openai.com/account/api-keys. ONLY FOR API TYPES 0, 2 AND 3",
-    "api_key": "",
+        "__comment01__": "SPECIFY revChatGPT API TYPE (currently available only 1 or 3)",
+        "__comment02__": "1 - https://github.com/acheong08/ChatGPT#v1-standard-chatgpt",
+        "__comment03__": "3 - (RECOMMENDED) https://github.com/acheong08/ChatGPT#v3-official-chat-api",
+        "chatgpt_api_type": 3,
 
-    "__comment02__": "MODEL NAME FOR API TYPE 0 AND 3",
-    "__comment03__": "DEFAULT FOR API TYPE 0: text-davinci-003",
-    "__comment04__": "DEFAULT FOR API TYPE 3: gpt-3.5-turbo",
-    "engine": "",
+        "__comment04__": "Default module for handling user messages (see RequestResponseContainer.py)",
+        "default_module": 0
+    },
 
-    "__comment05__": "FOR API TYPE 1 ACCESS TOKEN IS RECOMMENDED. GET IT FROM https://chat.openai.com/api/auth/session",
-    "__comment06__": "OR SESSION_TOKEN (FROM COOKIES ON chat.openai.com AS __Secure-next-auth.session-token",
-    "email": "",
-    "password": "",
-    "session_token": "",
-    "access_token": "",
+    "__comment02__": "CHATGPT  SETTINGS",
+    "chatgpt": {
+        "__comment01__": "API_KEY FROM https://platform.openai.com/account/api-keys. ONLY FOR API 3",
+        "api_key": "",
 
-    "__comment07__": "URL FOR API REQUESTS. ONLY FOR API TYPE 1. SPECIFY NOTHING TO USE DEFAULT VALUE",
-    "base_url": ""
-  },
+        "__comment02__": "MODEL NAME FOR API TYPE 3 (default: gpt-3.5-turbo)",
+        "engine": "",
 
-  "__comment05__": "AUTHORIZATION FOR EDGE-GPT. https://github.com/acheong08/EdgeGPT#getting-authentication-required",
-  "edgegpt_auth": {
-    "cookie_file": "EdgeGPT_cookies.json",
-    "wss_link": "wss://sydney.bing.com/sydney/ChatHub",
-    "conversation_style_type_default": "balanced"
-  },
+        "__comment03__": "FOR API TYPE 1 ACCESS TOKEN IS RECOMMENDED. GET IT FROM https://chat.openai.com/api/auth/session",
+        "__comment04__": "OR SESSION_TOKEN (FROM COOKIES ON chat.openai.com AS __Secure-next-auth.session-token",
+        "email": "",
+        "password": "",
+        "session_token": "",
+        "access_token": "",
 
-  "__comment06__": "PROXIES TO BYPASS COUNTRY RESTRICTIONS FOR CHATGPT / EDGEGPT",
-  "__comment07__": "IN AUTO MODE PROXIES WILL BE REQUESTED FROM http://free-proxy-list.net/",
-  "__comment08__": "IF AUTO IS FALSE, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
-  "__comment09__": "SPECIFY THE INTERVAL HOW LONG TO CHECK THE PROXY BY ASKING A QUESTION. OR SET 0 TO DISABLE CHECK",
-  "__comment10__": "SPECIFY THE QUESTION WHICH THE APP WILL ASK AND THE TEXT WHICH SHOULD BE IN THE ANSWER",
-  "proxy": {
-    "enabled": false,
-    "auto": true,
-    "manual_proxy": "",
-    "https_only": true,
-    "proxy_checks_enabled": true,
-    "check_interval_seconds": 600,
-    "check_message": "1+1",
-    "check_message_timeout": 240,
-    "check_reply_must_include": "2",
-    "max_number_of_processes": 5,
-    "initialization_timeout": 60,
-    "too_many_requests_wait_time_seconds": 600
-  },
+        "__comment05__": "SET TO TRUE IF YOU HAVE PAID ACCOUNT",
+        "paid": false,
 
-  "__comment11__": "FOR REQUESTS TO DALL-E PROVIDE YOUR API_KEY FROM https://platform.openai.com/account/api-keys",
-  "__comment12__": "SPECIFY FORMAT OF GENERATED IMAGES (256x256 or 512x512 or 1024x1024)",
-  "__comment13__": "SPECIFY IS PROXY NEEDED FOR DALLE (SAME PROXY AS FOR CHATGPT / EDGEGPT)",
-  "dalle": {
-    "open_ai_api_key": "",
-    "image_size": "512x512",
-    "use_proxy": true
-  },
+        "__comment06__": "URL FOR API REQUESTS. ONLY FOR API TYPE 1. SPECIFY NOTHING TO USE DEFAULT VALUE",
+        "base_url": "",
 
-  "__comment14__": "PROVIDE YOUR BOT API KEY FROM https://t.me/BotFather",
-  "__comment15__": "SPECIFY THE SIZE OF THE REQUEST QUEUE AND WHETHER TO SHOW A MESSAGE ABOUT ADDING TO THE QUEUE",
-  "__comment16__": "SPECIFY THE chat_id OF THOSE WHO CAN USE ADMINISTRATOR COMMANDS",
-  "telegram": {
-    "api_key": "",
-    "admin_ids": [],
-    "queue_max": 5,
-    "show_queue_message": true
-  }
+        "__comment07__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+        "proxy": "",
+
+        "__comment08__": "MINIMUM INTERVAL (IN SECONDS) BETWEEN EACH CHATGPT REQUEST",
+        "cooldown_seconds": 20
+    },
+
+    "__comment03__": "EDGEGPT SETTINGS",
+    "edgegpt_auth": {
+        "__comment01__": "AUTHORIZATION FOR EDGE-GPT. https://github.com/acheong08/EdgeGPT#getting-authentication-required",
+        "cookie_file": "EdgeGPT_cookies.json",
+        "wss_link": "",
+
+        "__comment02__": "creative / balanced / precise",
+        "conversation_style_type": "balanced",
+
+        "__comment03__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+        "proxy": ""
+    },
+
+    "__comment04__": "DALL-E SETTINGS",
+    "dalle": {
+        "__comment01__": "FOR REQUESTS TO DALL-E PROVIDE YOUR API_KEY FROM https://platform.openai.com/account/api-keys",
+        "open_ai_api_key": "",
+
+        "__comment02__": "SPECIFY FORMAT OF GENERATED IMAGES (256x256 or 512x512 or 1024x1024)",
+        "image_size": "512x512",
+
+        "__comment03__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+        "proxy": ""
+    },
+
+    "__comment05__": "TELEGRAM SETTINGS",
+    "telegram": {
+        "__comment01__": "PROVIDE YOUR BOT API KEY FROM https://t.me/BotFather",
+        "api_key": "",
+
+        "__comment02__": "TELEGRAM BOT TIMEOUTS",
+        "write_read_timeout": 30,
+
+        "__comment03__": "SPECIFY THE chat_id OF THOSE WHO CAN USE ADMINISTRATOR COMMANDS",
+        "admin_ids": [],
+
+        "__comment04__": "SET TO TRUE TO BLOCK NEW USERS BY DEFAULT (WHITELIST)",
+        "ban_by_default": false,
+
+        "__comment05__": "SPECIFY THE SIZE OF THE REQUEST QUEUE AND WHETHER TO SHOW A MESSAGE ABOUT ADDING TO THE QUEUE",
+        "queue_max": 10,
+        "show_queue_message": true
+    },
+
+    "__comment06__": "FILES AND DIRECTORIES SETTINGS",
+    "files": {
+        "users_database": "users.json",
+        "conversations_dir": "conversations"
+    }
 }
