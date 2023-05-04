@@ -199,11 +199,13 @@ class BotHandler:
         users = self.users_handler.read_users()
 
         # Broadcast to non-banned users
-        for user in users:
-            if not user["banned"]:
+        for broadcast_user in users:
+            if not broadcast_user["banned"]:
                 try:
+                    logging.info("broadcasting to: {0} ({1})".format(broadcast_user["user_name"],
+                                                                     broadcast_user["user_id"]))
                     await telegram.Bot(self.config["telegram"]["api_key"]) \
-                        .sendMessage(chat_id=user["user_id"],
+                        .sendMessage(chat_id=broadcast_user["user_id"],
                                      text=self.messages["broadcast"].replace("\\n", "\n").format(broadcast_message))
                 except Exception as e:
                     logging.error("Error sending message!", exc_info=e)
