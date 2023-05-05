@@ -1,7 +1,7 @@
 {
   "start_message": "Hello, \uD83D\uDC4B choomba! \uD83D\uDC4B\\n\\nGPT-Telegramus version \uD83D\uDCC4 {0}\\n\\nGPT-Telegramus author: Fern Lane\\nContributors: Sergey Krashevich\\nChatGPT API: acheong08\\nEdgeGPT API: acheong08\\nBard API: acheong08\\n\\nSupport the project by buying my music: https://f3rni.bandcamp.com",
-  "help_message": "\uD83D\uDCC4 /start - Welcome message and bot version\\n\uD83D\uDCD9 /help - Show this message\\n\uD83E\uDD16 /chatgpt <request> - ChatGPT request\\n\uD83D\uDD35 /edgegpt <request> - EdgeGPT request\\n\uD83D\uDDA5 /bard <request> - Bard request\\n\uD83D\uDDBC /dalle <request> - Draw a picture with DALL-E\\n\uD83E\uDDF9 /clear <module> - Clear chat history (chatgpt / edgegpt / bard)\\n\uD83C\uDD94 /chatid - Show your chat_id\\n\\n\uD83D\uDCAC Or just send a text message",
-  "help_message_admin": "Admin commands:\\n/queue - Show requests queue\\n/restart - Restart modules and telegram bot\\n/users - Show list of all users\\n/ban <id> [reason] - Ban a user by their id with reason (optional)\\n/unban <id> - Unban a user by their id\\n/broadcast <message> - Send text message to everyone except banned users",
+  "help_message": "\uD83D\uDCC4 /start - Welcome message and bot version\\n❓ /help - Show this message\\n\uD83E\uDD16 /chatgpt <request> - ChatGPT request\\n\uD83D\uDD35 /edgegpt <request> - EdgeGPT request\\n\uD83D\uDDA5 /bard <request> - Bard request\\n\uD83D\uDDBC /dalle <request> - Draw a picture with DALL-E\\n\uD83E\uDDF9 /clear <module> - Clear chat history (chatgpt / edgegpt / bard)\\n\uD83C\uDD94 /chatid - Show your chat_id\\n\\n\uD83D\uDCAC Or just send a text message",
+  "help_message_admin": "Admin commands:\\n\\n\uD83D\uDCAC /queue - Show requests queue\\n\uD83D\uDD03 /restart - Restart modules and telegram bot\\n\uD83D\uDC64 /users - Show list of all users\\n\uD83D\uDD28 /ban <id> [reason] - Ban a user by their id with reason (optional)\\n\uD83D\uDD13 /unban <id> - Unban a user by their id\\n\uD83D\uDCE2 /broadcast <message> - Send text message to everyone except banned users",
   "empty_request": "Empty request, \uD83E\uDD74 choomba!",
   "permissions_deny": "You do not have permission for this command! \uD83D\uDD28",
   "queue_overflow": "Queue is full. Try again later ⏳",
@@ -20,5 +20,8 @@
   "ban_reason_default": "Reason not specified. Maybe the whitelist is enabled or you pissed off the admin \uD83D\uDE02",
   "unban_message_admin": "Unbanned user: {0}",
   "broadcast_no_message": "No message to broadcast!",
-  "broadcast": "\uD83D\uDCE2 GPT-TELEGRAMUS \uD83D\uDCE2\\n\\n{0}"
+  "broadcast": "\uD83D\uDCE2 GPT-TELEGRAMUS \uD83D\uDCE2\\n\\n{0}",
+  "modules": [
+    "\uD83E\uDD16 ChatGPT", "\uD83D\uDDBC DALL-E", "\uD83D\uDD35 EdgeGPT", "\uD83D\uDDA5 Bard"
+  ]
 }
