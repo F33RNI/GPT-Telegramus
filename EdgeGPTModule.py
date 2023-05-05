@@ -23,6 +23,27 @@ import UsersHandler
 from RequestResponseContainer import RequestResponseContainer
 
 
+def async_helper(awaitable_) -> None:
+    """
+    Runs async function inside sync
+    :param awaitable_:
+    :return:
+    """
+    # Try to get current event loop
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    # Check it
+    if loop and loop.is_running():
+        loop.create_task(awaitable_)
+
+    # We need new event loop
+    else:
+        asyncio.run(awaitable_)
+
+
 class EdgeGPTModule:
     def __init__(self, config: dict, messages: dict, users_handler: UsersHandler.UsersHandler) -> None:
         self.config = config
@@ -45,18 +66,18 @@ class EdgeGPTModule:
                 return
 
             # Create asyncio event loop
-            event_loop = asyncio.get_event_loop()
-            if event_loop is None:
-                event_loop = asyncio.new_event_loop()
+            # event_loop = asyncio.get_event_loop()
+            # if event_loop is None:
+            #    event_loop = asyncio.new_event_loop()
 
             # Initialize EdgeGPT chatbot
             self._chatbot = EdgeGPT.Chatbot()
             proxy = self.config["edgegpt"]["proxy"]
             if len(proxy) > 0:
-                event_loop.create_task(self._chatbot.create(cookie_path=self.config["edgegpt"]["cookie_file"],
-                                                            proxy=proxy))
+                async_helper(self._chatbot.create(cookie_path=self.config["edgegpt"]["cookie_file"],
+                                                  proxy=proxy))
             else:
-                event_loop.create_task(self._chatbot.create(cookie_path=self.config["edgegpt"]["cookie_file"]))
+                async_helper(self._chatbot.create(cookie_path=self.config["edgegpt"]["cookie_file"]))
 
             # Check
             if self._chatbot is not None:
@@ -86,7 +107,9 @@ class EdgeGPTModule:
             request_response.user["requests_total"] += 1
             self.users_handler.save_user(request_response.user)
 
-            async def async_wrapper():
+            edgegpt_response_raw = []
+
+            async def async_wrapper(edgegpt_response_raw_):
                 conversation_style = EdgeGPT.ConversationStyle.balanced
                 if self.config["edgegpt"]["conversation_style_type"] == "creative":
                     conversation_style = EdgeGPT.ConversationStyle.creative
@@ -96,15 +119,16 @@ class EdgeGPTModule:
                 wss_link = self.config["edgegpt"]["wss_link"]
                 logging.info("Asking EdgeGPT...")
                 if len(wss_link) > 0:
-                    return await self._chatbot.ask(prompt=request_response.request,
-                                                   conversation_style=conversation_style,
-                                                   wss_link=wss_link)
+                    edgegpt_response_raw_.append(await self._chatbot.ask(prompt=request_response.request,
+                                                                         conversation_style=conversation_style,
+                                                                         wss_link=wss_link))
                 else:
-                    return await self._chatbot.ask(prompt=request_response.request,
-                                                   conversation_style=conversation_style)
+                    edgegpt_response_raw_.append(await self._chatbot.ask(prompt=request_response.request,
+                                                                         conversation_style=conversation_style))
 
             # Ask and parse
-            edgegpt_response_raw = asyncio.run(async_wrapper())
+            async_helper(async_wrapper(edgegpt_response_raw))
+            edgegpt_response_raw = edgegpt_response_raw[0]
             edgegpt_response = ""
             try:
                 edgegpt_response = edgegpt_response_raw["item"]["messages"][-1]["text"]
@@ -157,7 +181,7 @@ class EdgeGPTModule:
         if not self._enabled or self._chatbot is None:
             return
         try:
-            asyncio.create_task(self._chatbot.reset())
+            async_helper(self._chatbot.reset())
         except Exception as e:
             logging.error("Error clearing EdgeGPT history!", exc_info=e)
 
@@ -171,6 +195,6 @@ class EdgeGPTModule:
         if self._chatbot is not None:
             logging.warning("Closing EdgeGPT connection")
             try:
-                asyncio.create_task(self._chatbot.close())
+                async_helper(self._chatbot.close())
             except Exception as e:
                 logging.error("Error closing EdgeGPT connection!", exc_info=e)

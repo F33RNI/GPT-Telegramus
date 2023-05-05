@@ -133,6 +133,7 @@ def main():
 
     # If we're here, exit requested
     chatgpt_module.exit()
+    edgegpt_module.exit()
     queue_handler.stop_processing_loop()
     logging.info("GPT-Telegramus exited successfully")
 
