@@ -20,12 +20,14 @@ import datetime
 import logging
 import os
 import sys
+import time
 
 import BardModule
 import BotHandler
 import ChatGPTModule
 import DALLEModule
 import EdgeGPTModule
+import ProxyAutomation
 import QueueHandler
 import UsersHandler
 from JSONReaderWriter import load_json
@@ -115,8 +117,11 @@ def main():
     edgegpt_module = EdgeGPTModule.EdgeGPTModule(settings, messages, user_handler)
     bard_module = BardModule.BardModule(settings, messages, user_handler)
 
+    proxy_automation = ProxyAutomation.ProxyAutomation(settings,
+                                                       chatgpt_module, dalle_module, edgegpt_module, bard_module)
+
     queue_handler = QueueHandler.QueueHandler(settings, chatgpt_module, dalle_module, edgegpt_module, bard_module)
-    bot_handler = BotHandler.BotHandler(settings, messages, user_handler, queue_handler,
+    bot_handler = BotHandler.BotHandler(settings, messages, user_handler, queue_handler, proxy_automation,
                                         chatgpt_module, edgegpt_module, dalle_module, bard_module)
 
     # Initialize modules
@@ -125,6 +130,9 @@ def main():
     edgegpt_module.initialize()
     bard_module.initialize()
 
+    # Start proxy automation
+    proxy_automation.start_automation_loop()
+
     # Start processing loop in thread
     queue_handler.start_processing_loop()
 
@@ -132,6 +140,7 @@ def main():
     bot_handler.start_bot()
 
     # If we're here, exit requested
+    proxy_automation.stop_automation_loop()
     chatgpt_module.exit()
     edgegpt_module.exit()
     queue_handler.stop_processing_loop()

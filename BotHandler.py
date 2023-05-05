@@ -29,6 +29,7 @@ import BardModule
 import ChatGPTModule
 import DALLEModule
 import EdgeGPTModule
+import ProxyAutomation
 import QueueHandler
 import RequestResponseContainer
 import UsersHandler
@@ -83,6 +84,7 @@ class BotHandler:
     def __init__(self, config: dict, messages: dict,
                  users_handler: UsersHandler.UsersHandler,
                  queue_handler: QueueHandler.QueueHandler,
+                 proxy_automation: ProxyAutomation.ProxyAutomation,
                  chatgpt_module: ChatGPTModule.ChatGPTModule,
                  edgegpt_module: EdgeGPTModule.EdgeGPTModule,
                  dalle_module: DALLEModule.DALLEModule,
@@ -91,6 +93,8 @@ class BotHandler:
         self.messages = messages
         self.users_handler = users_handler
         self.queue_handler = queue_handler
+        self.proxy_automation = proxy_automation
+
         self.chatgpt_module = chatgpt_module
         self.edgegpt_module = edgegpt_module
         self.dalle_module = dalle_module
@@ -359,6 +363,10 @@ class BotHandler:
         logging.info("Restarting")
         await _send_safe(user["user_id"], self.messages["restarting"], context)
 
+        # Stop proxy automation
+        logging.info("Stopping ProxyAutomation")
+        self.proxy_automation.stop_automation_loop()
+
         # Restart ChatGPT module
         logging.info("Restarting ChatGPT module")
         self.chatgpt_module.exit()
@@ -376,6 +384,10 @@ class BotHandler:
         # Restart Bard module
         logging.info("Restarting Bard module")
         self.bard_module.initialize()
+
+        # Start proxy automation
+        logging.info("Starting back ProxyAutomation")
+        self.proxy_automation.start_automation_loop()
 
         # Restart telegram bot
         self._restart_requested_flag = True
@@ -746,9 +758,9 @@ class BotHandler:
         Stops response_loop thread
         :return:
         """
-        logging.warning("Stopping response_loop")
-        self._exit_flag = True
-        if self._response_loop_thread.is_alive():
+        if self._response_loop_thread and self._response_loop_thread.is_alive():
+            logging.warning("Stopping response_loop")
+            self._exit_flag = True
             self._response_loop_thread.join()
 
     def _response_loop(self) -> None:

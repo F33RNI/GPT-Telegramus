@@ -40,9 +40,10 @@
         "base_url": "",
 
         "__comment07__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+        "__comment08__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
         "proxy": "",
 
-        "__comment08__": "MINIMUM INTERVAL (IN SECONDS) BETWEEN EACH CHATGPT REQUEST",
+        "__comment09__": "MINIMUM INTERVAL (IN SECONDS) BETWEEN EACH CHATGPT REQUEST",
         "cooldown_seconds": 20
     },
 
@@ -56,6 +57,7 @@
         "conversation_style_type": "balanced",
 
         "__comment03__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+        "__comment04__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
         "proxy": ""
     },
 
@@ -68,6 +70,7 @@
         "image_size": "512x512",
 
         "__comment03__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+        "__comment04__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
         "proxy": ""
     },
 
@@ -77,6 +80,7 @@
         "token": "",
 
         "__comment02__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+        "__comment03__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
         "proxy": ""
     },
 
@@ -103,5 +107,20 @@
     "files": {
         "users_database": "users.json",
         "conversations_dir": "conversations"
+    },
+
+    "__comment08__": "AUTOMATIC PROXY SEARCHER SETTINGS",
+    "proxy_automation": {
+        "__comment01__": "SET TO true TO ENABLE AUTOMATIC PROXY SEARCH. SET proxy TO auto IN MODULE TO USE THIS PROXY",
+        "enabled": false,
+
+        "__comment02__": "URL TO WHICH THE GET REQUEST WILL BE SENT TO CHECK THE CONNECTION",
+        "check_url": "https://bard.google.com/",
+
+        "__comment03__": "AFTER HOW LONG (SECONDS) TO CHECK WHETHER THE CURRENT PROXY IS WORKING",
+        "check_interval_seconds": 600,
+
+        "__comment04__": "HOW LONG (SECONDS) TO WAIT A REPLY",
+        "check_timeout_seconds": 30
     }
 }

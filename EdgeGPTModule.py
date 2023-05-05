@@ -65,15 +65,10 @@ class EdgeGPTModule:
                 logging.warning("EdgeGPT module disabled in config file!")
                 return
 
-            # Create asyncio event loop
-            # event_loop = asyncio.get_event_loop()
-            # if event_loop is None:
-            #    event_loop = asyncio.new_event_loop()
-
             # Initialize EdgeGPT chatbot
             self._chatbot = EdgeGPT.Chatbot()
             proxy = self.config["edgegpt"]["proxy"]
-            if len(proxy) > 0:
+            if proxy and len(proxy) > 1 and proxy.strip().lower() != "auto":
                 async_helper(self._chatbot.create(cookie_path=self.config["edgegpt"]["cookie_file"],
                                                   proxy=proxy))
             else:
@@ -87,6 +82,18 @@ class EdgeGPTModule:
         except Exception as e:
             logging.error("Error initializing EdgeGPT module!", exc_info=e)
             self._enabled = False
+
+    def set_proxy(self, proxy: str) -> None:
+        """
+        Sets new proxy
+        :param proxy: https proxy but in format http://IP:PORT
+        :return:
+        """
+        if not self._enabled or self._chatbot is None:
+            return
+        if self.config["edgegpt"]["proxy"].strip().lower() == "auto":
+            logging.info("Setting proxy {0} for EdgeGPT module".format(proxy))
+            self._chatbot.proxy = proxy
 
     def process_request(self, request_response: RequestResponseContainer) -> None:
         """

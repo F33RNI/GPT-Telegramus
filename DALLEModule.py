@@ -47,7 +47,9 @@ class DALLEModule:
             openai.api_key = self.config["dalle"]["open_ai_api_key"]
 
             # Proxy for DALL-E
-            openai.proxy = self.config["dalle"]["proxy"] if len(self.config["dalle"]["proxy"]) > 0 else None
+            proxy = self.config["dalle"]["proxy"]
+            if proxy and len(proxy) > 1 and proxy.strip().lower() != "auto":
+                openai.proxy = proxy
 
             # Done?
             logging.info("DALL-E module initialized")
@@ -56,6 +58,18 @@ class DALLEModule:
         except Exception as e:
             logging.error("Error initializing DALL-E module!", exc_info=e)
             self._enabled = False
+
+    def set_proxy(self, proxy: str) -> None:
+        """
+        Sets new proxy
+        :param proxy: https proxy but in format http://IP:PORT
+        :return:
+        """
+        if not self._enabled:
+            return
+        if self.config["dalle"]["proxy"].strip().lower() == "auto":
+            logging.info("Setting proxy {0} for DALL-E module".format(proxy))
+            openai.proxy = proxy
 
     def process_request(self, request_response: RequestResponseContainer) -> None:
         """

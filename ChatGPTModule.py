@@ -77,6 +77,9 @@ class ChatGPTModule:
                 from revChatGPT.V3 import Chatbot
                 engine = str(self.config["chatgpt"]["engine"])
                 proxy = str(self.config["chatgpt"]["proxy"])
+                if proxy.strip().lower() == "auto":
+                    proxy = ""
+
                 if len(engine) > 0:
                     self._chatbot = Chatbot(str(self.config["chatgpt"]["api_key"]),
                                             proxy=proxy,
@@ -97,6 +100,18 @@ class ChatGPTModule:
         except Exception as e:
             logging.error("Error initializing ChatGPT module!", exc_info=e)
             self._enabled = False
+
+    def set_proxy(self, proxy: str) -> None:
+        """
+        Sets new proxy
+        :param proxy: https proxy but in format http://IP:PORT
+        :return:
+        """
+        if not self._enabled or self._chatbot is None:
+            return
+        if self.config["chatgpt"]["proxy"].strip().lower() == "auto":
+            logging.info("Setting proxy {0} for ChatGPT module".format(proxy))
+            self._chatbot.proxy = proxy
 
     def process_request(self, request_response: RequestResponseContainer) -> None:
         """
@@ -406,7 +421,7 @@ class ChatGPTModule:
             raise Exception("Error! No credentials to login!")
 
         # Add proxy
-        if len(self.config["chatgpt"]["proxy"]) > 0:
+        if len(self.config["chatgpt"]["proxy"]) > 0 and self.config["chatgpt"]["proxy"].strip().lower() != "auto":
             config["proxy"] = self.config["chatgpt"]["proxy"]
 
         # Paid?

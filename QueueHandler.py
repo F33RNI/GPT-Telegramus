@@ -60,9 +60,9 @@ class QueueHandler:
         Stops _queue_processing_loop
         :return:
         """
-        logging.warning("Stopping queue_processing_loop")
-        self._exit_flag = True
-        if self._processing_loop_thread.is_alive():
+        if self._processing_loop_thread and self._processing_loop_thread.is_alive():
+            logging.warning("Stopping queue_processing_loop")
+            self._exit_flag = True
             self._processing_loop_thread.join()
 
     def get_queue_list(self) -> list:

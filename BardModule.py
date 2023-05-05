@@ -49,7 +49,7 @@ class BardModule:
 
             # Set proxy
             proxy = self.config["bard"]["proxy"]
-            if proxy and len(proxy) > 1:
+            if proxy and len(proxy) > 1 and proxy.strip().lower() != "auto":
                 self._chatbot.session.proxies.update({"http": proxy,
                                                       "https": proxy})
 
@@ -63,6 +63,19 @@ class BardModule:
         except Exception as e:
             logging.error("Error initializing Bard module!", exc_info=e)
             self._enabled = False
+
+    def set_proxy(self, proxy: str) -> None:
+        """
+        Sets new proxy
+        :param proxy: https proxy but in format http://IP:PORT
+        :return:
+        """
+        if not self._enabled or self._chatbot is None:
+            return
+        if self.config["bard"]["proxy"].strip().lower() == "auto":
+            logging.info("Setting proxy {0} for Bard module".format(proxy))
+            self._chatbot.session.proxies.update({"http": proxy,
+                                                  "https": proxy})
 
     def process_request(self, request_response: RequestResponseContainer) -> None:
         """
