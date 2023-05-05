@@ -155,7 +155,8 @@ class ProxyAutomation:
                 self.working_proxy = ""
 
                 # Get list of proxies
-                self._proxy_get()
+                while not self._proxy_get():
+                    time.sleep(1)
 
                 # Clear queues
                 clear_queue(self._test_proxy_queue)
@@ -305,10 +306,10 @@ class ProxyAutomation:
                 except Exception as e:
                     logging.warning("Error killing process with PID: {0}".format(process.pid), exc_info=e)
 
-    def _proxy_get(self) -> None:
+    def _proxy_get(self) -> bool:
         """
-        Retrieves proxy from auto_proxy_from url into self.proxy_list
-        :return:
+        Retrieves proxy from PROXY_FROM_URL
+        :return: True if download successfully
         """
         # Reset proxy list
         self._proxy_list = []
@@ -338,7 +339,10 @@ class ProxyAutomation:
                     pass
             if len(self._proxy_list) > 1:
                 logging.info("Proxies downloaded successfully")
+                return True
             else:
                 logging.warning("Proxies list is empty!")
         except Exception as e:
             logging.error("Error downloading proxy list!", exc_info=e)
+
+        return False
