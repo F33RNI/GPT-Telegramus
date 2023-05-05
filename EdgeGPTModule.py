@@ -52,6 +52,7 @@ class EdgeGPTModule:
 
         self._enabled = False
         self._chatbot = None
+        self._restart_attempts = 0
 
     def initialize(self) -> None:
         """
@@ -107,6 +108,7 @@ class EdgeGPTModule:
             request_response.response = self.messages["response_error"].replace("\\n", "\n") \
                 .format("EdgeGPT module not initialized!")
             request_response.error = True
+            self._restart_attempts = 0
             return
 
         try:
@@ -169,16 +171,30 @@ class EdgeGPTModule:
                     .format("Empty response!")
                 request_response.error = True
 
+            # Reset attempts counter
+            self._restart_attempts = 0
+
         # Exit requested
         except KeyboardInterrupt:
             logging.warning("KeyboardInterrupt @ process_request")
+            self._restart_attempts = 0
             return
 
         # EdgeGPT or other error
         except Exception as e:
-            logging.error("Error processing request!", exc_info=e)
-            request_response.response = self.messages["response_error"].replace("\\n", "\n").format(str(e))
-            request_response.error = True
+            # Try to restart
+            self.restart()
+            self._restart_attempts += 1
+
+            # Try again 1 time
+            if self._restart_attempts < 2:
+                self.process_request(request_response)
+
+            # Stop restarting and respond with error
+            else:
+                request_response.response = self.messages["response_error"].replace("\\n", "\n").format(str(e))
+                request_response.error = True
+                self._restart_attempts = 0
 
     def clear_conversation(self) -> None:
         """
@@ -205,3 +221,22 @@ class EdgeGPTModule:
                 async_helper(self._chatbot.close())
             except Exception as e:
                 logging.error("Error closing EdgeGPT connection!", exc_info=e)
+
+    def restart(self):
+        """
+        Restarts module and saves proxy
+        :return:
+        """
+        if not self._enabled or self._chatbot is None:
+            return
+        logging.info("Restarting EdgeGPT module")
+
+        # Save proxy
+        proxy = self._chatbot.proxy
+
+        # Restart
+        self.exit()
+        self.initialize()
+
+        # Set proxy
+        self._chatbot.proxy = proxy

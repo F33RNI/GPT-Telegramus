@@ -31,6 +31,7 @@ class BardModule:
 
         self._enabled = False
         self._chatbot = None
+        self._restart_attempts = 0
 
     def initialize(self) -> None:
         """
@@ -89,6 +90,7 @@ class BardModule:
             request_response.response = self.messages["response_error"].replace("\\n", "\n") \
                 .format("Bard module not initialized!")
             request_response.error = True
+            self._restart_attempts = 0
             return
 
         try:
@@ -134,16 +136,30 @@ class BardModule:
                 self._chatbot.response_id = ""
                 self._chatbot.choice_id = ""
 
+            # Reset attempts counter
+            self._restart_attempts = 0
+
         # Exit requested
         except KeyboardInterrupt:
             logging.warning("KeyboardInterrupt @ process_request")
+            self._restart_attempts = 0
             return
 
         # Bard or other error
         except Exception as e:
-            logging.error("Error processing request!", exc_info=e)
-            request_response.response = self.messages["response_error"].replace("\\n", "\n").format(str(e))
-            request_response.error = True
+            # Try to restart
+            self.restart()
+            self._restart_attempts += 1
+
+            # Try again 1 time
+            if self._restart_attempts < 2:
+                self.process_request(request_response)
+
+            # Stop restarting and respond with error
+            else:
+                request_response.response = self.messages["response_error"].replace("\\n", "\n").format(str(e))
+                request_response.error = True
+                self._restart_attempts = 0
 
     def clear_conversation_for_user(self, user: dict) -> None:
         """
@@ -170,3 +186,22 @@ class BardModule:
         if not self._enabled or self._chatbot is None:
             return
         self._chatbot.session.close()
+
+    def restart(self):
+        """
+        Restarts module and saves proxy
+        :return:
+        """
+        if not self._enabled or self._chatbot is None:
+            return
+        logging.info("Restarting Bard module")
+
+        # Save proxy
+        proxy = self._chatbot.session.proxies
+
+        # Restart
+        self.exit()
+        self.initialize()
+
+        # Set proxy
+        self._chatbot.session.proxies = proxy

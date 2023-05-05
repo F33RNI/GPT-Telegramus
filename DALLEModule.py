@@ -30,6 +30,7 @@ class DALLEModule:
         self.users_handler = users_handler
 
         self._enabled = False
+        self._restart_attempts = 0
 
     def initialize(self) -> None:
         """
@@ -117,5 +118,35 @@ class DALLEModule:
         # DALL-E or other error
         except Exception as e:
             logging.error("Error processing request!", exc_info=e)
-            request_response.response = self.messages["response_error"].replace("\\n", "\n").format(str(e))
-            request_response.error = True
+
+            # Try to restart
+            self.restart()
+            self._restart_attempts += 1
+
+            # Try again 1 time
+            if self._restart_attempts < 2:
+                self.process_request(request_response)
+
+            # Stop restarting and respond with error
+            else:
+                request_response.response = self.messages["response_error"].replace("\\n", "\n").format(str(e))
+                request_response.error = True
+                self._restart_attempts = 0
+
+    def restart(self):
+        """
+        Restarts module and saves proxy
+        :return:
+        """
+        if not self._enabled:
+            return
+        logging.info("Restarting DALL-E module")
+
+        # Save proxy
+        proxy = openai.proxy
+
+        # Restart
+        self.initialize()
+
+        # Set proxy
+        openai.proxy = proxy

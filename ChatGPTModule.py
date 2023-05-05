@@ -39,6 +39,7 @@ class ChatGPTModule:
         self._chatbot = None
         self._exit_flag = False
         self._processing_flag = False
+        self._restart_attempts = 0
 
     def initialize(self) -> None:
         """
@@ -126,6 +127,7 @@ class ChatGPTModule:
                 .format("ChatGPT module not initialized!")
             request_response.error = True
             self._processing_flag = False
+            self._restart_attempts = 0
             return
 
         try:
@@ -250,18 +252,34 @@ class ChatGPTModule:
             # Clear processing flag
             self._processing_flag = False
 
+            # Reset attempts counter
+            self._restart_attempts = 0
+
         # Exit requested
         except KeyboardInterrupt:
             logging.warning("KeyboardInterrupt @ process_request")
             self._processing_flag = False
+            self._restart_attempts = 0
             return
 
         # ChatGPT or other error
         except Exception as e:
             logging.error("Error processing request!", exc_info=e)
-            request_response.response = self.messages["response_error"].replace("\\n", "\n").format(str(e))
-            request_response.error = True
-            self._processing_flag = False
+
+            # Try to restart
+            self.restart()
+            self._restart_attempts += 1
+
+            # Try again 1 time
+            if self._restart_attempts < 2:
+                self.process_request(request_response)
+
+            # Stop restarting and respond with error
+            else:
+                request_response.response = self.messages["response_error"].replace("\\n", "\n").format(str(e))
+                request_response.error = True
+                self._processing_flag = False
+                self._restart_attempts = 0
 
     def clear_conversation_for_user(self, user: dict) -> None:
         """
@@ -288,6 +306,25 @@ class ChatGPTModule:
         # Wait until aborted
         while self._processing_flag:
             time.sleep(0.1)
+
+    def restart(self):
+        """
+        Restarts module and saves proxy
+        :return:
+        """
+        if not self._enabled or self._chatbot is None:
+            return
+        logging.info("Restarting ChatGPT module")
+
+        # Save proxy
+        proxy = self._chatbot.proxy
+
+        # Restart
+        self.exit()
+        self.initialize()
+
+        # Set proxy
+        self._chatbot.proxy = proxy
 
     def _save_conversation(self, conversation_id) -> bool:
         """

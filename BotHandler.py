@@ -368,23 +368,16 @@ class BotHandler:
         self.proxy_automation.stop_automation_loop()
 
         # Restart ChatGPT module
-        logging.info("Restarting ChatGPT module")
-        self.chatgpt_module.exit()
-        self.chatgpt_module.initialize()
+        self.chatgpt_module.restart()
 
         # Restart EdgeGPT module
-        logging.info("Restarting EdgeGPT module")
-        self.edgegpt_module.exit()
-        self.edgegpt_module.initialize()
+        self.edgegpt_module.restart()
 
         # Restart DALL-E module
-        logging.info("Restarting DALL-E module")
-        self.dalle_module.initialize()
+        self.dalle_module.restart()
 
         # Restart Bard module
-        logging.info("Restarting Bard module")
-        self.bard_module.exit()
-        self.bard_module.initialize()
+        self.bard_module.restart()
 
         # Start proxy automation
         logging.info("Starting back ProxyAutomation")
