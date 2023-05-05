@@ -1,0 +1,128 @@
+{
+    "__comment01__": "SPECIFY WHAT MODULES WILL BE INCLUDED IN TELEGRAM BOT",
+    "modules": {
+        "chatgpt": true,
+        "edgegpt": true,
+        "dalle": true,
+        "bard": true,
+
+        "__comment01__": "SPECIFY revChatGPT API TYPE (currently available only 1 or 3)",
+        "__comment02__": "1 - https://github.com/acheong08/ChatGPT#v1-standard-chatgpt",
+        "__comment03__": "3 - (RECOMMENDED) https://github.com/acheong08/ChatGPT#v3-official-chat-api",
+        "chatgpt_api_type": 3,
+
+        "__comment04__": "Default module for handling user messages (see RequestResponseContainer.py)",
+        "default_module": 0,
+
+        "__comment05__": "Automatically change user module to handle plain messages after specific command",
+        "auto_module": true
+    },
+
+    "__comment02__": "CHATGPT  SETTINGS",
+    "chatgpt": {
+        "__comment01__": "API_KEY FROM https://platform.openai.com/account/api-keys. ONLY FOR API 3",
+        "api_key": "",
+
+        "__comment02__": "MODEL NAME FOR API TYPE 3 (default: gpt-3.5-turbo)",
+        "engine": "",
+
+        "__comment03__": "FOR API TYPE 1 ACCESS TOKEN IS RECOMMENDED. GET IT FROM https://chat.openai.com/api/auth/session",
+        "__comment04__": "OR SESSION_TOKEN (FROM COOKIES ON chat.openai.com AS __Secure-next-auth.session-token",
+        "email": "",
+        "password": "",
+        "session_token": "",
+        "access_token": "",
+
+        "__comment05__": "SET TO TRUE IF YOU HAVE PAID ACCOUNT",
+        "paid": false,
+
+        "__comment06__": "URL FOR API REQUESTS. ONLY FOR API TYPE 1. SPECIFY NOTHING TO USE DEFAULT VALUE",
+        "base_url": "",
+
+        "__comment07__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+        "__comment08__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
+        "proxy": "",
+
+        "__comment09__": "MINIMUM INTERVAL (IN SECONDS) BETWEEN EACH CHATGPT REQUEST",
+        "cooldown_seconds": 20
+    },
+
+    "__comment03__": "EDGEGPT SETTINGS",
+    "edgegpt": {
+        "__comment01__": "AUTHORIZATION FOR EDGE-GPT. https://github.com/acheong08/EdgeGPT#getting-authentication-required",
+        "cookie_file": "EdgeGPT_cookies.json",
+        "wss_link": "",
+
+        "__comment02__": "creative / balanced / precise",
+        "conversation_style_type": "balanced",
+
+        "__comment03__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+        "__comment04__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
+        "proxy": ""
+    },
+
+    "__comment04__": "DALL-E SETTINGS",
+    "dalle": {
+        "__comment01__": "FOR REQUESTS TO DALL-E PROVIDE YOUR API_KEY FROM https://platform.openai.com/account/api-keys",
+        "open_ai_api_key": "",
+
+        "__comment02__": "SPECIFY FORMAT OF GENERATED IMAGES (256x256 or 512x512 or 1024x1024)",
+        "image_size": "512x512",
+
+        "__comment03__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+        "__comment04__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
+        "proxy": ""
+    },
+
+    "__comment05__": "BARD SETTINGS",
+    "bard": {
+        "__comment01__": "Go to Application -> Cookies -> __Secure-1PSID. Copy the value of that cookie",
+        "token": "",
+
+        "__comment02__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+        "__comment03__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
+        "proxy": ""
+    },
+
+    "__comment06__": "TELEGRAM SETTINGS",
+    "telegram": {
+        "__comment01__": "PROVIDE YOUR BOT API KEY FROM https://t.me/BotFather",
+        "api_key": "",
+
+        "__comment02__": "TELEGRAM BOT TIMEOUTS",
+        "write_read_timeout": 30,
+
+        "__comment03__": "SPECIFY THE chat_id OF THOSE WHO CAN USE ADMINISTRATOR COMMANDS",
+        "admin_ids": [],
+
+        "__comment04__": "SET TO TRUE TO BLOCK NEW USERS BY DEFAULT (WHITELIST)",
+        "ban_by_default": false,
+
+        "__comment05__": "SPECIFY THE SIZE OF THE REQUEST QUEUE AND WHETHER TO SHOW A MESSAGE ABOUT ADDING TO THE QUEUE",
+        "queue_max": 10,
+        "show_queue_message": true
+    },
+
+    "__comment07__": "FILES AND DIRECTORIES SETTINGS",
+    "files": {
+        "users_database": "users.json",
+        "conversations_dir": "conversations",
+        "messages_file": "messages.json",
+        "logs_dir": "logs"
+    },
+
+    "__comment08__": "AUTOMATIC PROXY SEARCHER SETTINGS",
+    "proxy_automation": {
+        "__comment01__": "SET TO true TO ENABLE AUTOMATIC PROXY SEARCH. SET proxy TO auto IN MODULE TO USE THIS PROXY",
+        "enabled": false,
+
+        "__comment02__": "URL TO WHICH THE GET REQUEST WILL BE SENT TO CHECK THE CONNECTION",
+        "check_url": "https://bard.google.com/",
+
+        "__comment03__": "AFTER HOW LONG (SECONDS) TO CHECK WHETHER THE CURRENT PROXY IS WORKING",
+        "check_interval_seconds": 600,
+
+        "__comment04__": "HOW LONG (SECONDS) TO WAIT A REPLY",
+        "check_timeout_seconds": 30
+    }
+}

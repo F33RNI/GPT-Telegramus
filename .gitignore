@@ -1,5 +1,8 @@
-/.idea/
-/*.zip
-/test.py
-/logs/
-/chats/
+.idea/
+*.zip
+test.py
+logs/
+chats/
+users.json
+conversations/
+EdgeGPT_cookies.json

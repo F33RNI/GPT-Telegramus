@@ -1,5 +1,5 @@
 """
- Copyright (C) 2022 Fern Lane, GPT-telegramus
+ Copyright (C) 2023 Fern Lane, GPT-Telegramus
  Licensed under the GNU Affero General Public License, Version 3.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
@@ -19,44 +19,46 @@ import argparse
 import datetime
 import logging
 import os
-import signal
 import sys
 
-import psutil
-
-import AIHandler
-import Authenticator
+import BardModule
 import BotHandler
+import ChatGPTModule
+import DALLEModule
+import EdgeGPTModule
+import ProxyAutomation
+import QueueHandler
+import UsersHandler
 from JSONReaderWriter import load_json
 
-TELEGRAMUS_VERSION = 'beta_2.0.3'
+# GPT-Telegramus version
+__version__ = "2.0.0"
 
-# Logging level (INFO for debug, WARN for release)
+# Logging level
 LOGGING_LEVEL = logging.INFO
 
-# Files and directories
-SETTINGS_FILE = 'settings.json'
-MESSAGES_FILE = 'messages.json'
-CHATS_DIR = 'chats'
-LOGS_DIR = 'logs'
+# Default config file
+CONFIG_FILE = "config.json"
 
 
-def logging_setup():
+def logging_setup(directory: str):
     """
     Sets up logging format and level
+    :param directory: Directory where to save logs
     :return:
     """
     # Create logs directory
-    if not os.path.exists(LOGS_DIR):
-        os.makedirs(LOGS_DIR)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
     # Create logs formatter
-    log_formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    log_formatter = logging.Formatter("%(asctime)s %(threadName)s %(levelname)-8s %(message)s",
+                                      datefmt="%Y-%m-%d %H:%M:%S")
 
     # Setup logging into file
-    file_handler = logging.FileHandler(os.path.join(LOGS_DIR,
-                                                    datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + '.log'),
-                                       encoding='utf-8')
+    file_handler = logging.FileHandler(os.path.join(directory,
+                                                    datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + ".log"),
+                                       encoding="utf-8")
     file_handler.setFormatter(log_formatter)
 
     # Setup logging into console
@@ -70,20 +72,7 @@ def logging_setup():
     root_logger.setLevel(LOGGING_LEVEL)
 
     # Log test message
-    logging.info('logging setup is complete')
-
-
-def exit_(signum, frame):
-    """
-    Closes app
-    :param signum:
-    :param frame:
-    :return:
-    """
-    logging.warning('Killing all threads...')
-    current_system_pid = os.getpid()
-    psutil.Process(current_system_pid).terminate()
-    exit(0)
+    logging.info("logging setup is complete")
 
 
 def parse_args():
@@ -92,13 +81,9 @@ def parse_args():
     :return:
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--settings', type=str, help='settings.json file location',
-                        default=os.getenv('TELEGRAMUS_SETTINGS_FILE', SETTINGS_FILE))
-    parser.add_argument('--messages', type=str, help='messages.json file location',
-                        default=os.getenv('TELEGRAMUS_MESSAGES_FILE', MESSAGES_FILE))
-    parser.add_argument('--chats', type=str, help='chats directory location',
-                        default=os.getenv('TELEGRAMUS_CHATS_DIR', CHATS_DIR))
-    parser.add_argument('--version', action='version', version=TELEGRAMUS_VERSION)
+    parser.add_argument("--config", type=str, help="config.json file location",
+                        default=os.getenv("TELEGRAMUS_CONFIG_FILE", CONFIG_FILE))
+    parser.add_argument("--version", action="version", version=__version__)
     return parser.parse_args()
 
 
@@ -107,40 +92,56 @@ def main():
     Main entry
     :return:
     """
-    # Initialize logging
-    logging_setup()
-
-    # Connect interrupt signal
-    signal.signal(signal.SIGINT, exit_)
-
-    # Parse arguments and load settings and messages
+    # Parse arguments
     args = parse_args()
-    settings = load_json(args.settings)
-    messages = load_json(args.messages)
+
+    # Load config
+    config = load_json(args.config, logging_enabled=False)
+
+    # Initialize logging
+    logging_setup(config["files"]["logs_dir"])
+
+    # Load messages from json file
+    messages = load_json(config["files"]["messages_file"])
 
     # Initialize classes
-    authenticator = Authenticator.Authenticator(settings)
-    ai_handler = AIHandler.AIHandler(settings, args.chats, authenticator)
-    bot_handler = BotHandler.BotHandler(settings, messages, ai_handler)
+    user_handler = UsersHandler.UsersHandler(config, messages)
 
-    # Set requests_queue to ai_handler
-    ai_handler.requests_queue = bot_handler.requests_queue
+    chatgpt_module = ChatGPTModule.ChatGPTModule(config, messages, user_handler)
+    dalle_module = DALLEModule.DALLEModule(config, messages, user_handler)
+    edgegpt_module = EdgeGPTModule.EdgeGPTModule(config, messages, user_handler)
+    bard_module = BardModule.BardModule(config, messages, user_handler)
 
-    # Initialize chatbot and start checker loop
-    authenticator.start_chatbot()
+    proxy_automation = ProxyAutomation.ProxyAutomation(config,
+                                                       chatgpt_module, dalle_module, edgegpt_module, bard_module)
 
-    # Start AIHandler
-    ai_handler.thread_start()
+    queue_handler = QueueHandler.QueueHandler(config, chatgpt_module, dalle_module, edgegpt_module, bard_module)
+    bot_handler = BotHandler.BotHandler(config, messages, user_handler, queue_handler, proxy_automation,
+                                        chatgpt_module, edgegpt_module, dalle_module, bard_module)
 
-    # Start reply handler
-    bot_handler.reply_thread_start()
+    # Initialize modules
+    chatgpt_module.initialize()
+    dalle_module.initialize()
+    edgegpt_module.initialize()
+    bard_module.initialize()
 
-    # Finally, start telegram bot
-    bot_handler.bot_start()
+    # Start proxy automation
+    proxy_automation.start_automation_loop()
 
-    # Exit on error
-    exit_(None, None)
+    # Start processing loop in thread
+    queue_handler.start_processing_loop()
+
+    # Finally, start telegram bot in main thread
+    bot_handler.start_bot()
+
+    # If we're here, exit requested
+    proxy_automation.stop_automation_loop()
+    chatgpt_module.exit()
+    bard_module.exit()
+    edgegpt_module.exit()
+    queue_handler.stop_processing_loop()
+    logging.info("GPT-Telegramus exited successfully")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
