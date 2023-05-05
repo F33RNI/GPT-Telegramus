@@ -23,10 +23,6 @@
    <p align="center">
       <img src="Screenshots/edgegpt.png" width="auto" height="300" alt="Screenshot of request to EdgeGPT">
       <img src="Screenshots/dalle.png" width="auto" height="300" alt="Screenshot of request to DALL-E">
-   </p>
-</div>
-<div style="width:100%;text-align:center;">
-   <p align="center">
       <img src="Screenshots/bard.png" width="auto" height="300" alt="Screenshot of request to Bard">
    </p>
 </div>
