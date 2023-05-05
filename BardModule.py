@@ -47,6 +47,12 @@ class BardModule:
             # Initialize chatbot
             self._chatbot = Bard.Chatbot(self.config["bard"]["token"])
 
+            # Set proxy
+            proxy = self.config["bard"]["proxy"]
+            if proxy and len(proxy) > 1:
+                self._chatbot.session.proxies.update({"http": proxy,
+                                                      "https": proxy})
+
             # Done?
             if self._chatbot is not None:
                 logging.info("Bard module initialized")

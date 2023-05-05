@@ -2,7 +2,7 @@
     "__comment01__": "SPECIFY WHAT MODULES WILL BE INCLUDED IN TELEGRAM BOT",
     "modules": {
         "chatgpt": true,
-        "edgegpt": false,
+        "edgegpt": true,
         "dalle": true,
         "bard": true,
 
@@ -74,7 +74,10 @@
     "__comment05__": "BARD SETTINGS",
     "bard": {
         "__comment01__": "Go to Application -> Cookies -> __Secure-1PSID. Copy the value of that cookie",
-        "token": ""
+        "token": "",
+
+        "__comment02__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+        "proxy": ""
     },
 
     "__comment06__": "TELEGRAM SETTINGS",
