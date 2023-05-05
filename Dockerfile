@@ -60,9 +60,7 @@ RUN apt update && apt install -y --no-install-recommends gcc build-base libc-dev
 # Install wheels
 RUN --mount=type=cache,target=/root/.cache/pip pip3 install --upgrade --no-index --find-links=/wheels -r requirements.txt
 
-ENV TELEGRAMUS_SETTINGS_FILE "settings.json"
-ENV TELEGRAMUS_MESSAGES_FILE "messages.json"
-#ENV GPT_ENGINE "text-chat-davinci-002-20221122"
+ENV TELEGRAMUS_CONFIG_FILE "config.json"
 
 # Run main script
 CMD ["python3", "main.py"]
@@ -74,11 +72,9 @@ WORKDIR /app
 COPY --link --from=compile /app/dist/main /app/telegramus
 COPY --link --from=compile /lib/ /lib/
 COPY --link --from=compile /lib64/ /lib64/
-ADD settings.json messages.json /app/
+ADD config.json messages.json /app/
 
-ENV TELEGRAMUS_SETTINGS_FILE "settings.json"
-ENV TELEGRAMUS_MESSAGES_FILE "messages.json"
-#ENV GPT_ENGINE "text-chat-davinci-002-20221122"
+ENV TELEGRAMUS_CONFIG_FILE "config.json"
 
 # Run main script
 CMD ["/app/telegramus"]
