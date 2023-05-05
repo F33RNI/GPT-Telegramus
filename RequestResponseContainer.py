@@ -18,8 +18,9 @@
 REQUEST_TYPE_CHATGPT = 0
 REQUEST_TYPE_DALLE = 1
 REQUEST_TYPE_EDGEGPT = 2
+REQUEST_TYPE_BARD = 3
 
-REQUEST_NAMES = ["ChatGPT", "DALL-E", "EdgeGPT"]
+REQUEST_NAMES = ["ChatGPT", "DALL-E", "EdgeGPT", "Bard"]
 
 
 class RequestResponseContainer:

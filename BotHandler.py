@@ -25,6 +25,7 @@ import telegram
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 
+import BardModule
 import ChatGPTModule
 import EdgeGPTModule
 import QueueHandler
@@ -38,6 +39,7 @@ BOT_COMMAND_HELP = "help"
 BOT_COMMAND_CHATGPT = "chatgpt"
 BOT_COMMAND_EDGEGPT = "edgegpt"
 BOT_COMMAND_DALLE = "dalle"
+BOT_COMMAND_BARD = "bard"
 BOT_COMMAND_CLEAR = "clear"
 BOT_COMMAND_CHAT_ID = "chatid"
 
@@ -52,6 +54,10 @@ BOT_COMMAND_ADMIN_BROADCAST = "broadcast"
 # List of markdown chars to escape with \\
 MARKDOWN_ESCAPE = ["_", "*", "[", "]", "(", ")", "~", ">", "#", "+", "-", "=", "|", "{", "}", ".", "!"]
 MARKDOWN_ESCAPE_MINIMUM = ["_", "[", "]", "(", ")", "~", ">", "#", "+", "-", "=", "|", "{", "}", ".", "!"]
+MARKDOWN_MODE_ESCAPE_NONE = 0
+MARKDOWN_MODE_ESCAPE_MINIMUM = 1
+MARKDOWN_MODE_ESCAPE_ALL = 2
+MARKDOWN_MODE_NO_MARKDOWN = 3
 
 # After how many seconds restart bot polling if error occurs
 RESTART_ON_ERROR_DELAY = 30
@@ -77,13 +83,15 @@ class BotHandler:
                  users_handler: UsersHandler.UsersHandler,
                  queue_handler: QueueHandler.QueueHandler,
                  chatgpt_module: ChatGPTModule.ChatGPTModule,
-                 edgegpt_module: EdgeGPTModule.EdgeGPTModule):
+                 edgegpt_module: EdgeGPTModule.EdgeGPTModule,
+                 bard_module: BardModule.BardModule):
         self.config = config
         self.messages = messages
         self.users_handler = users_handler
         self.queue_handler = queue_handler
         self.chatgpt_module = chatgpt_module
         self.edgegpt_module = edgegpt_module
+        self.bard_module = bard_module
 
         self._application = None
         self._event_loop = None
@@ -117,6 +125,7 @@ class BotHandler:
                 self._application.add_handler(CommandHandler(BOT_COMMAND_CHATGPT, self.bot_command_chatgpt))
                 self._application.add_handler(CommandHandler(BOT_COMMAND_EDGEGPT, self.bot_command_edgegpt))
                 self._application.add_handler(CommandHandler(BOT_COMMAND_DALLE, self.bot_command_dalle))
+                self._application.add_handler(CommandHandler(BOT_COMMAND_BARD, self.bot_command_bard))
                 self._application.add_handler(CommandHandler(BOT_COMMAND_CLEAR, self.bot_command_clear))
                 self._application.add_handler(CommandHandler(BOT_COMMAND_CHAT_ID, self.bot_command_chatid))
                 self._application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), self.bot_message))
@@ -453,14 +462,38 @@ class BotHandler:
         if user["banned"]:
             return
 
-        # Clear EdgeGPT
-        self.edgegpt_module.clear_conversation()
+        # Check requested module
+        if not context.args or len(context.args) < 1:
+            await _send_safe(user["user_id"], self.messages["clear_no_module"], context)
+            return
 
-        # Clear ChatGPT and send confirmation
-        if self.chatgpt_module.clear_conversation_for_user(user):
-            await _send_safe(user["user_id"], self.messages["chat_cleared"], context)
+        # Get requested module
+        requested_module = context.args[0].strip().lower()
+
+        # Check again
+        if requested_module != "chatgpt" and requested_module != "edgegpt" and requested_module != "bard":
+            await _send_safe(user["user_id"], self.messages["clear_no_module"], context)
+            return
+
+        # Clear ChatGPT
+        if requested_module == "chatgpt":
+            self.chatgpt_module.clear_conversation_for_user(user)
+
+        # Clear EdgeGPT
+        elif requested_module == "edgegpt":
+            self.edgegpt_module.clear_conversation()
+
+        # Clear Bard
+        elif requested_module == "bard":
+            self.bard_module.clear_conversation_for_user(user)
+
+        # Wrong module
         else:
-            await _send_safe(user["user_id"], self.messages["chat_not_cleared"], context)
+            await _send_safe(user["user_id"], self.messages["clear_no_module"], context)
+            return
+
+        # Send confirmation
+        await _send_safe(user["user_id"], self.messages["chat_cleared"].format(requested_module), context)
 
     async def bot_command_chatgpt(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         await self.bot_command_or_message_request(RequestResponseContainer.REQUEST_TYPE_CHATGPT, update, context)
@@ -470,6 +503,9 @@ class BotHandler:
 
     async def bot_command_dalle(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         await self.bot_command_or_message_request(RequestResponseContainer.REQUEST_TYPE_DALLE, update, context)
+
+    async def bot_command_bard(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.bot_command_or_message_request(RequestResponseContainer.REQUEST_TYPE_BARD, update, context)
 
     async def bot_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         await self.bot_command_or_message_request(-1, update, context)
@@ -493,6 +529,8 @@ class BotHandler:
             logging.info("/edgegpt command from {0} ({1})".format(user["user_name"], user["user_id"]))
         elif request_type == RequestResponseContainer.REQUEST_TYPE_DALLE:
             logging.info("/dalle command from {0} ({1})".format(user["user_name"], user["user_id"]))
+        elif request_type == RequestResponseContainer.REQUEST_TYPE_BARD:
+            logging.info("/bard command from {0} ({1})".format(user["user_name"], user["user_id"]))
         else:
             logging.info("Text message from {0} ({1})".format(user["user_name"], user["user_id"]))
 
@@ -547,8 +585,10 @@ class BotHandler:
         # Send confirmation
         if self.config["telegram"]["show_queue_message"]:
             await _send_safe(user["user_id"],
-                             self.messages["queue_accepted"].format(len(self.queue_handler.get_queue_list()),
-                                                                    self.config["telegram"]["queue_max"]), context)
+                             self.messages["queue_accepted"].format(
+                                 RequestResponseContainer.REQUEST_NAMES[request_type],
+                                 len(self.queue_handler.get_queue_list()),
+                                 self.config["telegram"]["queue_max"]), context)
 
     async def bot_command_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
@@ -621,6 +661,51 @@ class BotHandler:
 
         return user
 
+    async def _send_parse(self, chat_id: int, message: str, reply_to_message_id: int, escape_mode: int) -> bool:
+        """
+        Parses message and sends it as reply
+        :param chat_id:
+        :param message:
+        :param reply_to_message_id:
+        :param escape_mode:
+        :return: True if sent correctly
+        """
+        try:
+            # Escape some chars
+            if escape_mode == MARKDOWN_MODE_ESCAPE_MINIMUM:
+                for i in range(len(MARKDOWN_ESCAPE_MINIMUM)):
+                    escape_char = MARKDOWN_ESCAPE_MINIMUM[i]
+                    message = message.replace(escape_char, "\\" + escape_char)
+
+            # Escape all chars
+            elif escape_mode == MARKDOWN_MODE_ESCAPE_ALL:
+                for i in range(len(MARKDOWN_ESCAPE)):
+                    escape_char = MARKDOWN_ESCAPE[i]
+                    message = message.replace(escape_char, "\\" + escape_char)
+
+            # Send as markdown
+            if escape_mode == MARKDOWN_MODE_ESCAPE_NONE \
+                    or escape_mode == MARKDOWN_MODE_ESCAPE_MINIMUM \
+                    or escape_mode == MARKDOWN_MODE_ESCAPE_ALL:
+                await telegram.Bot(self.config["telegram"]["api_key"]).sendMessage(chat_id=chat_id,
+                                                                                   text=message.replace("\\n", "\n"),
+                                                                                   reply_to_message_id=
+                                                                                   reply_to_message_id,
+                                                                                   parse_mode="MarkdownV2")
+            # Send as plain text
+            else:
+                await telegram.Bot(self.config["telegram"]["api_key"]).sendMessage(chat_id=chat_id,
+                                                                                   text=message.replace("\\n", "\n"),
+                                                                                   reply_to_message_id=
+                                                                                   reply_to_message_id)
+
+            # Seems OK
+            return True
+
+        except:
+            logging.warning("Error sending reply with eascape_mode {0}".format(escape_mode))
+            return False
+
     async def _send_reply(self, chat_id: int, message: str, reply_to_message_id: int, markdown=False) -> None:
         """
         Sends reply to chat
@@ -630,59 +715,18 @@ class BotHandler:
         :param markdown: parse as markdown
         :return:
         """
+        # Send as markdown
         if markdown:
-            # Try parse markdown
-            try:
-                # Firstly, try without escaping
-                try:
-                    # Escape some chars with \\
-                    for i in range(len(MARKDOWN_ESCAPE_MINIMUM)):
-                        escape_char = MARKDOWN_ESCAPE_MINIMUM[i]
-                        message = message.replace(escape_char, "\\" + escape_char)
-
-                    try:
-                        await telegram.Bot(self.config["telegram"]["api_key"]) \
-                            .sendMessage(chat_id=chat_id,
-                                         text=message,
-                                         reply_to_message_id=reply_to_message_id,
-                                         parse_mode="MarkdownV2")
-                    except Exception as e:
-                        logging.error("Error sending message!", exc_info=e)
-                except:
-                    # Escape all chars with \\
-                    for i in range(len(MARKDOWN_ESCAPE)):
-                        escape_char = MARKDOWN_ESCAPE[i]
-                        message = message.replace(escape_char, "\\" + escape_char)
-
-                    try:
-                        await telegram.Bot(self.config["telegram"]["api_key"]) \
-                            .sendMessage(chat_id=chat_id,
-                                         text=message,
-                                         reply_to_message_id=reply_to_message_id,
-                                         parse_mode="MarkdownV2")
-                    except Exception as e:
-                        logging.error("Error sending message!", exc_info=e)
-
-            # Error parsing markdown - send as plain message
-            except Exception as e:
-                logging.info("Error parsing markdown", exc_info=e)
-                try:
-                    await telegram.Bot(self.config["telegram"]["api_key"]) \
-                        .sendMessage(chat_id=chat_id,
-                                     text=message.replace("\\n", "\n"),
-                                     reply_to_message_id=reply_to_message_id)
-                except Exception as e:
-                    logging.error("Error sending message!", exc_info=e)
+            # Try everything
+            if not await self._send_parse(chat_id, message, reply_to_message_id, MARKDOWN_MODE_ESCAPE_NONE):
+                if not await self._send_parse(chat_id, message, reply_to_message_id, MARKDOWN_MODE_ESCAPE_MINIMUM):
+                    if not await self._send_parse(chat_id, message, reply_to_message_id, MARKDOWN_MODE_ESCAPE_ALL):
+                        if not await self._send_parse(chat_id, message, reply_to_message_id, MARKDOWN_MODE_NO_MARKDOWN):
+                            logging.error("Unable to send message in any markdown escape mode!")
 
         # Markdown parsing is disabled - send as plain message
         else:
-            try:
-                await telegram.Bot(self.config["telegram"]["api_key"]) \
-                    .sendMessage(chat_id=chat_id,
-                                 text=message.replace("\\n", "\n"),
-                                 reply_to_message_id=reply_to_message_id)
-            except Exception as e:
-                logging.error("Error sending message!", exc_info=e)
+            await self._send_parse(chat_id, message, reply_to_message_id, MARKDOWN_MODE_NO_MARKDOWN)
 
     def _stop_response_loop(self) -> None:
         """
@@ -720,9 +764,10 @@ class BotHandler:
 
                 # Send reply
                 if not request_response.error:
-                    # Text response (ChatGPT, EdgeGPT)
+                    # Text response (ChatGPT, EdgeGPT, Bard)
                     if request_response.request_type == RequestResponseContainer.REQUEST_TYPE_CHATGPT \
-                            or request_response.request_type == RequestResponseContainer.REQUEST_TYPE_EDGEGPT:
+                            or request_response.request_type == RequestResponseContainer.REQUEST_TYPE_EDGEGPT \
+                            or request_response.request_type == RequestResponseContainer.REQUEST_TYPE_BARD:
                         asyncio.run(self._send_reply(request_response.user["user_id"],
                                                      request_response.response,
                                                      request_response.message_id,

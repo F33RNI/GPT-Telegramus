@@ -16,12 +16,12 @@
 """
 
 import argparse
-import asyncio
 import datetime
 import logging
 import os
 import sys
 
+import BardModule
 import BotHandler
 import ChatGPTModule
 import DALLEModule
@@ -31,7 +31,7 @@ import UsersHandler
 from JSONReaderWriter import load_json
 
 # GPT-Telegramus version
-__version__ = "beta_3.0.0"
+__version__ = "2.0.0"
 
 # Logging level
 LOGGING_LEVEL = logging.INFO
@@ -113,15 +113,17 @@ def main():
     chatgpt_module = ChatGPTModule.ChatGPTModule(settings, messages, user_handler)
     dalle_module = DALLEModule.DALLEModule(settings, messages, user_handler)
     edgegpt_module = EdgeGPTModule.EdgeGPTModule(settings, messages, user_handler)
+    bard_module = BardModule.BardModule(settings, messages, user_handler)
 
-    queue_handler = QueueHandler.QueueHandler(settings, chatgpt_module, dalle_module, edgegpt_module)
+    queue_handler = QueueHandler.QueueHandler(settings, chatgpt_module, dalle_module, edgegpt_module, bard_module)
     bot_handler = BotHandler.BotHandler(settings, messages, user_handler, queue_handler,
-                                        chatgpt_module, edgegpt_module)
+                                        chatgpt_module, edgegpt_module, bard_module)
 
     # Initialize modules
     chatgpt_module.initialize()
     dalle_module.initialize()
     edgegpt_module.initialize()
+    bard_module.initialize()
 
     # Start processing loop in thread
     queue_handler.start_processing_loop()

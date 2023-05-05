@@ -248,22 +248,26 @@ class ChatGPTModule:
             request_response.error = True
             self._processing_flag = False
 
-    def clear_conversation_for_user(self, user: dict) -> bool:
+    def clear_conversation_for_user(self, user: dict) -> None:
         """
         Clears conversation (chat history) for selected user
         :param user:
         :return: True if cleared successfully
         """
+        if not self._enabled or self._chatbot is None:
+            return
         conversation_id = UsersHandler.get_key_or_none(user, "conversation_id")
         if conversation_id is None:
-            return False
-        return self._delete_conversation(conversation_id)
+            return
+        self._delete_conversation(conversation_id)
 
     def exit(self):
         """
         Aborts processing
         :return:
         """
+        if not self._enabled or self._chatbot is None:
+            return
         self._exit_flag = True
 
         # Wait until aborted

@@ -16,7 +16,6 @@
 """
 import asyncio
 import logging
-from asyncio import AbstractEventLoop
 
 import EdgeGPT
 
@@ -155,6 +154,8 @@ class EdgeGPTModule:
         Clears conversation (chat history)
         :return:
         """
+        if not self._enabled or self._chatbot is None:
+            return
         try:
             asyncio.create_task(self._chatbot.reset())
         except Exception as e:
@@ -165,6 +166,8 @@ class EdgeGPTModule:
         Aborts processing
         :return:
         """
+        if not self._enabled or self._chatbot is None:
+            return
         if self._chatbot is not None:
             logging.warning("Closing EdgeGPT connection")
             try:
