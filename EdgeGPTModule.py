@@ -149,9 +149,9 @@ class EdgeGPTModule:
             try:
                 sources = edgegpt_response_raw["item"]["messages"][-1]["sourceAttributions"]
                 for i in range(len(sources)):
-                    sources_str += "[{0}] {1} ({2})\n".format(i + 1,
-                                                              sources[i]["providerDisplayName"],
-                                                              sources[i]["seeMoreUrl"])
+                    sources_str += self.messages["edgegpt_sources"].format(i + 1,
+                                                                           sources[i]["providerDisplayName"],
+                                                                           sources[i]["seeMoreUrl"])
             except:
                 pass
             if sources_str and len(sources_str) > 0:
