@@ -605,7 +605,7 @@ class BotHandler:
         if self.config["telegram"]["show_queue_message"]:
             await _send_safe(user["user_id"],
                              self.messages["queue_accepted"].format(
-                                 RequestResponseContainer.REQUEST_NAMES[request_type],
+                                 self.messages["modules"][request_type],
                                  len(self.queue_handler.get_queue_list()),
                                  self.config["telegram"]["queue_max"]), context)
 

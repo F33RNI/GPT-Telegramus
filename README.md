@@ -1,4 +1,4 @@
-# GPT-Telegramus
+# 🤖 GPT-Telegramus
 ## ChatGPT, EdgeGPT, DALL-E and Bard implementation as a telegram bot with admin control and automatic proxy searcher
 <div style="width:100%;text-align:center;">
    <p align="center">
@@ -17,6 +17,10 @@
    <p align="center">
       <img src="Screenshots/help.png" width="auto" height="300" alt="/help command">
       <img src="Screenshots/chatgpt.png" width="auto" height="300" alt="Screenshot of request to ChatGPT">
+   </p>
+</div>
+<div style="width:100%;text-align:center;">
+   <p align="center">
       <img src="Screenshots/edgegpt.png" width="auto" height="300" alt="Screenshot of request to EdgeGPT">
       <img src="Screenshots/dalle.png" width="auto" height="300" alt="Screenshot of request to DALL-E">
       <img src="Screenshots/bard.png" width="auto" height="300" alt="Screenshot of request to Bard">
@@ -25,16 +29,16 @@
 
 ----------
 
-## Support project
+## 😋 Support project
 
 Support the project by buying and listening to my music 🎵
 
-- [Bandcamp](https://f3rni.bandcamp.com)
-- [SoundCloud](https://soundcloud.com/f3rni)
+- 🟦 [Bandcamp](https://f3rni.bandcamp.com)
+- 🟧 [SoundCloud](https://soundcloud.com/f3rni)
 
 ----------
 
-## Dependencies
+## 📙 Dependencies
 
 - **ChatGPT** (ChatGPT by OpenAI): https://chat.openai.com/chat
 - **EdgeGPT** (EdgeGPT by Microsoft): https://bing.com/chat
@@ -47,7 +51,7 @@ Support the project by buying and listening to my music 🎵
 
 ----------
 
-## Get started
+## ❓ Get started
 
 1. Install Python and pip
 2. Download source code
@@ -60,7 +64,7 @@ Support the project by buying and listening to my music 🎵
 
 ----------
 
-## Bot messages
+## 💬 Bot messages
 
 You can edit telegram bot messages by editing file `messages.json`. You can add new lines by adding `\\n`
 
@@ -68,7 +72,7 @@ Note: make sure you don't delete argumensts `{0}`, `{1}`, ... in message and ple
 
 ----------
 
-## Running as service on linux
+## 🐧 Running as service on linux
 
 1. Install Python and pip
 2. Clone repo
@@ -97,7 +101,7 @@ Note: make sure you don't delete argumensts `{0}`, `{1}`, ... in message and ple
 
 ----------
 
-## Running in Docker
+## 🐋 Running in Docker
 
 **WARNING: not tested**
 
@@ -119,7 +123,7 @@ docker run -d -e TELEGRAMUS_SETTINGS_FILE="PATH_TO_config.json" --name gpt-teleg
 
 ----------
 
-## Proxy to bypass geo-blocking
+## 🌎 Proxy to bypass geo-blocking
 
 It is possible to bypass geo-blocking of ChatGPT, EdgeGPT, DALL-E or Bard. GPT-Telegramus includes automatic proxy-list downloading with periodic checks
 
@@ -132,44 +136,45 @@ Sometimes, searching for a proxy can take a long time. If you think that the fou
 
 ----------
 
-## Telegram bot commands
+## 🤖 Telegram bot commands
 
-- `/start` - Welcome message and bot version
-- `/help` - Show this message
-- `/chatgpt <request>` - ChatGPT request
-- `/edgegpt <request>` - EdgeGPT request
-- `/bard <request>` - Bard request
-- `/dalle <request>` - Draw a picture with DALL-E
-- `/clear <module>` - Clear chat history (chatgpt / edgegpt / bard)
-- `/chatid` - Show your chat_id
-Or just send a text message
+- 📄 `/start` - Welcome message and bot version
+- 📙 `/help` - Show this message
+- 🤖 `/chatgpt <request>` - ChatGPT request
+- 🔵 `/edgegpt <request>` - EdgeGPT request
+- 🖥 `/bard <request>` - Bard request
+- 🖼 `/dalle <request>` - Draw a picture with DALL-E
+- 🧹 `/clear <module>` - Clear chat history (chatgpt / edgegpt / bard)
+- 🆔 `/chatid` - Show your chat_id
 
-Admin commands:
-- `/queue` - Show requests queue
-- `/restart` - Restart modules and telegram bot
-- `/users` - Show list of all users
-- `/ban <id> [reason]` - Ban a user by their id with reason (optional)
-- `/unban <id>` - Unban a user by their id
-- `/broadcast <message>` - Send text message to everyone except banned users
+💬 Or just send a text message to make a request
+
+### Admin commands:
+- 💬 `/queue` - Show requests queue
+- 🔃 `/restart` - Restart modules and telegram bot
+- 👤 `/users` - Show list of all users
+- 🔨 `/ban <id> [reason]` - Ban a user by their id with reason (optional)
+- 🔓 `/unban <id>` - Unban a user by their id
+- 📢 `/broadcast <message>` - Send text message to everyone except banned users
 
 ----------
 
-## Chat history
+## 📄 Chat history
 
 GPT-Telegramus saves only ChatGPT chat history locally (`"conversations_dir": "conversations"`). Other modules either have a built-in ability to save chat history or do not have the ability to split conversations
 
 ----------
 
-## TODO
+## 📝 TODO
 
 - Add some free GPT-4 model
 
 ----------
 
-## Contribution
+## ✨ Contribution
 
 - Anyone can contribute! Just create a pull request
 
 ----------
 
-## P.S. This project is still under development!
+### 🚧 P.S. This project is still under development!
