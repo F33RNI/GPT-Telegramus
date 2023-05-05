@@ -18,7 +18,6 @@
 import logging
 
 import Bard
-import openai
 
 import UsersHandler
 from RequestResponseContainer import RequestResponseContainer

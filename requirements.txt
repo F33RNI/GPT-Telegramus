@@ -6,3 +6,5 @@ EdgeGPT==0.3.5
 openai>=0.26.4
 tiktoken>=0.2.0
 OpenAIAuth>=0.3.2
+asyncio==3.4.3
+GoogleBard==1.0.0
