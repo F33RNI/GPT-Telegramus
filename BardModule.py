@@ -96,7 +96,6 @@ class BardModule:
             # Ask Bard
             logging.info("Asking Bard...")
             bard_response = self._chatbot.ask(request_response.request)
-            print(bard_response)
 
             # Check response
             if not bard_response or len(bard_response) < 1 or "content" not in bard_response:

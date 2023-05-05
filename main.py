@@ -117,7 +117,7 @@ def main():
 
     queue_handler = QueueHandler.QueueHandler(settings, chatgpt_module, dalle_module, edgegpt_module, bard_module)
     bot_handler = BotHandler.BotHandler(settings, messages, user_handler, queue_handler,
-                                        chatgpt_module, edgegpt_module, bard_module)
+                                        chatgpt_module, edgegpt_module, dalle_module, bard_module)
 
     # Initialize modules
     chatgpt_module.initialize()

@@ -27,6 +27,7 @@ from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, Messa
 
 import BardModule
 import ChatGPTModule
+import DALLEModule
 import EdgeGPTModule
 import QueueHandler
 import RequestResponseContainer
@@ -84,6 +85,7 @@ class BotHandler:
                  queue_handler: QueueHandler.QueueHandler,
                  chatgpt_module: ChatGPTModule.ChatGPTModule,
                  edgegpt_module: EdgeGPTModule.EdgeGPTModule,
+                 dalle_module: DALLEModule.DALLEModule,
                  bard_module: BardModule.BardModule):
         self.config = config
         self.messages = messages
@@ -91,6 +93,7 @@ class BotHandler:
         self.queue_handler = queue_handler
         self.chatgpt_module = chatgpt_module
         self.edgegpt_module = edgegpt_module
+        self.dalle_module = dalle_module
         self.bard_module = bard_module
 
         self._application = None
@@ -356,13 +359,23 @@ class BotHandler:
         logging.info("Restarting")
         await _send_safe(user["user_id"], self.messages["restarting"], context)
 
+        # Restart ChatGPT module
+        logging.info("Restarting ChatGPT module")
+        self.chatgpt_module.exit()
+        self.chatgpt_module.initialize()
+
         # Restart EdgeGPT module
+        logging.info("Restarting EdgeGPT module")
         self.edgegpt_module.exit()
         self.edgegpt_module.initialize()
 
-        # Restart ChatGPT module
-        self.chatgpt_module.exit()
-        self.chatgpt_module.initialize()
+        # Restart DALL-E module
+        logging.info("Restarting DALL-E module")
+        self.dalle_module.initialize()
+
+        # Restart Bard module
+        logging.info("Restarting Bard module")
+        self.bard_module.initialize()
 
         # Restart telegram bot
         self._restart_requested_flag = True
