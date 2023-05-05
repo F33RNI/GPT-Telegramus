@@ -37,10 +37,8 @@ __version__ = "2.0.0"
 # Logging level
 LOGGING_LEVEL = logging.INFO
 
-# Files and directories
-SETTINGS_FILE = "settings.json"
-MESSAGES_FILE = "messages.json"
-LOGS_DIR = "logs"
+# Default config file
+CONFIG_FILE = "config.json"
 
 
 def logging_setup(directory: str):
@@ -83,12 +81,8 @@ def parse_args():
     :return:
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("--settings", type=str, help="settings.json file location",
-                        default=os.getenv("TELEGRAMUS_SETTINGS_FILE", SETTINGS_FILE))
-    parser.add_argument("--messages", type=str, help="messages.json file location",
-                        default=os.getenv("TELEGRAMUS_MESSAGES_FILE", MESSAGES_FILE))
-    parser.add_argument("--logs", type=str, help="logs directory",
-                        default=os.getenv("TELEGRAMUS_LOGS_DIR", LOGS_DIR))
+    parser.add_argument("--config", type=str, help="config.json file location",
+                        default=os.getenv("TELEGRAMUS_CONFIG_FILE", CONFIG_FILE))
     parser.add_argument("--version", action="version", version=__version__)
     return parser.parse_args()
 
@@ -101,26 +95,28 @@ def main():
     # Parse arguments
     args = parse_args()
 
-    # Initialize logging
-    logging_setup(args.logs)
+    # Load config
+    config = load_json(args.config, logging_enabled=False)
 
-    # Load settings and messages from json files
-    settings = load_json(args.settings)
-    messages = load_json(args.messages)
+    # Initialize logging
+    logging_setup(config["files"]["logs_dir"])
+
+    # Load messages from json file
+    messages = load_json(config["files"]["messages_file"])
 
     # Initialize classes
-    user_handler = UsersHandler.UsersHandler(settings, messages)
+    user_handler = UsersHandler.UsersHandler(config, messages)
 
-    chatgpt_module = ChatGPTModule.ChatGPTModule(settings, messages, user_handler)
-    dalle_module = DALLEModule.DALLEModule(settings, messages, user_handler)
-    edgegpt_module = EdgeGPTModule.EdgeGPTModule(settings, messages, user_handler)
-    bard_module = BardModule.BardModule(settings, messages, user_handler)
+    chatgpt_module = ChatGPTModule.ChatGPTModule(config, messages, user_handler)
+    dalle_module = DALLEModule.DALLEModule(config, messages, user_handler)
+    edgegpt_module = EdgeGPTModule.EdgeGPTModule(config, messages, user_handler)
+    bard_module = BardModule.BardModule(config, messages, user_handler)
 
-    proxy_automation = ProxyAutomation.ProxyAutomation(settings,
+    proxy_automation = ProxyAutomation.ProxyAutomation(config,
                                                        chatgpt_module, dalle_module, edgegpt_module, bard_module)
 
-    queue_handler = QueueHandler.QueueHandler(settings, chatgpt_module, dalle_module, edgegpt_module, bard_module)
-    bot_handler = BotHandler.BotHandler(settings, messages, user_handler, queue_handler, proxy_automation,
+    queue_handler = QueueHandler.QueueHandler(config, chatgpt_module, dalle_module, edgegpt_module, bard_module)
+    bot_handler = BotHandler.BotHandler(config, messages, user_handler, queue_handler, proxy_automation,
                                         chatgpt_module, edgegpt_module, dalle_module, bard_module)
 
     # Initialize modules

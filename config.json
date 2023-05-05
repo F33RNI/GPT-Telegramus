@@ -106,7 +106,9 @@
     "__comment07__": "FILES AND DIRECTORIES SETTINGS",
     "files": {
         "users_database": "users.json",
-        "conversations_dir": "conversations"
+        "conversations_dir": "conversations",
+        "messages_file": "messages.json",
+        "logs_dir": "logs"
     },
 
     "__comment08__": "AUTOMATIC PROXY SEARCHER SETTINGS",

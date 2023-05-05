@@ -20,43 +20,52 @@ import logging
 import os.path
 
 
-def load_json(file_name: str):
+def load_json(file_name: str, logging_enabled=True):
     """
     Loads json from file_name
+    :param file_name: filename to load
+    :param logging_enabled: set True to have logs
     :return: json if loaded or None if not
     """
     try:
         if os.path.exists(file_name):
-            logging.info("Loading {0}".format(file_name))
+            if logging_enabled:
+                logging.info("Loading {0}".format(file_name))
 
             messages_file = open(file_name, encoding="utf-8")
             json_content = json.load(messages_file)
             messages_file.close()
 
             if json_content is not None:
-                logging.info("Loaded json from {0}".format(file_name))
+                if logging_enabled:
+                    logging.info("Loaded json from {0}".format(file_name))
             else:
-                logging.error("Error loading json data from file {0}".format(file_name))
+                if logging_enabled:
+                    logging.error("Error loading json data from file {0}".format(file_name))
                 return None
         else:
-            logging.warning("No {0} file! Returning empty json".format(file_name))
+            if logging_enabled:
+                logging.warning("No {0} file! Returning empty json".format(file_name))
             return None
 
     except Exception as e:
-        logging.error("Error loading json data from file {0}".format(file_name), exc_info=e)
+        if logging_enabled:
+            logging.error("Error loading json data from file {0}".format(file_name), exc_info=e)
         return None
 
     return json_content
 
 
-def save_json(file_name: str, content):
+def save_json(file_name: str, content, logging_enabled=True):
     """
     Saves
     :param file_name: filename to save
     :param content: JSON dictionary
+    :param logging_enabled: set True to have logs
     :return:
     """
-    logging.info("Saving to {0}".format(file_name))
+    if logging_enabled:
+        logging.info("Saving to {0}".format(file_name))
     file = open(file_name, "w")
     json.dump(content, file, indent=4)
     file.close()
