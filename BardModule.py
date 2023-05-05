@@ -161,3 +161,12 @@ class BardModule:
 
         # Save user
         self.users_handler.save_user(user)
+
+    def exit(self):
+        """
+        Aborts connection
+        :return:
+        """
+        if not self._enabled or self._chatbot is None:
+            return
+        self._chatbot.session.close()

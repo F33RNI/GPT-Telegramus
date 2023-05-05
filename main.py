@@ -20,7 +20,6 @@ import datetime
 import logging
 import os
 import sys
-import time
 
 import BardModule
 import BotHandler
@@ -142,6 +141,7 @@ def main():
     # If we're here, exit requested
     proxy_automation.stop_automation_loop()
     chatgpt_module.exit()
+    bard_module.exit()
     edgegpt_module.exit()
     queue_handler.stop_processing_loop()
     logging.info("GPT-Telegramus exited successfully")

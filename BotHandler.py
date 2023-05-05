@@ -383,6 +383,7 @@ class BotHandler:
 
         # Restart Bard module
         logging.info("Restarting Bard module")
+        self.bard_module.exit()
         self.bard_module.initialize()
 
         # Start proxy automation
