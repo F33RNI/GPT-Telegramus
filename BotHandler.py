@@ -582,7 +582,15 @@ class BotHandler:
 
         # Check request
         if not request_message or len(request_message) <= 0:
-            await _send_safe(user["user_id"], self.messages["empty_request"], context)
+            # Module changed
+            if self.config["modules"]["auto_module"]:
+                await _send_safe(user["user_id"],
+                                 self.messages["empty_request_module_changed"]
+                                 .format(self.messages["modules"][request_type]), context)
+
+            # Empty request
+            else:
+                await _send_safe(user["user_id"], self.messages["empty_request"], context)
             return
 
         # Check queue
