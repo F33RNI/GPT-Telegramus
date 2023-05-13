@@ -192,7 +192,7 @@ class BardModule:
         Restarts module and saves proxy
         :return:
         """
-        if not self._enabled or self._chatbot is None:
+        if not self.config["modules"]["bard"]:
             return
         logging.info("Restarting Bard module")
 

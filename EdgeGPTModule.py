@@ -227,7 +227,7 @@ class EdgeGPTModule:
         Restarts module and saves proxy
         :return:
         """
-        if not self._enabled or self._chatbot is None:
+        if not self.config["modules"]["edgegpt"]:
             return
         logging.info("Restarting EdgeGPT module")
 

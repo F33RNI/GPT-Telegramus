@@ -312,7 +312,7 @@ class ChatGPTModule:
         Restarts module and saves proxy
         :return:
         """
-        if not self._enabled or self._chatbot is None:
+        if not self.config["modules"]["chatgpt"]:
             return
         logging.info("Restarting ChatGPT module")
 

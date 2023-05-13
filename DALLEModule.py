@@ -138,7 +138,7 @@ class DALLEModule:
         Restarts module and saves proxy
         :return:
         """
-        if not self._enabled:
+        if not self.config["modules"]["dalle"]:
             return
         logging.info("Restarting DALL-E module")
 
