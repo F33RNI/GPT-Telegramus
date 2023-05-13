@@ -53,6 +53,7 @@ class EdgeGPTModule:
         self._enabled = False
         self._chatbot = None
         self._restart_attempts = 0
+        self._proxy = None
 
     def initialize(self) -> None:
         """
@@ -72,8 +73,10 @@ class EdgeGPTModule:
             if proxy and len(proxy) > 1 and proxy.strip().lower() != "auto":
                 async_helper(self._chatbot.create(cookie_path=self.config["edgegpt"]["cookie_file"],
                                                   proxy=proxy))
+                self._proxy = proxy
             else:
                 async_helper(self._chatbot.create(cookie_path=self.config["edgegpt"]["cookie_file"]))
+                self._proxy = None
 
             # Check
             if self._chatbot is not None:
@@ -86,14 +89,17 @@ class EdgeGPTModule:
 
     def set_proxy(self, proxy: str) -> None:
         """
-        Sets new proxy
+        Sets new proxy from ProxyAutomation
+        self.config["edgegpt"]["proxy"] must be "auto"
         :param proxy: https proxy but in format http://IP:PORT
         :return:
         """
-        if not self._enabled or self._chatbot is None:
+        if self.config["edgegpt"]["proxy"].strip().lower() != "auto":
             return
-        if self.config["edgegpt"]["proxy"].strip().lower() == "auto":
-            logging.info("Setting proxy {0} for EdgeGPT module".format(proxy))
+
+        logging.info("Setting proxy {0} for EdgeGPT module".format(proxy))
+        self._proxy = proxy
+        if self._enabled and self._chatbot is not None:
             self._chatbot.proxy = proxy
 
     def process_request(self, request_response: RequestResponseContainer) -> None:
@@ -231,12 +237,13 @@ class EdgeGPTModule:
             return
         logging.info("Restarting EdgeGPT module")
 
-        # Save proxy
-        proxy = self._chatbot.proxy
-
         # Restart
         self.exit()
         self.initialize()
 
         # Set proxy
-        self._chatbot.proxy = proxy
+        try:
+            if self._proxy is not None:
+                self._chatbot.proxy = self._proxy
+        except Exception as e:
+            logging.error("Error setting back proxy to EdgeGPT module!", exc_info=e)

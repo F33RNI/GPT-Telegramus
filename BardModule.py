@@ -32,6 +32,7 @@ class BardModule:
         self._enabled = False
         self._chatbot = None
         self._restart_attempts = 0
+        self._proxy = None
 
     def initialize(self) -> None:
         """
@@ -51,8 +52,11 @@ class BardModule:
             # Set proxy
             proxy = self.config["bard"]["proxy"]
             if proxy and len(proxy) > 1 and proxy.strip().lower() != "auto":
+                self._proxy = proxy
                 self._chatbot.session.proxies.update({"http": proxy,
                                                       "https": proxy})
+            else:
+                self._proxy = None
 
             # Done?
             if self._chatbot is not None:
@@ -67,14 +71,17 @@ class BardModule:
 
     def set_proxy(self, proxy: str) -> None:
         """
-        Sets new proxy
+        Sets new proxy from ProxyAutomation
+        self.config["bard"]["proxy"] must be "auto"
         :param proxy: https proxy but in format http://IP:PORT
         :return:
         """
-        if not self._enabled or self._chatbot is None:
+        if self.config["bard"]["proxy"].strip().lower() != "auto":
             return
-        if self.config["bard"]["proxy"].strip().lower() == "auto":
-            logging.info("Setting proxy {0} for Bard module".format(proxy))
+
+        logging.info("Setting proxy {0} for Bard module".format(proxy))
+        self._proxy = proxy
+        if self._enabled and self._chatbot is not None:
             self._chatbot.session.proxies.update({"http": proxy,
                                                   "https": proxy})
 
@@ -196,12 +203,15 @@ class BardModule:
             return
         logging.info("Restarting Bard module")
 
-        # Save proxy
-        proxy = self._chatbot.session.proxies
-
         # Restart
         self.exit()
         self.initialize()
 
         # Set proxy
-        self._chatbot.session.proxies = proxy
+        try:
+            if self._proxy is not None:
+                self._chatbot.session.proxies.update({"http": self._proxy,
+                                                      "https": self._proxy})
+        except Exception as e:
+            logging.error("Error setting back proxy to Bard module!", exc_info=e)
+
