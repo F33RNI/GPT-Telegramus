@@ -119,7 +119,7 @@
         "enabled": false,
 
         "__comment03__": "MAXIMUM FILE SIZE (IN BYTES). IF THE SIZE WILL EXCEED THIS VALUE, A NEW FILE WILL BE CREATED",
-        "max_size": 3,
+        "max_size": 33554432,
 
         "__comment04__": "NAME OF THE FILE TO BE CREATED",
         "filename_timestamp_format": "%Y_%m_%d_%H_%M_%S",
