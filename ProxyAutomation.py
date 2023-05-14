@@ -65,7 +65,7 @@ def proxy_tester_process(test_proxy_queue: multiprocessing.Queue,
                     response = session.get(check_url, timeout=timeout)
 
                     # Check result
-                    if len(str(response.headers)) > 1:
+                    if len(str(response.headers)) > 1 and response.status_code == 200:
                         # Put working proxy to the queue
                         working_proxy_queue.put(proxy_to_test, block=True, timeout=1)
 
@@ -248,7 +248,7 @@ class ProxyAutomation:
                     try:
                         response = session.get(self.config["proxy_automation"]["check_url"],
                                                timeout=self.config["proxy_automation"]["check_timeout_seconds"])
-                        is_proxy_working = len(str(response.headers)) > 1
+                        is_proxy_working = len(str(response.headers)) > 1 and response.status_code == 200
                     except Exception as e:
                         logging.error("Error checking proxy: {0}".format(str(e)))
                     session.close()
