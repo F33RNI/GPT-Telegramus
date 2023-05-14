@@ -56,7 +56,7 @@ class ChatGPTModule:
                 return
 
             # Get API type from config
-            self._api_type = int(self.config["modules"]["chatgpt_api_type"])
+            self._api_type = int(self.config["chatgpt"]["api_type"])
 
             # Get conversations directory
             self._conversations_dir = self.config["files"]["conversations_dir"]

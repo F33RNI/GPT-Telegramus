@@ -29,10 +29,14 @@ class RequestResponseContainer:
                  message_id: int,
                  request="",
                  response="",
-                 request_type=REQUEST_TYPE_CHATGPT) -> None:
+                 request_type=REQUEST_TYPE_CHATGPT,
+                 request_timestamp="",
+                 response_timestamp="") -> None:
         self.user = user
         self.message_id = message_id
         self.request = request
         self.response = response
         self.request_type = request_type
         self.error = False
+        self.request_timestamp = request_timestamp
+        self.response_timestamp = response_timestamp

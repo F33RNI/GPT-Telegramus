@@ -16,6 +16,7 @@
 """
 
 import asyncio
+import datetime
 import logging
 import queue
 import threading
@@ -598,10 +599,16 @@ class BotHandler:
             await _send_safe(user["user_id"], self.messages["queue_overflow"], context)
             return
 
+        # Create request timestamp (for data collecting)
+        request_timestamp = ""
+        if self.config["data_collecting"]["enabled"]:
+            request_timestamp = datetime.datetime.now().strftime(self.config["data_collecting"]["timestamp_format"])
+
         # Create request
         request_response = RequestResponseContainer.RequestResponseContainer(user, update.message.message_id,
                                                                              request=request_message,
-                                                                             request_type=request_type)
+                                                                             request_type=request_type,
+                                                                             request_timestamp=request_timestamp)
 
         # Add request to the queue
         logging.info("Adding new {0} request from {1} ({2}) to the queue".format(request_type,
