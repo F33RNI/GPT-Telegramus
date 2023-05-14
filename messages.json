@@ -3,6 +3,7 @@
   "help_message": "\uD83D\uDCC4 /start - Welcome message and bot version\\n❓ /help - Show this message\\n\uD83E\uDD16 /chatgpt <request> - ChatGPT request\\n\uD83D\uDD35 /edgegpt <request> - EdgeGPT request\\n\uD83D\uDDA5 /bard <request> - Bard request\\n\uD83D\uDDBC /dalle <request> - Draw a picture with DALL-E\\n\uD83E\uDDF9 /clear <module> - Clear chat history (chatgpt / edgegpt / bard)\\n\uD83C\uDD94 /chatid - Show your chat_id\\n\\n\uD83D\uDCAC Or just send a text message",
   "help_message_admin": "Admin commands:\\n\\n\uD83D\uDCAC /queue - Show requests queue\\n\uD83D\uDD03 /restart - Restart modules and telegram bot\\n\uD83D\uDC64 /users - Show list of all users\\n\uD83D\uDD28 /ban <id> [reason] - Ban a user by their id with reason (optional)\\n\uD83D\uDD13 /unban <id> - Unban a user by their id\\n\uD83D\uDCE2 /broadcast <message> - Send text message to everyone except banned users",
   "empty_request": "Empty request, \uD83E\uDD74 choomba!",
+  "empty_request_module_changed": "Your default module has been changed to {0}\\nNow send me your request as a message",
   "permissions_deny": "You do not have permission for this command! \uD83D\uDD28",
   "queue_overflow": "Queue is full. Try again later ⏳",
   "queue_empty": "Queue is empty \uD83D\uDDD1",

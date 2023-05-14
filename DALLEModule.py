@@ -31,6 +31,7 @@ class DALLEModule:
 
         self._enabled = False
         self._restart_attempts = 0
+        self._proxy = None
 
     def initialize(self) -> None:
         """
@@ -50,7 +51,10 @@ class DALLEModule:
             # Proxy for DALL-E
             proxy = self.config["dalle"]["proxy"]
             if proxy and len(proxy) > 1 and proxy.strip().lower() != "auto":
+                self._proxy = proxy
                 openai.proxy = proxy
+            else:
+                self._proxy = None
 
             # Done?
             logging.info("DALL-E module initialized")
@@ -62,15 +66,17 @@ class DALLEModule:
 
     def set_proxy(self, proxy: str) -> None:
         """
-        Sets new proxy
+        Sets new proxy from ProxyAutomation
+        self.config["dalle"]["proxy"] must be "auto"
         :param proxy: https proxy but in format http://IP:PORT
         :return:
         """
-        if not self._enabled:
+        if self.config["dalle"]["proxy"].strip().lower() != "auto":
             return
-        if self.config["dalle"]["proxy"].strip().lower() == "auto":
-            logging.info("Setting proxy {0} for DALL-E module".format(proxy))
-            openai.proxy = proxy
+
+        logging.info("Setting proxy {0} for DALL-E module".format(proxy))
+        self._proxy = proxy
+        openai.proxy = proxy
 
     def process_request(self, request_response: RequestResponseContainer) -> None:
         """
@@ -138,15 +144,16 @@ class DALLEModule:
         Restarts module and saves proxy
         :return:
         """
-        if not self._enabled:
+        if not self.config["modules"]["dalle"]:
             return
         logging.info("Restarting DALL-E module")
-
-        # Save proxy
-        proxy = openai.proxy
 
         # Restart
         self.initialize()
 
         # Set proxy
-        openai.proxy = proxy
+        try:
+            if self._proxy is not None:
+                openai.proxy = self._proxy
+        except Exception as e:
+            logging.error("Error setting back proxy to DALL-E module!", exc_info=e)

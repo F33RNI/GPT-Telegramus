@@ -40,6 +40,7 @@ class ChatGPTModule:
         self._exit_flag = False
         self._processing_flag = False
         self._restart_attempts = 0
+        self._proxy = None
 
     def initialize(self) -> None:
         """
@@ -55,7 +56,7 @@ class ChatGPTModule:
                 return
 
             # Get API type from config
-            self._api_type = int(self.config["modules"]["chatgpt_api_type"])
+            self._api_type = int(self.config["chatgpt"]["api_type"])
 
             # Get conversations directory
             self._conversations_dir = self.config["files"]["conversations_dir"]
@@ -77,9 +78,13 @@ class ChatGPTModule:
                 logging.info("Initializing ChatGPT module with API type 3")
                 from revChatGPT.V3 import Chatbot
                 engine = str(self.config["chatgpt"]["engine"])
-                proxy = str(self.config["chatgpt"]["proxy"])
-                if proxy.strip().lower() == "auto":
+
+                proxy = self.config["edgegpt"]["proxy"]
+                if proxy and len(proxy) > 1 and proxy.strip().lower() != "auto":
+                    self._proxy = proxy
+                else:
                     proxy = ""
+                    self._proxy = None
 
                 if len(engine) > 0:
                     self._chatbot = Chatbot(str(self.config["chatgpt"]["api_key"]),
@@ -104,14 +109,17 @@ class ChatGPTModule:
 
     def set_proxy(self, proxy: str) -> None:
         """
-        Sets new proxy
+        Sets new proxy from ProxyAutomation
+        self.config["chatgpt"]["proxy"] must be "auto"
         :param proxy: https proxy but in format http://IP:PORT
         :return:
         """
-        if not self._enabled or self._chatbot is None:
+        if self.config["chatgpt"]["proxy"].strip().lower() != "auto":
             return
-        if self.config["chatgpt"]["proxy"].strip().lower() == "auto":
-            logging.info("Setting proxy {0} for ChatGPT module".format(proxy))
+
+        logging.info("Setting proxy {0} for ChatGPT module".format(proxy))
+        self._proxy = proxy
+        if self._enabled and self._chatbot is not None:
             self._chatbot.proxy = proxy
 
     def process_request(self, request_response: RequestResponseContainer) -> None:
@@ -312,19 +320,20 @@ class ChatGPTModule:
         Restarts module and saves proxy
         :return:
         """
-        if not self._enabled or self._chatbot is None:
+        if not self.config["modules"]["chatgpt"]:
             return
         logging.info("Restarting ChatGPT module")
-
-        # Save proxy
-        proxy = self._chatbot.proxy
 
         # Restart
         self.exit()
         self.initialize()
 
         # Set proxy
-        self._chatbot.proxy = proxy
+        try:
+            if self._proxy is not None:
+                self._chatbot.proxy = self._proxy
+        except Exception as e:
+            logging.error("Error setting back proxy to ChatGPT module!", exc_info=e)
 
     def _save_conversation(self, conversation_id) -> bool:
         """
@@ -458,8 +467,12 @@ class ChatGPTModule:
             raise Exception("Error! No credentials to login!")
 
         # Add proxy
-        if len(self.config["chatgpt"]["proxy"]) > 0 and self.config["chatgpt"]["proxy"].strip().lower() != "auto":
-            config["proxy"] = self.config["chatgpt"]["proxy"]
+        proxy = self.config["edgegpt"]["proxy"]
+        if proxy and len(proxy) > 1 and proxy.strip().lower() != "auto":
+            self._proxy = proxy
+            config["proxy"] = proxy
+        else:
+            self._proxy = None
 
         # Paid?
         config["paid"] = self.config["chatgpt"]["paid"]
