@@ -1,5 +1,5 @@
 # 🤖 GPT-Telegramus
-## ChatGPT, EdgeGPT, DALL-E and Bard implementation as a telegram bot with admin control and automatic proxy searcher
+## ChatGPT, EdgeGPT, DALL-E and Bard implementation as a telegram bot with admin control, automatic proxy searcher and data logging
 <div style="width:100%;text-align:center;">
    <p align="center">
       <img src="https://badges.frapsoft.com/os/v1/open-source.png?v=103" >
@@ -162,6 +162,19 @@ Sometimes, searching for a proxy can take a long time. If you think that the fou
 ## 📄 Chat history
 
 GPT-Telegramus saves only ChatGPT chat history locally (`"conversations_dir": "conversations"`). Other modules either have a built-in ability to save chat history or do not have the ability to split conversations
+
+----------
+
+## 📜 Data collecting
+
+GPT-Telegramus has a built-in data collecting function (request and response)
+
+- **For ChatGPT, EdgeGPT and Bard** response is saved as plain text
+- **For DALL-E** response is saved as Base64-encoded image (in the same text file)
+
+You can enable and configure data collection in config in `data_collecting` block
+
+**NOTE:** Please make sure you notify your bot users that you are collecting data
 
 ----------
 
