@@ -196,7 +196,7 @@ class QueueHandler:
             # Log request
             request_str_to_format = self.config["data_collecting"]["request_format"].replace("\\n", "\n") \
                 .replace("\\t", "\t").replace("\\r", "\r")
-            log_file.write(request_str_to_format.format(request_response.response_timestamp,
+            log_file.write(request_str_to_format.format(request_response.request_timestamp,
                                                         request_response.user["user_name"],
                                                         request_response.user["user_id"],
                                                         RequestResponseContainer
