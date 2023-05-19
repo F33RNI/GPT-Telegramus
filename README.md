@@ -36,6 +36,8 @@ Support the project by buying and listening to my music 🎵
 - 🟦 [Bandcamp](https://f3rni.bandcamp.com)
 - 🟧 [SoundCloud](https://soundcloud.com/f3rni)
 
+[![Star History Chart](https://api.star-history.com/svg?repos=F33RNI/GPT-Telegramus&type=Date)](https://star-history.com/#F33RNI/GPT-Telegramus&Date)
+
 ----------
 
 ## 📙 Dependencies
