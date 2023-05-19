@@ -183,6 +183,7 @@ You can enable and configure data collection in config in `data_collecting` bloc
 ## 📝 TODO
 
 - Add some free GPT-4 model
+- Add buttons to the telegram bot (reply markup)
 
 ----------
 
