@@ -498,14 +498,17 @@ class BotHandler:
         # Clear ChatGPT
         if requested_module == "chatgpt":
             self.chatgpt_module.clear_conversation_for_user(user)
+            requested_module = self.messages["modules"][0]
 
         # Clear EdgeGPT
         elif requested_module == "edgegpt":
             self.edgegpt_module.clear_conversation()
+            requested_module = self.messages["modules"][2]
 
         # Clear Bard
         elif requested_module == "bard":
             self.bard_module.clear_conversation_for_user(user)
+            requested_module = self.messages["modules"][3]
 
         # Wrong module
         else:
