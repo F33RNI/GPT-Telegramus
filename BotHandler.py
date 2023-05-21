@@ -740,7 +740,7 @@ class BotHandler:
             return True
 
         except:
-            logging.warning("Error sending reply with eascape_mode {0}".format(escape_mode))
+            logging.warning("Error sending reply with escape_mode {0}. You can ignore this message".format(escape_mode))
             return False
 
     async def _send_reply(self, chat_id: int, message: str, reply_to_message_id: int, markdown=False) -> None:

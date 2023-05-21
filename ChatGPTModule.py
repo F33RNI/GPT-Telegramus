@@ -198,7 +198,7 @@ class ChatGPTModule:
                 request_response.user["parent_id"] = parent_id
 
             # API type 3
-            if self._api_type == 3:
+            elif self._api_type == 3:
                 # Try to load conversation
                 if not self._load_conversation(conversation_id):
                     conversation_id = None
