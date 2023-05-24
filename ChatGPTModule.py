@@ -311,6 +311,13 @@ class ChatGPTModule:
             return
         self._exit_flag = True
 
+        # Try to close session
+        try:
+            logging.info("Trying to close ChatGPT session")
+            self._chatbot.session.close()
+        except Exception as e:
+            logging.warning("Error closing ChatGPT session", exc_info=e)
+
         # Wait until aborted
         while self._processing_flag:
             time.sleep(0.1)
