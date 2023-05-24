@@ -49,8 +49,7 @@
 
     "__comment03__": "EDGEGPT SETTINGS",
     "edgegpt": {
-        "__comment01__": "AUTHORIZATION FOR EDGE-GPT. https://github.com/acheong08/EdgeGPT#getting-authentication-required",
-        "cookie_file": "EdgeGPT_cookies.json",
+        "__comment01__": "WSS LINK FOR EDGE-GPT",
         "wss_link": "",
 
         "__comment02__": "creative / balanced / precise",

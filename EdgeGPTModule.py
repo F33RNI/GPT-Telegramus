@@ -71,11 +71,10 @@ class EdgeGPTModule:
             self._chatbot = EdgeGPT.Chatbot()
             proxy = self.config["edgegpt"]["proxy"]
             if proxy and len(proxy) > 1 and proxy.strip().lower() != "auto":
-                async_helper(self._chatbot.create(cookie_path=self.config["edgegpt"]["cookie_file"],
-                                                  proxy=proxy))
+                async_helper(self._chatbot.create(proxy=proxy))
                 self._proxy = proxy
             else:
-                async_helper(self._chatbot.create(cookie_path=self.config["edgegpt"]["cookie_file"]))
+                async_helper(self._chatbot.create())
                 self._proxy = None
 
             # Check
