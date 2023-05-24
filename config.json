@@ -49,7 +49,7 @@
 
     "__comment03__": "EDGEGPT SETTINGS",
     "edgegpt": {
-        "__comment01__": "WSS LINK FOR EDGE-GPT",
+        "__comment01__": "WSS LINK FOR EDGE-GPT (LEAVE EMPTY FOR THE DEFAULT VALUE)",
         "wss_link": "",
 
         "__comment02__": "creative / balanced / precise",
