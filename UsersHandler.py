@@ -14,25 +14,32 @@
  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  OTHER DEALINGS IN THE SOFTWARE.
 """
+
 import logging
 
 import JSONReaderWriter
 
+DEFAULT_USER_NAME = "Noname"
 
-def get_key_or_none(dictionary: dict, key):
+
+def get_key_or_none(dictionary: dict, key, default_value=None):
     """
     Safely gets value of key from dictionary
     :param dictionary:
     :param key:
-    :return: key value or None if not found
+    :param default_value: default value if key not found
+    :return: key value or default_value if not found
     """
     if key is None:
-        return None
+        return default_value
 
     if key in dictionary:
-        return dictionary[key]
+        if dictionary[key] is None:
+            return default_value
+        else:
+            return dictionary[key]
 
-    return None
+    return default_value
 
 
 class UsersHandler:
@@ -101,12 +108,13 @@ class UsersHandler:
         logging.info("Creating new user with id: {0}".format(user_id))
         user = {
             "user_id": user_id,
-            "user_name": "",
+            "user_name": DEFAULT_USER_NAME,
             "admin": True if user_id in self.config["telegram"]["admin_ids"] else False,
             "banned": self.config["telegram"]["ban_by_default"],
             "ban_reason": self.messages["ban_reason_default"].replace("\\n", "\n"),
             "module": self.config["modules"]["default_module"],
-            "requests_total": 0
+            "requests_total": 0,
+            "reply_message_id_last": -1
         }
         self.save_user(user)
         return user

@@ -14,11 +14,20 @@
  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  OTHER DEALINGS IN THE SOFTWARE.
 """
+
 import asyncio
+import ctypes
+import json
 import logging
+import multiprocessing
+import os
+import uuid
+from typing import List, Dict
 
-import EdgeGPT
+from EdgeGPT.EdgeGPT import Chatbot
+from EdgeGPT.conversation_style import ConversationStyle
 
+import BotHandler
 import UsersHandler
 from RequestResponseContainer import RequestResponseContainer
 
@@ -45,22 +54,40 @@ def async_helper(awaitable_) -> None:
 
 
 class EdgeGPTModule:
-    def __init__(self, config: dict, messages: dict, users_handler: UsersHandler.UsersHandler) -> None:
+    def __init__(self, config: dict, messages: List[Dict], users_handler: UsersHandler.UsersHandler) -> None:
         self.config = config
         self.messages = messages
         self.users_handler = users_handler
 
-        self._enabled = False
-        self._chatbot = None
-        self._restart_attempts = 0
-        self._proxy = None
+        # All variables here must be multiprocessing
+        self.cancel_requested = multiprocessing.Value(ctypes.c_bool, False)
+        self.processing_flag = multiprocessing.Value(ctypes.c_bool, False)
 
-    def initialize(self) -> None:
+    def initialize(self, proxy=None) -> None:
         """
         Initializes EdgeGPT bot using this API: https://github.com/acheong08/EdgeGPT
         :return:
         """
+        self._enabled = False
+        self._chatbot = None
+
+        self.processing_flag.value = False
+        self.cancel_requested.value = False
+
         try:
+            # Use manual proxy
+            if not proxy and self.config["edgegpt"]["proxy"] and self.config["edgegpt"]["proxy"] != "auto":
+                proxy = self.config["edgegpt"]["proxy"]
+
+            # Log
+            logging.info("Initializing EdgeGPT module with proxy {}".format(proxy))
+
+            # Read cookies file
+            cookies = None
+            if self.config["edgegpt"]["cookies_file"] and os.path.exists(self.config["edgegpt"]["cookies_file"]):
+                logging.info("Loading cookies from {}".format(self.config["edgegpt"]["cookies_file"]))
+                cookies = json.loads(open(self.config["edgegpt"]["cookies_file"], encoding="utf-8").read())
+
             # Set enabled status
             self._enabled = self.config["modules"]["edgegpt"]
             if not self._enabled:
@@ -68,14 +95,10 @@ class EdgeGPTModule:
                 return
 
             # Initialize EdgeGPT chatbot
-            self._chatbot = EdgeGPT.Chatbot()
-            proxy = self.config["edgegpt"]["proxy"]
             if proxy and len(proxy) > 1 and proxy.strip().lower() != "auto":
-                async_helper(self._chatbot.create(proxy=proxy))
-                self._proxy = proxy
+                self._chatbot = asyncio.run(Chatbot.create(proxy=proxy, cookies=cookies))
             else:
-                async_helper(self._chatbot.create())
-                self._proxy = None
+                self._chatbot = asyncio.run(Chatbot.create(cookies=cookies))
 
             # Check
             if self._chatbot is not None:
@@ -83,23 +106,8 @@ class EdgeGPTModule:
 
         # Error
         except Exception as e:
-            logging.error("Error initializing EdgeGPT module!", exc_info=e)
             self._enabled = False
-
-    def set_proxy(self, proxy: str) -> None:
-        """
-        Sets new proxy from ProxyAutomation
-        self.config["edgegpt"]["proxy"] must be "auto"
-        :param proxy: https proxy but in format http://IP:PORT
-        :return:
-        """
-        if self.config["edgegpt"]["proxy"].strip().lower() != "auto":
-            return
-
-        logging.info("Setting proxy {0} for EdgeGPT module".format(proxy))
-        self._proxy = proxy
-        if self._enabled and self._chatbot is not None:
-            self._chatbot.proxy = proxy
+            raise e
 
     def process_request(self, request_response: RequestResponseContainer) -> None:
         """
@@ -107,111 +115,201 @@ class EdgeGPTModule:
         :param request_response: RequestResponseContainer object
         :return:
         """
+        # Get user language
+        lang = UsersHandler.get_key_or_none(request_response.user, "lang", 0)
+
         # Check if we are initialized
         if not self._enabled or self._chatbot is None:
             logging.error("EdgeGPT module not initialized!")
-            request_response.response = self.messages["response_error"].replace("\\n", "\n") \
+            request_response.response = self.messages[lang]["response_error"].replace("\\n", "\n") \
                 .format("EdgeGPT module not initialized!")
             request_response.error = True
-            self._restart_attempts = 0
             return
 
         try:
+            # Set flag that we are currently processing request
+            self.processing_flag.value = True
+            self.cancel_requested.value = False
+
+            # Get user data
+            conversation_id = UsersHandler.get_key_or_none(request_response.user, "edgegpt_conversation_id")
+            conversation_style = UsersHandler.get_key_or_none(request_response.user, "edgegpt_style")
+
+            # Set default conversation style
+            if conversation_style is None:
+                conversation_style = self.config["edgegpt"]["conversation_style_type_default"]
+
+            # Extract conversation style
+            if conversation_style == 0:
+                conversation_style_ = ConversationStyle.precise
+            elif conversation_style == 1:
+                conversation_style_ = ConversationStyle.balanced
+            else:
+                conversation_style_ = ConversationStyle.creative
+
             # Increment requests_total for statistics
             request_response.user["requests_total"] += 1
             self.users_handler.save_user(request_response.user)
 
-            edgegpt_response_raw = []
+            async def async_ask_stream_():
+                async for data in self._chatbot.ask_stream(prompt=request_response.request,
+                                                           conversation_style=conversation_style_,
+                                                           raw=True):
+                    # Split response
+                    is_done, json_data = data
 
-            async def async_wrapper(edgegpt_response_raw_):
-                conversation_style = EdgeGPT.ConversationStyle.balanced
-                if self.config["edgegpt"]["conversation_style_type"] == "creative":
-                    conversation_style = EdgeGPT.ConversationStyle.creative
-                elif self.config["edgegpt"]["conversation_style_type"] == "precise":
-                    conversation_style = EdgeGPT.ConversationStyle.precise
+                    # Response
+                    text_response = None
+                    response_sources = []
 
-                wss_link = self.config["edgegpt"]["wss_link"]
-                logging.info("Asking EdgeGPT...")
-                if len(wss_link) > 0:
-                    edgegpt_response_raw_.append(await self._chatbot.ask(prompt=request_response.request,
-                                                                         conversation_style=conversation_style,
-                                                                         wss_link=wss_link))
+                    # Type 1
+                    if not is_done:
+                        if "arguments" in json_data:
+                            arguments = json_data["arguments"]
+                            if len(arguments) > 0 and "messages" in arguments[-1]:
+                                messages = arguments[-1]["messages"]
+                                if len(messages) > 0:
+                                    message = messages[-1]
+                                    # Parse text response
+                                    if "text" in message:
+                                        text_response = message["text"]
+
+                    # Type 2
+                    else:
+                        if "item" in json_data:
+                            item = json_data["item"]
+                            if "messages" in item:
+                                messages = item["messages"]
+                                if len(messages) > 0:
+                                    # Try to find message with sourceAttributions
+                                    for message in messages:
+                                        response_sources.clear()
+
+                                        # Parse text response
+                                        if "text" in message:
+                                            text_response = message["text"]
+
+                                        # Parse sources
+                                        if "sourceAttributions" in message:
+                                            source_attributions = message["sourceAttributions"]
+                                            for source_attribution in source_attributions:
+                                                if "providerDisplayName" in source_attribution \
+                                                        and "seeMoreUrl" in source_attribution:
+                                                    response_sources.append((source_attribution["providerDisplayName"],
+                                                                             source_attribution["seeMoreUrl"]))
+
+                                        # We found it
+                                        if len(response_sources) > 0 and text_response:
+                                            break
+
+                    # If we have text response
+                    if text_response:
+                        # Set to container
+                        request_response.response = text_response
+
+                        # Add sources
+                        if len(response_sources) > 0:
+                            request_response.response += "\n"
+                        for response_source in response_sources:
+                            request_response.response += self.messages[lang]["edgegpt_sources"]\
+                                .format(response_source[0],
+                                        response_source[1]).replace("\\n", "\n")
+
+                        # Send message to user
+                        await BotHandler.send_message_async(self.config, self.messages, request_response, end=False)
+
+                    # Exit requested?
+                    if self.cancel_requested.value:
+                        logging.info("Exiting from loop")
+                        break
+
+            # Reset current conversation
+            asyncio.run(self._chatbot.reset())
+
+            # Try to load conversation
+            if conversation_id:
+                conversation_file = os.path.join(self.config["files"]["conversations_dir"], conversation_id + ".json")
+                if os.path.exists(conversation_file):
+                    logging.info("Loading conversation from {}".format(conversation_file))
+                    asyncio.run(self._chatbot.load_conversation(conversation_file))
                 else:
-                    edgegpt_response_raw_.append(await self._chatbot.ask(prompt=request_response.request,
-                                                                         conversation_style=conversation_style))
+                    conversation_id = None
 
-            # Ask and parse
-            async_helper(async_wrapper(edgegpt_response_raw))
-            edgegpt_response_raw = edgegpt_response_raw[0]
-            edgegpt_response = ""
-            try:
-                edgegpt_response = edgegpt_response_raw["item"]["messages"][-1]["text"]
-            except Exception as e:
-                logging.error("Error parsing EdgeGPT response!", exc_info=e)
+            # Start request handling
+            asyncio.run(async_ask_stream_())
 
-            # Add sources
-            sources_str = ""
-            try:
-                sources = edgegpt_response_raw["item"]["messages"][-1]["sourceAttributions"]
-                for i in range(len(sources)):
-                    sources_str += self.messages["edgegpt_sources"].format(i + 1,
-                                                                           sources[i]["providerDisplayName"],
-                                                                           sources[i]["seeMoreUrl"])
-            except:
-                pass
-            if sources_str and len(sources_str) > 0:
-                edgegpt_response += "\n\n" + sources_str
+            # Generate new conversation id
+            if not conversation_id:
+                conversation_id = str(uuid.uuid4()) + "_edgegpt"
+
+            # Save conversation
+            logging.info("Saving conversation to {}".format(conversation_id))
+            asyncio.run(self._chatbot.save_conversation(os.path.join(self.config["files"]["conversations_dir"],
+                                                                     conversation_id + ".json")))
+
+            # Save to user data
+            request_response.user["edgegpt_conversation_id"] = conversation_id
+            self.users_handler.save_user(request_response.user)
 
             # Check response
-            if len(edgegpt_response) > 0:
+            if len(request_response.response) > 0:
                 logging.info("Response successfully processed for user {0} ({1})"
                              .format(request_response.user["user_name"], request_response.user["user_id"]))
-                request_response.response = edgegpt_response
 
             # No response
             else:
                 logging.warning("Empty response for user {0} ({1})!"
                                 .format(request_response.user["user_name"], request_response.user["user_id"]))
-                request_response.response = self.messages["response_error"].replace("\\n", "\n") \
+                request_response.response = self.messages[lang]["response_error"].replace("\\n", "\n") \
                     .format("Empty response!")
                 request_response.error = True
-
-            # Reset attempts counter
-            self._restart_attempts = 0
 
         # Exit requested
         except KeyboardInterrupt:
             logging.warning("KeyboardInterrupt @ process_request")
-            self._restart_attempts = 0
             return
 
         # EdgeGPT or other error
         except Exception as e:
-            # Try to restart
-            self.restart()
-            self._restart_attempts += 1
+            logging.error("Error processing request!", exc_info=e)
+            error_text = str(e)
+            if len(error_text) > 100:
+                error_text = error_text[:100] + "..."
 
-            # Try again 1 time
-            if self._restart_attempts < 2:
-                self.process_request(request_response)
+            request_response.response = self.messages[lang]["response_error"].replace("\\n", "\n").format(error_text)
+            request_response.error = True
+            self.processing_flag.value = False
 
-            # Stop restarting and respond with error
-            else:
-                request_response.response = self.messages["response_error"].replace("\\n", "\n").format(str(e))
-                request_response.error = True
-                self._restart_attempts = 0
+        # Finish message
+        BotHandler.async_helper(BotHandler.send_message_async(self.config, self.messages, request_response, end=True))
 
-    def clear_conversation(self) -> None:
+        # Clear processing flag
+        self.processing_flag.value = False
+
+    def clear_conversation_for_user(self, user: dict) -> None:
         """
-        Clears conversation (chat history)
+        Clears conversation (chat history) for selected user
+        :param user:
         :return:
         """
-        if not self._enabled or self._chatbot is None:
-            return
-        try:
-            async_helper(self._chatbot.reset())
-        except Exception as e:
-            logging.error("Error clearing EdgeGPT history!", exc_info=e)
+        # Get conversation id
+        edgegpt_conversation_id = UsersHandler.get_key_or_none(user, "edgegpt_conversation_id")
+
+        # Check if we need to clear it
+        if edgegpt_conversation_id:
+            # Delete file
+            try:
+                conversation_file = os.path.join(self.config["files"]["conversations_dir"],
+                                                 edgegpt_conversation_id + ".json")
+                if os.path.exists(conversation_file):
+                    logging.info("Removing {}".format(conversation_file))
+                    os.remove(conversation_file)
+            except Exception as e:
+                logging.error("Error removing conversation file!", exc_info=e)
+
+        # Reset user data
+        user["edgegpt_conversation_id"] = None
+        self.users_handler.save_user(user)
 
     def exit(self):
         """
@@ -226,23 +324,3 @@ class EdgeGPTModule:
                 async_helper(self._chatbot.close())
             except Exception as e:
                 logging.error("Error closing EdgeGPT connection!", exc_info=e)
-
-    def restart(self):
-        """
-        Restarts module and saves proxy
-        :return:
-        """
-        if not self.config["modules"]["edgegpt"]:
-            return
-        logging.info("Restarting EdgeGPT module")
-
-        # Restart
-        self.exit()
-        self.initialize()
-
-        # Set proxy
-        try:
-            if self._proxy is not None:
-                self._chatbot.proxy = self._proxy
-        except Exception as e:
-            logging.error("Error setting back proxy to EdgeGPT module!", exc_info=e)

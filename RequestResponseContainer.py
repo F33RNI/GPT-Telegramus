@@ -20,23 +20,66 @@ REQUEST_TYPE_DALLE = 1
 REQUEST_TYPE_EDGEGPT = 2
 REQUEST_TYPE_BARD = 3
 
+PROCESSING_STATE_IN_QUEUE = 0
+PROCESSING_STATE_INITIALIZING = 1
+PROCESSING_STATE_ACTIVE = 2
+PROCESSING_STATE_DONE = 3
+PROCESSING_STATE_TIMED_OUT = 4
+PROCESSING_STATE_CANCEL = 5
+PROCESSING_STATE_CANCELING = 5
+
 REQUEST_NAMES = ["ChatGPT", "DALL-E", "EdgeGPT", "Bard"]
+PROCESSING_STATE_NAMES = ["Waiting", "Starting", "Active", "Done", "Timed out", "Canceling", "Canceling"]
 
 
 class RequestResponseContainer:
     def __init__(self,
                  user: dict,
-                 message_id: int,
+                 reply_message_id: int,
+                 processing_state=PROCESSING_STATE_IN_QUEUE,
+                 message_id=-1,
                  request="",
                  response="",
+                 response_len_last=0,
                  request_type=REQUEST_TYPE_CHATGPT,
                  request_timestamp="",
-                 response_timestamp="") -> None:
+                 response_timestamp="",
+                 response_send_timestamp_last=0,
+                 reply_markup=None,
+                 pid=0) -> None:
+        """
+        Contains all info about request
+        :param user: user data as dictionary from UsersHandler class
+        :param reply_message_id: id of message reply to
+        :param processing_state: PROCESSING_STATE_IN_QUEUE or PROCESSING_STATE_ACTIVE or PROCESSING_STATE_DONE
+        :param message_id: current message id (for editing aka live replying)
+        :param request: text request
+        :param response: text response
+        :param response_len_last: length of last response (for editing aka live replying)
+        :param request_type: REQUEST_TYPE_CHATGPT / REQUEST_TYPE_DALLE / ...
+        :param request_timestamp: timestamp of request (for data collecting)
+        :param response_timestamp: timestamp of response (for data collecting)
+        :param response_send_timestamp_last: timestamp of last response (for editing aka live replying)
+        :param reply_markup: message buttons
+        :param pid: current multiprocessing process PID for handling this container
+        """
         self.user = user
+        self.reply_message_id = reply_message_id
+
+        self.processing_state = processing_state
         self.message_id = message_id
         self.request = request
         self.response = response
+        self.response_len_last = response_len_last
         self.request_type = request_type
-        self.error = False
         self.request_timestamp = request_timestamp
         self.response_timestamp = response_timestamp
+        self.response_send_timestamp_last = response_send_timestamp_last
+        self.reply_markup = reply_markup
+        self.pid = pid
+
+        self.processing_start_timestamp = 0.
+        self.error = False
+
+        # Unique ID for container to get it from queue (address)
+        self.id = -1

@@ -16,29 +16,36 @@
 """
 
 import logging
+from typing import List, Dict
 
 import openai
 
+import BotHandler
 import UsersHandler
 from RequestResponseContainer import RequestResponseContainer
 
 
 class DALLEModule:
-    def __init__(self, config: dict, messages: dict, users_handler: UsersHandler.UsersHandler) -> None:
+    def __init__(self, config: dict, messages: List[Dict], users_handler: UsersHandler.UsersHandler) -> None:
         self.config = config
         self.messages = messages
         self.users_handler = users_handler
 
-        self._enabled = False
-        self._restart_attempts = 0
-        self._proxy = None
-
-    def initialize(self) -> None:
+    def initialize(self, proxy=None) -> None:
         """
         Initializes DALL-E official API
         :return:
         """
+        self._enabled = False
+
         try:
+            # Use manual proxy
+            if not proxy and self.config["dalle"]["proxy"] and self.config["dalle"]["proxy"] != "auto":
+                proxy = self.config["dalle"]["proxy"]
+
+            # Log
+            logging.info("Initializing DALL-E module with proxy {}".format(proxy))
+
             # Set enabled status
             self._enabled = self.config["modules"]["dalle"]
             if not self._enabled:
@@ -48,35 +55,17 @@ class DALLEModule:
             # Set Key
             openai.api_key = self.config["dalle"]["open_ai_api_key"]
 
-            # Proxy for DALL-E
-            proxy = self.config["dalle"]["proxy"]
-            if proxy and len(proxy) > 1 and proxy.strip().lower() != "auto":
-                self._proxy = proxy
+            # Set proxy
+            if proxy:
                 openai.proxy = proxy
-            else:
-                self._proxy = None
 
             # Done?
             logging.info("DALL-E module initialized")
 
         # Error
         except Exception as e:
-            logging.error("Error initializing DALL-E module!", exc_info=e)
             self._enabled = False
-
-    def set_proxy(self, proxy: str) -> None:
-        """
-        Sets new proxy from ProxyAutomation
-        self.config["dalle"]["proxy"] must be "auto"
-        :param proxy: https proxy but in format http://IP:PORT
-        :return:
-        """
-        if self.config["dalle"]["proxy"].strip().lower() != "auto":
-            return
-
-        logging.info("Setting proxy {0} for DALL-E module".format(proxy))
-        self._proxy = proxy
-        openai.proxy = proxy
+            raise e
 
     def process_request(self, request_response: RequestResponseContainer) -> None:
         """
@@ -84,10 +73,13 @@ class DALLEModule:
         :param request_response: RequestResponseContainer object
         :return:
         """
+        # Get user language
+        lang = UsersHandler.get_key_or_none(request_response.user, "lang", 0)
+
         # Check if we are initialized
         if not self._enabled:
             logging.error("DALL-E module not initialized!")
-            request_response.response = self.messages["response_error"].replace("\\n", "\n") \
+            request_response.response = self.messages[lang]["response_error"].replace("\\n", "\n") \
                 .format("DALL-E module not initialized!")
             request_response.error = True
             return
@@ -124,36 +116,12 @@ class DALLEModule:
         # DALL-E or other error
         except Exception as e:
             logging.error("Error processing request!", exc_info=e)
+            error_text = str(e)
+            if len(error_text) > 100:
+                error_text = error_text[:100] + "..."
 
-            # Try to restart
-            self.restart()
-            self._restart_attempts += 1
+            request_response.response = self.messages[lang]["response_error"].replace("\\n", "\n").format(error_text)
+            request_response.error = True
 
-            # Try again 1 time
-            if self._restart_attempts < 2:
-                self.process_request(request_response)
-
-            # Stop restarting and respond with error
-            else:
-                request_response.response = self.messages["response_error"].replace("\\n", "\n").format(str(e))
-                request_response.error = True
-                self._restart_attempts = 0
-
-    def restart(self):
-        """
-        Restarts module and saves proxy
-        :return:
-        """
-        if not self.config["modules"]["dalle"]:
-            return
-        logging.info("Restarting DALL-E module")
-
-        # Restart
-        self.initialize()
-
-        # Set proxy
-        try:
-            if self._proxy is not None:
-                openai.proxy = self._proxy
-        except Exception as e:
-            logging.error("Error setting back proxy to DALL-E module!", exc_info=e)
+        # Finish message
+        BotHandler.async_helper(BotHandler.send_message_async(self.config, self.messages, request_response, end=True))
