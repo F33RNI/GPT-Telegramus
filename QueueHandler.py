@@ -15,6 +15,8 @@
  OTHER DEALINGS IN THE SOFTWARE.
 """
 
+from __future__ import annotations
+
 import base64
 import datetime
 import gc
@@ -37,7 +39,7 @@ import UsersHandler
 
 
 def get_container_from_queue(request_response_queue: multiprocessing.Queue, lock: multiprocessing.Lock,
-                             container_id: int):
+                             container_id: int) -> RequestResponseContainer.RequestResponseContainer | None:
     """
     Retrieves request_response_container from queue by ID without removing it
     :param request_response_queue: multiprocessing Queue to get container from
@@ -46,7 +48,7 @@ def get_container_from_queue(request_response_queue: multiprocessing.Queue, lock
     :return: RequestResponseContainer or None if not exists
     """
 
-    def get_container_from_queue_():
+    def get_container_from_queue_() -> RequestResponseContainer.RequestResponseContainer | None:
         # Convert entire queue to list
         queue_list = queue_to_list(request_response_queue)
 
