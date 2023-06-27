@@ -22,6 +22,7 @@ import os
 import sys
 
 import BardModule
+import BingImageGenModule
 import BotHandler
 import ChatGPTModule
 import DALLEModule
@@ -97,10 +98,15 @@ def main():
     dalle_module = DALLEModule.DALLEModule(config, messages, user_handler)
     bard_module = BardModule.BardModule(config, messages, user_handler)
     edgegpt_module = EdgeGPTModule.EdgeGPTModule(config, messages, user_handler)
+    bing_image_gen_module = BingImageGenModule.BingImageGenModule(config, messages, user_handler)
 
     # Initialize QueueHandler class
     queue_handler = QueueHandler.QueueHandler(config, messages, logging_handler.queue, user_handler, proxy_automation,
-                                              chatgpt_module, dalle_module, bard_module, edgegpt_module)
+                                              chatgpt_module,
+                                              dalle_module,
+                                              bard_module,
+                                              edgegpt_module,
+                                              bing_image_gen_module)
 
     # Initialize Telegram bot class
     bot_handler = BotHandler.BotHandler(config, messages, user_handler, queue_handler, proxy_automation,

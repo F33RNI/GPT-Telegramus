@@ -195,7 +195,7 @@ def _request_processor(config: dict,
                        lock: multiprocessing.Lock,
                        request_id: int,
                        proxy: str,
-                       chatgpt_module, dalle_module, bard_module, edgegpt_module) -> None:
+                       chatgpt_module, dalle_module, bard_module, edgegpt_module, bing_image_gen_module) -> None:
     """
     Processes request to any module
     This method should be called from multiprocessing as process
@@ -264,6 +264,14 @@ def _request_processor(config: dict,
             bard_module.process_request(request_)
             bard_module.exit()
 
+        # Bing ImageGen
+        elif request_.request_type == RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN:
+            proxy_ = None
+            if proxy and config["bing_imagegen"]["proxy"] == "auto":
+                proxy_ = proxy
+            bing_image_gen_module.initialize(proxy_)
+            bing_image_gen_module.process_request(request_)
+
         # Wrong API type
         else:
             raise Exception("Wrong request type: {0}".format(request_.request_type))
@@ -289,12 +297,13 @@ class QueueHandler:
                  logging_queue: multiprocessing.Queue,
                  users_handler: UsersHandler,
                  proxy_automation: ProxyAutomation.ProxyAutomation,
-                 chatgpt_module, dalle_module, bard_module, edgegpt_module):
+                 chatgpt_module, dalle_module, bard_module, edgegpt_module, bing_image_gen_module):
         self.config = config
         self.messages = messages
         self.logging_queue = logging_queue
         self.users_handler = users_handler
         self.proxy_automation = proxy_automation
+        self.bing_image_gen_module = bing_image_gen_module
 
         # Modules
         self.chatgpt_module = chatgpt_module
@@ -387,7 +396,8 @@ class QueueHandler:
                                                                             self.chatgpt_module,
                                                                             self.dalle_module,
                                                                             self.bard_module,
-                                                                            self.edgegpt_module))
+                                                                            self.edgegpt_module,
+                                                                            self.bing_image_gen_module,))
 
                             # Start process
                             request_process.start()
@@ -410,6 +420,8 @@ class QueueHandler:
                             timeout_seconds = self.config["dalle"]["timeout_seconds"]
                         elif request_.request_type == RequestResponseContainer.REQUEST_TYPE_BARD:
                             timeout_seconds = self.config["bard"]["timeout_seconds"]
+                        elif request_.request_type == RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN:
+                            timeout_seconds = self.config["bing_imagegen"]["timeout_seconds"]
 
                         # Check timeout
                         if time.time() - request_.processing_start_timestamp > timeout_seconds:

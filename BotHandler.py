@@ -43,6 +43,7 @@ BOT_COMMAND_CHATGPT = "chatgpt"
 BOT_COMMAND_EDGEGPT = "edgegpt"
 BOT_COMMAND_DALLE = "dalle"
 BOT_COMMAND_BARD = "bard"
+BOT_COMMAND_BING_IMAGEGEN = "bingigen"
 BOT_COMMAND_MODULE = "module"
 BOT_COMMAND_STYLE = "style"
 BOT_COMMAND_CLEAR = "clear"
@@ -149,8 +150,9 @@ async def send_message_async(config: dict, messages: List[Dict],
                                                                request_response.reply_message_id))
                     buttons.append(button_continue)
 
-            # Add clear button for all modules except DALL-E
-            if not request_response.request_type == RequestResponseContainer.REQUEST_TYPE_DALLE:
+            # Add clear button for all modules except DALL-E and Bing ImageGen
+            if not request_response.request_type == RequestResponseContainer.REQUEST_TYPE_DALLE \
+                    and not request_response.request_type == RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN:
                 button_clear = InlineKeyboardButton(messages[lang]["button_clear"],
                                                     callback_data="{0}_clear_{1}".format(
                                                         request_response.request_type,
@@ -175,7 +177,8 @@ async def send_message_async(config: dict, messages: List[Dict],
             request_response.reply_markup = InlineKeyboardMarkup(build_menu(buttons, n_cols=2))
 
             # Send message as image
-            if request_response.request_type == RequestResponseContainer.REQUEST_TYPE_DALLE \
+            if (request_response.request_type == RequestResponseContainer.REQUEST_TYPE_DALLE
+                or request_response.request_type == RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN) \
                     and not request_response.error:
                 request_response.message_id = (await (telegram.Bot(config["telegram"]["api_key"]).sendPhoto(
                     chat_id=request_response.user["user_id"],
@@ -484,6 +487,7 @@ class BotHandler:
                 self._application.add_handler(CommandHandler(BOT_COMMAND_EDGEGPT, self.bot_command_edgegpt))
                 self._application.add_handler(CommandHandler(BOT_COMMAND_DALLE, self.bot_command_dalle))
                 self._application.add_handler(CommandHandler(BOT_COMMAND_BARD, self.bot_command_bard))
+                self._application.add_handler(CommandHandler(BOT_COMMAND_BING_IMAGEGEN, self.bot_command_bing_imagegen))
                 self._application.add_handler(CommandHandler(BOT_COMMAND_MODULE, self.bot_command_module))
                 self._application.add_handler(CommandHandler(BOT_COMMAND_STYLE, self.bot_command_style))
                 self._application.add_handler(CommandHandler(BOT_COMMAND_CLEAR, self.bot_command_clear))
@@ -1232,6 +1236,8 @@ class BotHandler:
                 buttons.append(InlineKeyboardButton(self.messages[lang]["modules"][2], callback_data="2_module_0"))
             if self.config["modules"]["bard"]:
                 buttons.append(InlineKeyboardButton(self.messages[lang]["modules"][3], callback_data="3_module_0"))
+            if self.config["modules"]["bing_imagegen"]:
+                buttons.append(InlineKeyboardButton(self.messages[lang]["modules"][4], callback_data="4_module_0"))
 
             # Extract current module
             current_module = self.messages[lang]["modules"][user["module"]]
@@ -1316,13 +1322,16 @@ class BotHandler:
     async def bot_command_bard(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         await self.bot_command_or_message_request(RequestResponseContainer.REQUEST_TYPE_BARD, update, context)
 
+    async def bot_command_bing_imagegen(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.bot_command_or_message_request(RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN, update, context)
+
     async def bot_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         await self.bot_command_or_message_request(-1, update, context)
 
     async def bot_command_or_message_request(self, request_type: int,
                                              update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
-        /chatgpt, /edgegpt, /dalle or message request
+        /chatgpt, /edgegpt, /dalle, /bard, /bingigen or message request
         :param request_type: -1 for message, or RequestResponseContainer.REQUEST_TYPE_...
         :param update:
         :param context:
@@ -1340,6 +1349,8 @@ class BotHandler:
             logging.info("/dalle command from {0} ({1})".format(user["user_name"], user["user_id"]))
         elif request_type == RequestResponseContainer.REQUEST_TYPE_BARD:
             logging.info("/bard command from {0} ({1})".format(user["user_name"], user["user_id"]))
+        elif request_type == RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN:
+            logging.info("/bingigen command from {0} ({1})".format(user["user_name"], user["user_id"]))
         else:
             logging.info("Text message from {0} ({1})".format(user["user_name"], user["user_id"]))
 

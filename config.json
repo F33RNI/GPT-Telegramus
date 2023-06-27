@@ -5,6 +5,7 @@
         "edgegpt": true,
         "dalle": true,
         "bard": true,
+        "bing_imagegen": false,
 
         "__comment04__": "Default (initial) module for handling user messages (see RequestResponseContainer.py)",
         "default_module": 0
@@ -85,7 +86,20 @@
         "timeout_seconds": 60
     },
 
-    "__comment05__": "BARD SETTINGS",
+    "__comment05__": "BING IMAGEGEN SETTINGS (CURRENTLY NOT WORKING)",
+    "bing_imagegen": {
+        "__comment01__": "PATH TO COOKIES FILE (JSON) https://github.com/acheong08/EdgeGPT#collect-cookies",
+        "cookies_file": "EdgeGPT_cookies.json",
+
+        "__comment04__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+        "__comment05__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
+        "proxy": "",
+
+        "__comment06__": "RESPONSE TIMEOUT (IN SECONDS)",
+        "timeout_seconds": 120
+    },
+
+    "__comment06__": "BARD SETTINGS",
     "bard": {
         "__comment01__": "Go to Application -> Cookies -> __Secure-1PSID. Copy the value of that cookie",
         "token": "",
@@ -98,7 +112,7 @@
         "timeout_seconds": 120
     },
 
-    "__comment06__": "TELEGRAM SETTINGS",
+    "__comment07__": "TELEGRAM SETTINGS",
     "telegram": {
         "__comment01__": "PROVIDE YOUR BOT API KEY FROM https://t.me/BotFather",
         "api_key": "",
@@ -120,7 +134,7 @@
         "cursor_symbol": "▯"
     },
 
-    "__comment07__": "FILES AND DIRECTORIES SETTINGS",
+    "__comment08__": "FILES AND DIRECTORIES SETTINGS",
     "files": {
         "users_database": "users.json",
         "conversations_dir": "conversations",
@@ -128,7 +142,7 @@
         "data_collecting_dir": "data"
     },
 
-    "__comment08__": "SETTINGS TO SAVE REQUESTS AND RESPONSE TO FILES",
+    "__comment09__": "SETTINGS TO SAVE REQUESTS AND RESPONSE TO FILES",
     "data_collecting": {
         "__comment01__": "SET true TO AUTOMATICALLY SAVE USER REQUESTS AND RESPONSES TO FILES INTO data_collecting_dir",
         "__comment02__": "NOTE: YOU SHOULD NOTIFY USERS IF IT IS ENABLED!",
@@ -151,7 +165,7 @@
         "timestamp_format": "%Y-%m-%d %H:%M:%S"
     },
 
-    "__comment09__": "AUTOMATIC PROXY SEARCHER SETTINGS",
+    "__comment10__": "AUTOMATIC PROXY SEARCHER SETTINGS",
     "proxy_automation": {
         "__comment01__": "SET TO true TO ENABLE AUTOMATIC PROXY SEARCH. SET proxy TO auto IN MODULE TO USE THIS PROXY",
         "enabled": false,
