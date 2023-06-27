@@ -175,6 +175,7 @@ You can enable and configure data collection in config in `data_collecting` bloc
 
 - Add some free GPT-4 model
 - Make Bing ImageGet work
+- Add rate limit
 
 ----------
 
