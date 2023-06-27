@@ -1,5 +1,5 @@
 # 🤖 GPT-Telegramus
-## ChatGPT, EdgeGPT, DALL-E and Bard implementation as a telegram bot with admin control, automatic proxy searcher and data logging
+## Best ChatGPT, EdgeGPT, DALL-E and Bard telegram bot with stream writing, admin control, automatic proxy searcher and data logging
 <div style="width:100%;text-align:center;">
    <p align="center">
       <img src="https://badges.frapsoft.com/os/v1/open-source.png?v=103" >
@@ -13,19 +13,11 @@
       <a href="https://soundcloud.com/f3rni"><img alt="SoundCloud" src="https://img.shields.io/badge/-SoundCloud-orange" ></a>
    </p>
 </div>
-<div style="width:100%;text-align:center;">
-   <p align="center">
-      <img src="Screenshots/help.png" width="auto" height="300" alt="/help command">
-      <img src="Screenshots/chatgpt.png" width="auto" height="300" alt="Screenshot of request to ChatGPT">
-   </p>
-</div>
-<div style="width:100%;text-align:center;">
-   <p align="center">
-      <img src="Screenshots/edgegpt.png" width="auto" height="300" alt="Screenshot of request to EdgeGPT">
-      <img src="Screenshots/dalle.png" width="auto" height="300" alt="Screenshot of request to DALL-E">
-      <img src="Screenshots/bard.png" width="auto" height="300" alt="Screenshot of request to Bard">
-   </p>
-</div>
+
+|      ![](Screenshots/lang.png)      |  ![](Screenshots/start.png)  | ![](Screenshots/module.png) |
+|:-----------------------------------:|:----------------------------:|:---------------------------:|
+| ![](Screenshots/chatgpt_stream.png) | ![](Screenshots/chatgpt.png) | ![](Screenshots/style.png)  |
+|    ![](Screenshots/edgegpt.png)     |  ![](Screenshots/dalle.png)  |  ![](Screenshots/bard.png)  |
 
 ----------
 
