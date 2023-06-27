@@ -66,7 +66,7 @@ class ChatGPTModule:
             self._enabled = self.config["modules"]["chatgpt"]
             if not self._enabled:
                 logging.warning("ChatGPT module disabled in config file!")
-                return
+                raise Exception("ChatGPT module disabled in config file!")
 
             # Set chatbot object to None (reset it)
             self._chatbot = None

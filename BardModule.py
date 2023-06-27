@@ -59,7 +59,7 @@ class BardModule:
             self._enabled = self.config["modules"]["bard"]
             if not self._enabled:
                 logging.warning("Bard module disabled in config file!")
-                return
+                raise Exception("Bard module disabled in config file!")
 
             # Initialize chatbot
             if proxy:

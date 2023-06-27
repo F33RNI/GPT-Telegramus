@@ -50,7 +50,7 @@ class DALLEModule:
             self._enabled = self.config["modules"]["dalle"]
             if not self._enabled:
                 logging.warning("DALL-E module disabled in config file!")
-                return
+                raise Exception("DALL-E module disabled in config file!")
 
             # Set Key
             openai.api_key = self.config["dalle"]["open_ai_api_key"]

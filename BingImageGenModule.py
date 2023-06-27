@@ -58,7 +58,7 @@ class BingImageGenModule:
             self._enabled = self.config["modules"]["bing_imagegen"]
             if not self._enabled:
                 logging.warning("Bing ImageGen module disabled in config file!")
-                return
+                raise Exception("Bing ImageGen module disabled in config file!")
 
             # Initialize Bing ImageGen
             self._image_generator = ImageGen(self.config["bing_imagegen"]["cookies_file"], quiet=True)

@@ -92,7 +92,7 @@ class EdgeGPTModule:
             self._enabled = self.config["modules"]["edgegpt"]
             if not self._enabled:
                 logging.warning("EdgeGPT module disabled in config file!")
-                return
+                raise Exception("EdgeGPT module disabled in config file!")
 
             # Initialize EdgeGPT chatbot
             if proxy and len(proxy) > 1 and proxy.strip().lower() != "auto":
