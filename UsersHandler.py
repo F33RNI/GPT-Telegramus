@@ -16,6 +16,7 @@
 """
 
 import logging
+from typing import List, Dict
 
 import JSONReaderWriter
 
@@ -43,7 +44,7 @@ def get_key_or_none(dictionary: dict, key, default_value=None):
 
 
 class UsersHandler:
-    def __init__(self, config: dict, messages: dict):
+    def __init__(self, config: dict, messages: List[Dict]):
         self.config = config
         self.messages = messages
 
@@ -111,7 +112,7 @@ class UsersHandler:
             "user_name": DEFAULT_USER_NAME,
             "admin": True if user_id in self.config["telegram"]["admin_ids"] else False,
             "banned": self.config["telegram"]["ban_by_default"],
-            "ban_reason": self.messages["ban_reason_default"].replace("\\n", "\n"),
+            "ban_reason": self.messages[0]["ban_reason_default"].replace("\\n", "\n"),
             "module": self.config["modules"]["default_module"],
             "requests_total": 0,
             "reply_message_id_last": -1
