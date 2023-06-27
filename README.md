@@ -1,5 +1,5 @@
 # 🤖 GPT-Telegramus
-## Best ChatGPT, EdgeGPT, DALL-E and Bard telegram bot with stream writing, admin control, automatic proxy searcher and data logging
+### The best Telegram bot for ChatGPT, EdgeGPT, DALL-E and Bard with stream writing, multiple languages, admin control, automatic proxy searcher, data logging and more!
 <div style="width:100%;text-align:center;">
    <p align="center">
       <img src="https://badges.frapsoft.com/os/v1/open-source.png?v=103" >
