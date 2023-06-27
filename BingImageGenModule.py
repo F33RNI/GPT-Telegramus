@@ -20,7 +20,7 @@ import logging
 import multiprocessing
 from typing import List, Dict
 
-from EdgeGPT.ImageGen import ImageGen
+from BingImageCreator import ImageGen
 
 import BotHandler
 import UsersHandler
@@ -99,8 +99,10 @@ class BingImageGenModule:
             self.users_handler.save_user(request_response.user)
 
             # Generate images
+            # TODO: Make it work
             logging.info("Requesting images from Bing ImageGen")
             response_urls = self._image_generator.get_images(request_response.request)
+            print(response_urls)
 
             # Check response
             if not response_urls or len(response_urls) < 1:
