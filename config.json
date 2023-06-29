@@ -5,20 +5,18 @@
         "edgegpt": true,
         "dalle": true,
         "bard": true,
+        "bing_imagegen": false,
 
-        "__comment04__": "Default module for handling user messages (see RequestResponseContainer.py)",
-        "default_module": 0,
-
-        "__comment05__": "Automatically change user module to handle plain messages after specific command",
-        "auto_module": true
+        "__comment04__": "Default (initial) module for handling user messages (see RequestResponseContainer.py)",
+        "default_module": 0
     },
 
     "__comment02__": "CHATGPT  SETTINGS",
     "chatgpt": {
         "__comment01__": "SPECIFY revChatGPT API TYPE (currently available only 1 or 3)",
         "__comment02__": "1 - https://github.com/acheong08/ChatGPT#v1-standard-chatgpt",
-        "__comment03__": "3 - (RECOMMENDED) https://github.com/acheong08/ChatGPT#v3-official-chat-api",
-        "api_type": 3,
+        "__comment03__": "3 - https://github.com/acheong08/ChatGPT#v3-official-chat-api",
+        "api_type": 1,
 
         "__comment04__": "API_KEY FROM https://platform.openai.com/account/api-keys. ONLY FOR API 3",
         "api_key": "",
@@ -39,26 +37,37 @@
         "__comment09__": "URL FOR API REQUESTS. ONLY FOR API TYPE 1. SPECIFY NOTHING TO USE DEFAULT VALUE",
         "base_url": "",
 
-        "__comment10__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
-        "__comment11__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
+        "__comment10__": "WHAT MESSAGE DOES THE Continue BUTTON SEND",
+        "continue_request_text": "continue",
+
+        "__comment11__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+        "__comment12__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
         "proxy": "",
 
-        "__comment12__": "MINIMUM INTERVAL (IN SECONDS) BETWEEN EACH CHATGPT REQUEST",
-        "cooldown_seconds": 20
+        "__comment13__": "MINIMUM INTERVAL (IN SECONDS) BETWEEN EACH CHATGPT REQUEST",
+        "cooldown_seconds": 20,
+
+        "__comment14__": "RESPONSE TIMEOUT (IN SECONDS)",
+        "timeout_seconds": 120
     },
 
     "__comment03__": "EDGEGPT SETTINGS",
     "edgegpt": {
-        "__comment01__": "AUTHORIZATION FOR EDGE-GPT. https://github.com/acheong08/EdgeGPT#getting-authentication-required",
-        "cookie_file": "EdgeGPT_cookies.json",
+        "__comment01__": "PATH TO COOKIES FILE (JSON) (POSSIBLY NOT REQUIRED) https://github.com/acheong08/EdgeGPT#collect-cookies",
+        "cookies_file": "EdgeGPT_cookies.json",
+
+        "__comment02__": "WSS LINK FOR EDGE-GPT (LEAVE EMPTY FOR THE DEFAULT VALUE)",
         "wss_link": "",
 
-        "__comment02__": "creative / balanced / precise",
-        "conversation_style_type": "balanced",
+        "__comment03__": "DEFAULT CONVERSATION STYLE (0 - PRECISE, 1 - BALANCED, 3 - CREATIVE)",
+        "conversation_style_type_default": 1,
 
-        "__comment03__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
-        "__comment04__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
-        "proxy": ""
+        "__comment04__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+        "__comment05__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
+        "proxy": "",
+
+        "__comment06__": "RESPONSE TIMEOUT (IN SECONDS)",
+        "timeout_seconds": 240
     },
 
     "__comment04__": "DALL-E SETTINGS",
@@ -71,48 +80,69 @@
 
         "__comment03__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
         "__comment04__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
-        "proxy": ""
+        "proxy": "",
+
+        "__comment05__": "RESPONSE TIMEOUT (IN SECONDS)",
+        "timeout_seconds": 60
     },
 
-    "__comment05__": "BARD SETTINGS",
+    "__comment05__": "BING IMAGEGEN SETTINGS (CURRENTLY NOT WORKING)",
+    "bing_imagegen": {
+        "__comment01__": "PATH TO COOKIES FILE (JSON) https://github.com/acheong08/EdgeGPT#collect-cookies",
+        "cookies_file": "EdgeGPT_cookies.json",
+
+        "__comment04__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+        "__comment05__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
+        "proxy": "",
+
+        "__comment06__": "RESPONSE TIMEOUT (IN SECONDS)",
+        "timeout_seconds": 120
+    },
+
+    "__comment06__": "BARD SETTINGS",
     "bard": {
         "__comment01__": "Go to Application -> Cookies -> __Secure-1PSID. Copy the value of that cookie",
         "token": "",
 
         "__comment02__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
         "__comment03__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
-        "proxy": ""
+        "proxy": "",
+
+        "__comment04__": "RESPONSE TIMEOUT (IN SECONDS)",
+        "timeout_seconds": 120
     },
 
-    "__comment06__": "TELEGRAM SETTINGS",
+    "__comment07__": "TELEGRAM SETTINGS",
     "telegram": {
         "__comment01__": "PROVIDE YOUR BOT API KEY FROM https://t.me/BotFather",
         "api_key": "",
 
-        "__comment02__": "TELEGRAM BOT TIMEOUTS",
-        "write_read_timeout": 30,
-
-        "__comment03__": "SPECIFY THE chat_id OF THOSE WHO CAN USE ADMINISTRATOR COMMANDS",
+        "__comment02__": "SPECIFY THE chat_id OF THOSE WHO CAN USE ADMINISTRATOR COMMANDS",
         "admin_ids": [],
 
-        "__comment04__": "SET TO TRUE TO BLOCK NEW USERS BY DEFAULT (WHITELIST)",
+        "__comment03__": "SET TO TRUE TO BLOCK NEW USERS BY DEFAULT (WHITELIST)",
         "ban_by_default": false,
 
-        "__comment05__": "SPECIFY THE SIZE OF THE REQUEST QUEUE AND WHETHER TO SHOW A MESSAGE ABOUT ADDING TO THE QUEUE",
+        "__comment04__": "SPECIFY THE SIZE OF THE REQUEST QUEUE AND WHETHER TO SHOW A MESSAGE ABOUT ADDING TO THE QUEUE",
         "queue_max": 10,
-        "show_queue_message": true
+
+        "__comment05__": "IN HOW MANY SECONDS TO EDIT MESSAGES (FOR ChatGPT / EdgeGPT)",
+        "edit_message_every_seconds_num": 2,
+
+        "__comment06__": "ADD CURSOR CHARACTER TO END OF MESSAGE DURING RESPONSE",
+        "add_cursor_symbol": true,
+        "cursor_symbol": "▯"
     },
 
-    "__comment07__": "FILES AND DIRECTORIES SETTINGS",
+    "__comment08__": "FILES AND DIRECTORIES SETTINGS",
     "files": {
         "users_database": "users.json",
         "conversations_dir": "conversations",
         "messages_file": "messages.json",
-        "logs_dir": "logs",
         "data_collecting_dir": "data"
     },
 
-    "__comment08__": "SETTINGS TO SAVE REQUESTS AND RESPONSE TO FILES",
+    "__comment09__": "SETTINGS TO SAVE REQUESTS AND RESPONSE TO FILES",
     "data_collecting": {
         "__comment01__": "SET true TO AUTOMATICALLY SAVE USER REQUESTS AND RESPONSES TO FILES INTO data_collecting_dir",
         "__comment02__": "NOTE: YOU SHOULD NOTIFY USERS IF IT IS ENABLED!",
@@ -125,28 +155,36 @@
         "filename_timestamp_format": "%Y_%m_%d_%H_%M_%S",
         "filename_extension": ".log",
 
-        "__comment05__": "REQUEST LOG FORMAT. {0} - TIMESTAMP, {1} - USER NAME, {2} - USER ID, {3} - MODULE NAME, {4} - REQUEST",
-        "request_format": "{0} Request from {1} ({2}) to {3}: {4}\\n\\n",
+        "__comment05__": "REQUEST LOG FORMAT. {0} - TIMESTAMP, {1} - CONTAINER ID, {2} - USER NAME, {3} - USER ID, {4} - MODULE NAME, {5} - REQUEST",
+        "request_format": "{0} Request ({1}) from {2} ({3}) to {4}: {5}\\n\\n",
 
-        "__comment06__": "RESPONSE LOG FORMAT. {0} - TIMESTAMP, {1} - USER NAME, {2} - USER ID, {3} - MODULE NAME, {4} - RESPONSE",
-        "response_format": "{0} Response from {3} to {1} ({2}): {4}\\n\\n",
+        "__comment06__": "RESPONSE LOG FORMAT. {0} - TIMESTAMP, {1} - CONTAINER ID, {2} - USER NAME, {3} - USER ID, {4} - MODULE NAME, {5} - RESPONSE",
+        "response_format": "{0} Response ({1}) from {4} to {2} ({3}): {5}\\n\\n",
 
         "__comment07__": "TIME STAMP FORMAT",
         "timestamp_format": "%Y-%m-%d %H:%M:%S"
     },
 
-    "__comment09__": "AUTOMATIC PROXY SEARCHER SETTINGS",
+    "__comment10__": "AUTOMATIC PROXY SEARCHER SETTINGS",
     "proxy_automation": {
         "__comment01__": "SET TO true TO ENABLE AUTOMATIC PROXY SEARCH. SET proxy TO auto IN MODULE TO USE THIS PROXY",
         "enabled": false,
 
-        "__comment02__": "URL TO WHICH THE GET REQUEST WILL BE SENT TO CHECK THE CONNECTION",
+        "__comment02__": "COUNTRY FILTER FOR PROXY (FROM https://free-proxy-list.net/)",
+        "country_list": [
+            "us"
+        ],
+
+        "__comment03__": "SET TO true TO ENABLE COUNTRY FILTER",
+        "country_list_enabled": false,
+
+        "__comment04__": "URL TO WHICH THE GET REQUEST WILL BE SENT TO CHECK THE CONNECTION",
         "check_url": "https://bard.google.com/",
 
-        "__comment03__": "AFTER HOW LONG (SECONDS) TO CHECK WHETHER THE CURRENT PROXY IS WORKING",
+        "__comment05__": "AFTER HOW LONG (SECONDS) TO CHECK WHETHER THE CURRENT PROXY IS WORKING",
         "check_interval_seconds": 600,
 
-        "__comment04__": "HOW LONG (SECONDS) TO WAIT A REPLY",
+        "__comment06__": "HOW LONG (SECONDS) TO WAIT A REPLY",
         "check_timeout_seconds": 30
     }
 }

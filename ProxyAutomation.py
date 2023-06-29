@@ -25,13 +25,10 @@ from urllib import request
 
 import requests
 
-import BardModule
-import ChatGPTModule
-import DALLEModule
-import EdgeGPTModule
 import useragents
 
 PROXY_FROM_URL = "http://free-proxy-list.net/"
+GET_PROXY_EVERY_SECONDS = 10
 
 
 def proxy_tester_process(test_proxy_queue: multiprocessing.Queue,
@@ -98,17 +95,8 @@ def clear_queue(queue: multiprocessing.Queue) -> None:
 
 
 class ProxyAutomation:
-    def __init__(self, config,
-                 chatgpt_module: ChatGPTModule.ChatGPTModule,
-                 dalle_module: DALLEModule.DALLEModule,
-                 edgegpt_module: EdgeGPTModule.EdgeGPTModule,
-                 bard_module: BardModule.BardModule) -> None:
+    def __init__(self, config) -> None:
         self.config = config
-
-        self.chatgpt_module = chatgpt_module
-        self.dalle_module = dalle_module
-        self.edgegpt_module = edgegpt_module
-        self.bard_module = bard_module
 
         self.working_proxy = ""
 
@@ -155,8 +143,16 @@ class ProxyAutomation:
                 self.working_proxy = ""
 
                 # Get list of proxies
-                while not self._proxy_get():
-                    time.sleep(1)
+                while not self._proxy_get() and not self._exit_flag:
+                    logging.info("Trying again to download proxies after {}s".format(GET_PROXY_EVERY_SECONDS))
+                    time_started = time.time()
+                    while not self._exit_flag and time.time() - time_started < GET_PROXY_EVERY_SECONDS:
+                        time.sleep(0.1)
+
+                # Exit requested
+                if self._exit_flag:
+                    self._kill_processes()
+                    break
 
                 # Clear queues
                 clear_queue(self._test_proxy_queue)
@@ -209,9 +205,6 @@ class ProxyAutomation:
                             # Set last check time
                             last_check_time = time.time()
 
-                            # Run callback function
-                            self._apply_new_proxy()
-
                             # Exit from waiting loop
                             break
 
@@ -228,7 +221,7 @@ class ProxyAutomation:
                     break
 
                 # Loop for checking if proxy is still working, or we need to find a new one
-                while True:
+                while self.working_proxy:
                     # Exit from current loop if requested
                     if self._exit_flag:
                         break
@@ -282,16 +275,6 @@ class ProxyAutomation:
         # Done
         logging.warning("queue_processing_loop finished")
 
-    def _apply_new_proxy(self) -> None:
-        """
-        This function will be called if a new working proxy (self.working_proxy) is found
-        :return:
-        """
-        self.chatgpt_module.set_proxy(self.working_proxy)
-        self.dalle_module.set_proxy(self.working_proxy)
-        self.edgegpt_module.set_proxy(self.working_proxy)
-        self.bard_module.set_proxy(self.working_proxy)
-
     def _kill_processes(self) -> None:
         """
         Kills all processes by their PIDs
@@ -330,19 +313,34 @@ class ProxyAutomation:
                     # Get proxy parts
                     ip = proxy_[0].replace(">", "").replace("<", "").strip()
                     port = proxy_[1].replace(">", "").replace("<", "").strip()
+                    country = proxy_[2].replace(">", "").replace("<", "").strip().lower()
                     is_https = "yes" in proxy_[6].lower()
 
+                    # Check if country is in list
+                    if self.config["proxy_automation"]["country_list_enabled"]:
+                        country_in_list = False
+                        for country_filter_code in self.config["proxy_automation"]["country_list"]:
+                            if country == country_filter_code.lower().strip():
+                                country_in_list = True
+                                break
+
+                    # Allow all countries if country list is disabled
+                    else:
+                        country_in_list = True
+
                     # Check data and append to list
-                    if len(ip.split(".")) == 4 and len(port) > 1 and is_https:
+                    if len(ip.split(".")) == 4 and len(port) > 1 and is_https and country_in_list:
                         self._proxy_list.append("http://" + ip + ":" + port)
                 except:
                     pass
-            if len(self._proxy_list) > 1:
+            if len(self._proxy_list) > 0:
                 logging.info("Proxies downloaded successfully")
                 return True
             else:
                 logging.warning("Proxies list is empty!")
         except Exception as e:
             logging.error("Error downloading proxy list!", exc_info=e)
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
 
         return False

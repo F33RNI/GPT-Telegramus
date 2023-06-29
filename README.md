@@ -1,5 +1,5 @@
 # 🤖 GPT-Telegramus
-## ChatGPT, EdgeGPT, DALL-E and Bard implementation as a telegram bot with admin control, automatic proxy searcher and data logging
+### The best Telegram bot for ChatGPT, EdgeGPT, DALL-E and Bard with stream writing, multiple languages, admin control, automatic proxy searcher, data logging and more!
 <div style="width:100%;text-align:center;">
    <p align="center">
       <img src="https://badges.frapsoft.com/os/v1/open-source.png?v=103" >
@@ -13,19 +13,11 @@
       <a href="https://soundcloud.com/f3rni"><img alt="SoundCloud" src="https://img.shields.io/badge/-SoundCloud-orange" ></a>
    </p>
 </div>
-<div style="width:100%;text-align:center;">
-   <p align="center">
-      <img src="Screenshots/help.png" width="auto" height="300" alt="/help command">
-      <img src="Screenshots/chatgpt.png" width="auto" height="300" alt="Screenshot of request to ChatGPT">
-   </p>
-</div>
-<div style="width:100%;text-align:center;">
-   <p align="center">
-      <img src="Screenshots/edgegpt.png" width="auto" height="300" alt="Screenshot of request to EdgeGPT">
-      <img src="Screenshots/dalle.png" width="auto" height="300" alt="Screenshot of request to DALL-E">
-      <img src="Screenshots/bard.png" width="auto" height="300" alt="Screenshot of request to Bard">
-   </p>
-</div>
+
+|      ![](Screenshots/lang.png)      |  ![](Screenshots/start.png)  | ![](Screenshots/module.png) |
+|:-----------------------------------:|:----------------------------:|:---------------------------:|
+| ![](Screenshots/chatgpt_stream.png) | ![](Screenshots/chatgpt.png) | ![](Screenshots/style.png)  |
+|    ![](Screenshots/edgegpt.png)     |  ![](Screenshots/dalle.png)  |  ![](Screenshots/bard.png)  |
 
 ----------
 
@@ -68,9 +60,10 @@ Support the project by buying and listening to my music 🎵
 
 ## 💬 Bot messages
 
-You can edit telegram bot messages by editing file `messages.json`. You can add new lines by adding `\\n`
+- You can edit telegram bot messages by editing file `messages.json`. You can add new lines by adding `\\n`
+- You can add a new language simply by copying one of existing language (with `{}`) to the end of file (before the last `]`) and translating all values
 
-Note: make sure you don't delete argumensts `{0}`, `{1}`, ... in message and please restart script to apply changes
+**Note:** make sure you don't delete argumensts `{0}`, `{1}`, ... in message and please restart python script to apply changes
 
 ----------
 
@@ -136,24 +129,22 @@ It is possible to bypass geo-blocking of ChatGPT, EdgeGPT, DALL-E or Bard. GPT-T
 GPT-Telegramus will download the proxy list itself and start trying various proxies (see console for logs).
 Sometimes, searching for a proxy can take a long time. If you think that the found proxy is not suitable, you can restart the bot using the `/restart` command
 
+- To use **manual proxy**, specify tham in `http://IP:Port` or `http://user:password@IP:Port` format (even if they are HTTPS proxies)  in `proxy` for modules you need
+
 ----------
 
 ## 🤖 Telegram bot commands
 
 - 📄 `/start` - Welcome message and bot version
-- 📙 `/help` - Show this message
-- 🤖 `/chatgpt <request>` - ChatGPT request
-- 🔵 `/edgegpt <request>` - EdgeGPT request
-- 🖥 `/bard <request>` - Bard request
-- 🖼 `/dalle <request>` - Draw a picture with DALL-E
-- 🧹 `/clear <module>` - Clear chat history (chatgpt / edgegpt / bard)
+- ❓ `/help` - Show this message
+- ↕️ `/module` - Change module to chat with
+- 🧹 `/clear` - Clear chat history
+- 🌎 `/lang` - Change the language
 - 🆔 `/chatid` - Show your chat_id
-
-💬 Or just send a text message to make a request
 
 ### Admin commands:
 - 💬 `/queue` - Show requests queue
-- 🔃 `/restart` - Restart modules and telegram bot
+- 🔃 `/restart` - Restart proxies and telegram bot
 - 👤 `/users` - Show list of all users
 - 🔨 `/ban <id> [reason]` - Ban a user by their id with reason (optional)
 - 🔓 `/unban <id>` - Unban a user by their id
@@ -163,7 +154,7 @@ Sometimes, searching for a proxy can take a long time. If you think that the fou
 
 ## 📄 Chat history
 
-GPT-Telegramus saves only ChatGPT chat history locally (`"conversations_dir": "conversations"`). Other modules either have a built-in ability to save chat history or do not have the ability to split conversations
+GPT-Telegramus saves chat history for some modules locally (`"conversations_dir": "conversations"`) to keep conversation with users
 
 ----------
 
@@ -183,7 +174,8 @@ You can enable and configure data collection in config in `data_collecting` bloc
 ## 📝 TODO
 
 - Add some free GPT-4 model
-- Add buttons to the telegram bot (reply markup)
+- Make Bing ImageGet work
+- Add rate limit
 
 ----------
 
@@ -194,3 +186,5 @@ You can enable and configure data collection in config in `data_collecting` bloc
 ----------
 
 ### 🚧 P.S. This project is still under development!
+
+- If you find a bug, please create an Issue

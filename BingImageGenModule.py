@@ -15,52 +15,61 @@
  OTHER DEALINGS IN THE SOFTWARE.
 """
 
+import ctypes
 import logging
+import multiprocessing
 from typing import List, Dict
 
-import openai
+from BingImageCreator import ImageGen
 
 import BotHandler
 import UsersHandler
 from RequestResponseContainer import RequestResponseContainer
 
 
-class DALLEModule:
+class BingImageGenModule:
     def __init__(self, config: dict, messages: List[Dict], users_handler: UsersHandler.UsersHandler) -> None:
         self.config = config
         self.messages = messages
         self.users_handler = users_handler
 
+        # All variables here must be multiprocessing
+        self.processing_flag = multiprocessing.Value(ctypes.c_bool, False)
+
     def initialize(self, proxy=None) -> None:
         """
-        Initializes DALL-E official API
+        Initializes Bing ImageGen API
         :return:
         """
         self._enabled = False
+        self._image_generator = None
+
+        self.processing_flag.value = False
 
         try:
             # Use manual proxy
-            if not proxy and self.config["dalle"]["proxy"] and self.config["dalle"]["proxy"] != "auto":
-                proxy = self.config["dalle"]["proxy"]
+            if not proxy and self.config["bing_imagegen"]["proxy"] and self.config["bing_imagegen"]["proxy"] != "auto":
+                proxy = self.config["bing_imagegen"]["proxy"]
 
             # Log
-            logging.info("Initializing DALL-E module with proxy {}".format(proxy))
+            logging.info("Initializing Bing ImageGen module with proxy {}".format(proxy))
 
             # Set enabled status
-            self._enabled = self.config["modules"]["dalle"]
+            self._enabled = self.config["modules"]["bing_imagegen"]
             if not self._enabled:
-                logging.warning("DALL-E module disabled in config file!")
-                raise Exception("DALL-E module disabled in config file!")
+                logging.warning("Bing ImageGen module disabled in config file!")
+                raise Exception("Bing ImageGen module disabled in config file!")
 
-            # Set Key
-            openai.api_key = self.config["dalle"]["open_ai_api_key"]
+            # Initialize Bing ImageGen
+            self._image_generator = ImageGen(self.config["bing_imagegen"]["cookies_file"], quiet=True)
 
             # Set proxy
             if proxy:
-                openai.proxy = proxy
+                self._image_generator.session.proxies = {"http": proxy, "https": proxy}
 
-            # Done?
-            logging.info("DALL-E module initialized")
+            # Check
+            if self._image_generator is not None:
+                logging.info("Bing ImageGen module initialized")
 
         # Error
         except Exception as e:
@@ -69,7 +78,7 @@ class DALLEModule:
 
     def process_request(self, request_response: RequestResponseContainer) -> None:
         """
-        Processes request to DALL-E
+        Processes request to Bing ImageGen
         :param request_response: RequestResponseContainer object
         :return:
         """
@@ -78,9 +87,9 @@ class DALLEModule:
 
         # Check if we are initialized
         if not self._enabled:
-            logging.error("DALL-E module not initialized!")
+            logging.error("Bing ImageGen module not initialized!")
             request_response.response = self.messages[lang]["response_error"].replace("\\n", "\n") \
-                .format("DALL-E module not initialized!")
+                .format("Bing ImageGen module not initialized!")
             request_response.error = True
             return
 
@@ -89,24 +98,20 @@ class DALLEModule:
             request_response.user["requests_total"] += 1
             self.users_handler.save_user(request_response.user)
 
-            # Set Key
-            openai.api_key = self.config["dalle"]["open_ai_api_key"]
-
-            # Generate image
-            logging.info("Requesting image from DALL-E")
-            image_response = openai.Image.create(prompt=request_response.request,
-                                                 n=1,
-                                                 size=self.config["dalle"]["image_size"])
-            response_url = image_response["data"][0]["url"]
+            # Generate images
+            # TODO: Make it work
+            logging.info("Requesting images from Bing ImageGen")
+            response_urls = self._image_generator.get_images(request_response.request)
+            print(response_urls)
 
             # Check response
-            if not response_url or len(response_url) < 1:
-                raise Exception("Wrong DALL-E response!")
+            if not response_urls or len(response_urls) < 1:
+                raise Exception("Wrong Bing ImageGen response!")
 
-            # OK?
+            # TODO: Use all generated images (for now it's the first one)
             logging.info("Response successfully processed for user {0} ({1})"
                          .format(request_response.user["user_name"], request_response.user["user_id"]))
-            request_response.response = response_url
+            request_response.response = response_urls[0]
 
         # Exit requested
         except KeyboardInterrupt:

@@ -16,63 +16,31 @@
 """
 
 import argparse
-import datetime
 import logging
+import multiprocessing
 import os
 import sys
 
 import BardModule
+import BingImageGenModule
 import BotHandler
 import ChatGPTModule
 import DALLEModule
 import EdgeGPTModule
+import LoggingHandler
 import ProxyAutomation
 import QueueHandler
 import UsersHandler
 from JSONReaderWriter import load_json
 
 # GPT-Telegramus version
-__version__ = "2.1.4"
+__version__ = "3.0.0"
 
 # Logging level
 LOGGING_LEVEL = logging.INFO
 
 # Default config file
 CONFIG_FILE = "config.json"
-
-
-def logging_setup(directory: str):
-    """
-    Sets up logging format and level
-    :param directory: Directory where to save logs
-    :return:
-    """
-    # Create logs directory
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
-    # Create logs formatter
-    log_formatter = logging.Formatter("%(asctime)s %(threadName)s %(levelname)-8s %(message)s",
-                                      datefmt="%Y-%m-%d %H:%M:%S")
-
-    # Setup logging into file
-    file_handler = logging.FileHandler(os.path.join(directory,
-                                                    datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + ".log"),
-                                       encoding="utf-8")
-    file_handler.setFormatter(log_formatter)
-
-    # Setup logging into console
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(log_formatter)
-
-    # Add all handlers and setup level
-    root_logger = logging.getLogger()
-    root_logger.addHandler(file_handler)
-    root_logger.addHandler(console_handler)
-    root_logger.setLevel(LOGGING_LEVEL)
-
-    # Log test message
-    logging.info("logging setup is complete")
 
 
 def parse_args():
@@ -95,35 +63,55 @@ def main():
     # Parse arguments
     args = parse_args()
 
-    # Load config
-    config = load_json(args.config, logging_enabled=False)
+    # Multiprocessing fix for Windows
+    if sys.platform.startswith("win"):
+        multiprocessing.freeze_support()
 
-    # Initialize logging
-    logging_setup(config["files"]["logs_dir"])
+    # Initialize logging and start listener as process
+    logging_handler = LoggingHandler.LoggingHandler()
+    logging_handler_process = multiprocessing.Process(target=logging_handler.configure_and_start_listener)
+    logging_handler_process.start()
+    LoggingHandler.worker_configurer(logging_handler.queue)
+    logging.info("LoggingHandler PID: " + str(logging_handler_process.pid))
 
-    # Load messages from json file
-    messages = load_json(config["files"]["messages_file"])
+    # Log software version and GitHub link
+    logging.info("GPT-Telegramus version: " + str(__version__))
+    logging.info("https://github.com/F33RNI/GPT-Telegramus")
 
-    # Initialize classes
+    # Load config with multiprocessing support
+    config = multiprocessing.Manager().dict(load_json(args.config))
+
+    # Load messages from json file with multiprocessing support
+    messages = multiprocessing.Manager().list(load_json(config["files"]["messages_file"]))
+
+    # Check and create conversations directory
+    if not os.path.exists(config["files"]["conversations_dir"]):
+        logging.info("Creating directory: {0}".format(config["files"]["conversations_dir"]))
+        os.makedirs(config["files"]["conversations_dir"])
+
+    # Initialize UsersHandler and ProxyAutomation classes
     user_handler = UsersHandler.UsersHandler(config, messages)
+    proxy_automation = ProxyAutomation.ProxyAutomation(config)
 
+    # Pre-initialize modules
     chatgpt_module = ChatGPTModule.ChatGPTModule(config, messages, user_handler)
     dalle_module = DALLEModule.DALLEModule(config, messages, user_handler)
-    edgegpt_module = EdgeGPTModule.EdgeGPTModule(config, messages, user_handler)
     bard_module = BardModule.BardModule(config, messages, user_handler)
+    edgegpt_module = EdgeGPTModule.EdgeGPTModule(config, messages, user_handler)
+    bing_image_gen_module = BingImageGenModule.BingImageGenModule(config, messages, user_handler)
 
-    proxy_automation = ProxyAutomation.ProxyAutomation(config,
-                                                       chatgpt_module, dalle_module, edgegpt_module, bard_module)
+    # Initialize QueueHandler class
+    queue_handler = QueueHandler.QueueHandler(config, messages, logging_handler.queue, user_handler, proxy_automation,
+                                              chatgpt_module,
+                                              dalle_module,
+                                              bard_module,
+                                              edgegpt_module,
+                                              bing_image_gen_module)
 
-    queue_handler = QueueHandler.QueueHandler(config, chatgpt_module, dalle_module, edgegpt_module, bard_module)
+    # Initialize Telegram bot class
     bot_handler = BotHandler.BotHandler(config, messages, user_handler, queue_handler, proxy_automation,
-                                        chatgpt_module, edgegpt_module, dalle_module, bard_module)
-
-    # Initialize modules
-    chatgpt_module.initialize()
-    dalle_module.initialize()
-    edgegpt_module.initialize()
-    bard_module.initialize()
+                                        logging_handler.queue,
+                                        chatgpt_module, bard_module, edgegpt_module)
 
     # Start proxy automation
     proxy_automation.start_automation_loop()
@@ -136,11 +124,11 @@ def main():
 
     # If we're here, exit requested
     proxy_automation.stop_automation_loop()
-    chatgpt_module.exit()
-    bard_module.exit()
-    edgegpt_module.exit()
     queue_handler.stop_processing_loop()
     logging.info("GPT-Telegramus exited successfully")
+
+    # Finally, stop logging loop
+    logging_handler.queue.put(None)
 
 
 if __name__ == "__main__":
