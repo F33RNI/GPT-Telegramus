@@ -67,7 +67,7 @@
         "proxy": "",
 
         "__comment06__": "RESPONSE TIMEOUT (IN SECONDS)",
-        "timeout_seconds": 120
+        "timeout_seconds": 240
     },
 
     "__comment04__": "DALL-E SETTINGS",
