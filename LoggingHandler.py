@@ -26,6 +26,9 @@ LOGGING_LEVEL = logging.INFO
 # Where to save log files
 LOGS_DIR = "logs"
 
+# Will ignore logs from python-telegram-bot that start with this message
+TELEGRAM_LOGS_IGNORE_PREFIX = "HTTP Request: POST https://api.telegram.org/bot"
+
 
 def worker_configurer(queue: multiprocessing.Queue):
     """
@@ -83,6 +86,11 @@ class LoggingHandler:
             try:
                 # Get logging record
                 record = self.queue.get()
+
+                # Ignore python-telegram-bot logs
+                if record is not None and record.message \
+                        and str(record.message).startswith(TELEGRAM_LOGS_IGNORE_PREFIX):
+                    continue
 
                 # Send None to exit
                 if record is None:
