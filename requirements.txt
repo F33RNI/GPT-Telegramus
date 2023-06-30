@@ -9,4 +9,4 @@ GoogleBard==1.4.0
 requests>=2.28.1
 telegram>=0.0.1
 psutil>=5.9.4
-BingImageCreator==0.4.2
+BingImageCreator>=0.4.4
