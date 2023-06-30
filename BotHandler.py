@@ -493,7 +493,10 @@ class BotHandler:
                 self._application.add_handler(CommandHandler(BOT_COMMAND_CLEAR, self.bot_command_clear))
                 self._application.add_handler(CommandHandler(BOT_COMMAND_LANG, self.bot_command_lang))
                 self._application.add_handler(CommandHandler(BOT_COMMAND_CHAT_ID, self.bot_command_chatid))
-                self._application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), self.bot_message))
+
+                # Handle requests as messages
+                if self.config["telegram"]["reply_to_messages"]:
+                    self._application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), self.bot_message))
 
                 # Admin commands
                 self._application.add_handler(CommandHandler(BOT_COMMAND_ADMIN_QUEUE, self.bot_command_queue))
