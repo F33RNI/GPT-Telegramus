@@ -131,7 +131,10 @@
 
         "__comment06__": "ADD CURSOR CHARACTER TO END OF MESSAGE DURING RESPONSE",
         "add_cursor_symbol": true,
-        "cursor_symbol": "▯"
+        "cursor_symbol": "▯",
+
+        "__comment07__": "SET TO true FOR THE BOT TO REPLY TO PLAIN MESSAGES AS WELL AS DIRECT MODULE COMMANDS",
+        "reply_to_messages": true
     },
 
     "__comment08__": "FILES AND DIRECTORIES SETTINGS",
