@@ -187,6 +187,54 @@ def queue_to_list(request_response_queue: multiprocessing.Queue) -> list:
     return queue_list
 
 
+def _user_module_cooldown(config: dict,
+                          messages: List[Dict],
+                          request: RequestResponseContainer,
+                          time_left_seconds: int) -> None:
+    """
+    Sends cooldown message to the user
+    :param config:
+    :param messages:
+    :param request:
+    :param time_left_seconds:
+    :return:
+    """
+    # Get user language
+    lang = UsersHandler.get_key_or_none(request.user, "lang", 0)
+
+    # Calculate time left
+    if time_left_seconds < 0:
+        time_left_seconds = 0
+    time_left_hours = time_left_seconds // 3600
+    time_left_minutes = (time_left_seconds - (time_left_hours * 3600)) // 60
+    time_left_seconds = time_left_seconds - (time_left_hours * 3600) - (time_left_minutes * 60)
+
+    # Convert to string (ex. 1h 20m 9s)
+    time_left_str = ""
+    if time_left_hours > 0:
+        if len(time_left_str) > 0:
+            time_left_str += " "
+        time_left_str += str(time_left_hours) + messages[lang]["hours"]
+    if time_left_minutes > 0:
+        if len(time_left_str) > 0:
+            time_left_str += " "
+        time_left_str += str(time_left_minutes) + messages[lang]["minutes"]
+    if time_left_seconds > 0:
+        if len(time_left_str) > 0:
+            time_left_str += " "
+        time_left_str += str(time_left_seconds) + messages[lang]["seconds"]
+    if time_left_str == "":
+        time_left_str = "0" + messages[lang]["seconds"]
+
+    # Generate cooldown message
+    request.response = messages[lang]["user_cooldown_error"].replace("\\n", "\n") \
+        .format(time_left_str,
+                messages[lang]["modules"][request.request_type])
+
+    # Send this message
+    BotHandler.async_helper(BotHandler.send_message_async(config, messages, request, end=True))
+
+
 def _request_processor(config: dict,
                        messages: List[Dict],
                        logging_queue: multiprocessing.Queue,
@@ -231,46 +279,97 @@ def _request_processor(config: dict,
 
         # ChatGPT
         if request_.request_type == RequestResponseContainer.REQUEST_TYPE_CHATGPT:
-            proxy_ = None
-            if proxy and config["chatgpt"]["proxy"] == "auto":
-                proxy_ = proxy
-            chatgpt_module.initialize(proxy_)
-            chatgpt_module.process_request(request_)
-            chatgpt_module.exit()
+            chatgpt_user_last_request_timestamp = UsersHandler.get_key_or_none(request_.user, "timestamp_chatgpt", 0)
+            time_passed_seconds = int(time.time()) - chatgpt_user_last_request_timestamp
+            if time_passed_seconds < config["chatgpt"]["user_cooldown_seconds"]:
+                request_.error = True
+                logging.warning("User {0} sends ChatGPT requests too quickly!".format(request_.user["user_id"]))
+                _user_module_cooldown(config, messages, request_,
+                                      config["chatgpt"]["user_cooldown_seconds"] - time_passed_seconds)
+            else:
+                request_.user["timestamp_chatgpt"] = int(time.time())
+                users_handler.save_user(request_.user)
+                proxy_ = None
+                if proxy and config["chatgpt"]["proxy"] == "auto":
+                    proxy_ = proxy
+                chatgpt_module.initialize(proxy_)
+                chatgpt_module.process_request(request_)
+                chatgpt_module.exit()
 
         # DALL-E
         elif request_.request_type == RequestResponseContainer.REQUEST_TYPE_DALLE:
-            proxy_ = None
-            if proxy and config["dalle"]["proxy"] == "auto":
-                proxy_ = proxy
-            dalle_module.initialize(proxy_)
-            dalle_module.process_request(request_)
+            dalle_user_last_request_timestamp = UsersHandler.get_key_or_none(request_.user, "timestamp_dalle", 0)
+            time_passed_seconds = int(time.time()) - dalle_user_last_request_timestamp
+            if time_passed_seconds < config["dalle"]["user_cooldown_seconds"]:
+                request_.error = True
+                logging.warning("User {0} sends DALL-E requests too quickly!".format(request_.user["user_id"]))
+                _user_module_cooldown(config, messages, request_,
+                                      config["dalle"]["user_cooldown_seconds"] - time_passed_seconds)
+            else:
+                request_.user["timestamp_dalle"] = int(time.time())
+                users_handler.save_user(request_.user)
+                proxy_ = None
+                if proxy and config["dalle"]["proxy"] == "auto":
+                    proxy_ = proxy
+                dalle_module.initialize(proxy_)
+                dalle_module.process_request(request_)
 
         # EdgeGPT
         elif request_.request_type == RequestResponseContainer.REQUEST_TYPE_EDGEGPT:
-            proxy_ = None
-            if proxy and config["chatgpt"]["proxy"] == "auto":
-                proxy_ = proxy
-            edgegpt_module.initialize(proxy_)
-            edgegpt_module.process_request(request_)
-            edgegpt_module.exit()
+            edgegpt_user_last_request_timestamp = UsersHandler.get_key_or_none(request_.user, "timestamp_edgegpt", 0)
+            time_passed_seconds = int(time.time()) - edgegpt_user_last_request_timestamp
+            if time_passed_seconds < config["edgegpt"]["user_cooldown_seconds"]:
+                request_.error = True
+                logging.warning("User {0} sends EdgeGPT requests too quickly!".format(request_.user["user_id"]))
+                _user_module_cooldown(config, messages, request_,
+                                      config["edgegpt"]["user_cooldown_seconds"] - time_passed_seconds)
+            else:
+                request_.user["timestamp_edgegpt"] = int(time.time())
+                users_handler.save_user(request_.user)
+                proxy_ = None
+                if proxy and config["edgegpt"]["proxy"] == "auto":
+                    proxy_ = proxy
+                edgegpt_module.initialize(proxy_)
+                edgegpt_module.process_request(request_)
+                edgegpt_module.exit()
 
         # Bard
         elif request_.request_type == RequestResponseContainer.REQUEST_TYPE_BARD:
-            proxy_ = None
-            if proxy and config["bard"]["proxy"] == "auto":
-                proxy_ = proxy
-            bard_module.initialize(proxy_)
-            bard_module.process_request(request_)
-            bard_module.exit()
+            bard_user_last_request_timestamp = UsersHandler.get_key_or_none(request_.user, "timestamp_bard", 0)
+            time_passed_seconds = int(time.time()) - bard_user_last_request_timestamp
+            if time_passed_seconds < config["bard"]["user_cooldown_seconds"]:
+                request_.error = True
+                logging.warning("User {0} sends Bard requests too quickly!".format(request_.user["user_id"]))
+                _user_module_cooldown(config, messages, request_,
+                                      config["bard"]["user_cooldown_seconds"] - time_passed_seconds)
+            else:
+                request_.user["timestamp_bard"] = int(time.time())
+                users_handler.save_user(request_.user)
+                proxy_ = None
+                if proxy and config["bard"]["proxy"] == "auto":
+                    proxy_ = proxy
+                bard_module.initialize(proxy_)
+                bard_module.process_request(request_)
+                bard_module.exit()
 
         # Bing ImageGen
         elif request_.request_type == RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN:
-            proxy_ = None
-            if proxy and config["bing_imagegen"]["proxy"] == "auto":
-                proxy_ = proxy
-            bing_image_gen_module.initialize(proxy_)
-            bing_image_gen_module.process_request(request_)
+            bing_imagegen_user_last_request_timestamp \
+                = UsersHandler.get_key_or_none(request_.user, "timestamp_bing_imagegen", 0)
+            time_passed_seconds = int(time.time()) - bing_imagegen_user_last_request_timestamp
+            if time_passed_seconds < config["bing_imagegen"]["user_cooldown_seconds"]:
+                request_.error = True
+                logging.warning("User {0} sends BingImageGen requests too quickly!".format(request_.user["user_id"]))
+                _user_module_cooldown(config, messages, request_,
+                                      config["bing_imagegen"]["user_cooldown_seconds"] - time_passed_seconds)
+            else:
+                request_.user["timestamp_bing_imagegen"] = int(time.time())
+                users_handler.save_user(request_.user)
+                proxy_ = None
+                if proxy and config["bing_imagegen"]["proxy"] == "auto":
+                    proxy_ = proxy
+                bing_image_gen_module.initialize(proxy_)
+                bing_image_gen_module.process_request(request_)
 
         # Wrong API type
         else:
@@ -576,8 +675,10 @@ class QueueHandler:
 
             # Log response
             else:
-                # DALL-E response
-                if request_response.request_type == RequestResponseContainer.REQUEST_TYPE_DALLE:
+                # DALL-E or BingImageGen response without error
+                if (request_response.request_type == RequestResponseContainer.REQUEST_TYPE_DALLE
+                    or request_response.request_type == RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN) \
+                        and not request_response.error:
                     response = base64.b64encode(requests.get(request_response.response, timeout=120).content) \
                         .decode("utf-8")
 

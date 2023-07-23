@@ -48,7 +48,10 @@
         "cooldown_seconds": 20,
 
         "__comment14__": "RESPONSE TIMEOUT (IN SECONDS)",
-        "timeout_seconds": 120
+        "timeout_seconds": 120,
+
+        "__comment15__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
+        "user_cooldown_seconds": 0
     },
 
     "__comment03__": "EDGEGPT SETTINGS",
@@ -67,7 +70,10 @@
         "proxy": "",
 
         "__comment06__": "RESPONSE TIMEOUT (IN SECONDS)",
-        "timeout_seconds": 240
+        "timeout_seconds": 240,
+
+        "__comment07__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
+        "user_cooldown_seconds": 0
     },
 
     "__comment04__": "DALL-E SETTINGS",
@@ -83,7 +89,10 @@
         "proxy": "",
 
         "__comment05__": "RESPONSE TIMEOUT (IN SECONDS)",
-        "timeout_seconds": 60
+        "timeout_seconds": 120,
+
+        "__comment15__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
+        "user_cooldown_seconds": 600
     },
 
     "__comment05__": "BING IMAGEGEN SETTINGS (CURRENTLY NOT WORKING)",
@@ -96,20 +105,29 @@
         "proxy": "",
 
         "__comment06__": "RESPONSE TIMEOUT (IN SECONDS)",
-        "timeout_seconds": 120
+        "timeout_seconds": 120,
+
+        "__comment15__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
+        "user_cooldown_seconds": 0
     },
 
     "__comment06__": "BARD SETTINGS",
     "bard": {
         "__comment01__": "Go to Application -> Cookies -> __Secure-1PSID. Copy the value of that cookie",
-        "token": "",
+        "secure_1psid": "",
 
-        "__comment02__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
-        "__comment03__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
+        "__comment02__": "Go to Application -> Cookies -> __Secure-1PSIDTS. Copy the value of that cookie",
+        "secure_1psidts": "",
+
+        "__comment03__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+        "__comment04__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
         "proxy": "",
 
-        "__comment04__": "RESPONSE TIMEOUT (IN SECONDS)",
-        "timeout_seconds": 120
+        "__comment05__": "RESPONSE TIMEOUT (IN SECONDS)",
+        "timeout_seconds": 120,
+
+        "__comment15__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
+        "user_cooldown_seconds": 0
     },
 
     "__comment07__": "TELEGRAM SETTINGS",
