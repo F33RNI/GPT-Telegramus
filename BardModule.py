@@ -63,9 +63,12 @@ class BardModule:
 
             # Initialize chatbot
             if proxy:
-                self._chatbot = Bard.Chatbot(self.config["bard"]["token"], proxy=proxy)
+                self._chatbot = Bard.Chatbot(self.config["bard"]["secure_1psid"],
+                                             self.config["bard"]["secure_1psidts"],
+                                             proxy=proxy)
             else:
-                self._chatbot = Bard.Chatbot(self.config["bard"]["token"])
+                self._chatbot = Bard.Chatbot(self.config["bard"]["secure_1psid"],
+                                             self.config["bard"]["secure_1psidts"])
             # Done?
             if self._chatbot is not None:
                 logging.info("Bard module initialized")

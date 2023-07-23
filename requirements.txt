@@ -1,11 +1,11 @@
 python-telegram-bot>=20.3
-revChatGPT==6.7.3
+revChatGPT==6.8.6
 EdgeGPT==0.10.16
 openai>=0.26.4
 tiktoken>=0.2.0
 OpenAIAuth>=0.3.2
 asyncio==3.4.3
-GoogleBard==1.4.0
+GoogleBard==2.1.0
 requests>=2.28.1
 telegram>=0.0.1
 psutil>=5.9.4
