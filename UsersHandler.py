@@ -16,6 +16,7 @@
 """
 
 import logging
+import multiprocessing
 from typing import List, Dict
 
 import JSONReaderWriter
@@ -48,15 +49,18 @@ class UsersHandler:
         self.config = config
         self.messages = messages
 
+        self.lock = multiprocessing.Lock()
+
     def read_users(self) -> list:
         """
         Reads users data from database
         :return: users as list of dictionaries or [] if not found
         """
-        users = JSONReaderWriter.load_json(self.config["files"]["users_database"])
-        if users is None:
-            return []
-        return users
+        with self.lock:
+            users = JSONReaderWriter.load_json(self.config["files"]["users_database"])
+            if users is None:
+                return []
+            return users
 
     def get_user_by_id(self, user_id: int) -> dict:
         """
@@ -82,24 +86,26 @@ class UsersHandler:
             return
 
         users = self.read_users()
-        user_index = -1
-        for i in range(len(users)):
-            if users[i]["user_id"] == user_data["user_id"]:
-                user_index = i
-                break
 
-        # User exists
-        if user_index >= 0:
-            new_keys = user_data.keys()
-            for new_key in new_keys:
-                users[user_index][new_key] = user_data[new_key]
+        with self.lock:
+            user_index = -1
+            for i in range(len(users)):
+                if users[i]["user_id"] == user_data["user_id"]:
+                    user_index = i
+                    break
 
-        # New user
-        else:
-            users.append(user_data)
+            # User exists
+            if user_index >= 0:
+                new_keys = user_data.keys()
+                for new_key in new_keys:
+                    users[user_index][new_key] = user_data[new_key]
 
-        # Save to database
-        JSONReaderWriter.save_json(self.config["files"]["users_database"], users)
+            # New user
+            else:
+                users.append(user_data)
+
+            # Save to database
+            JSONReaderWriter.save_json(self.config["files"]["users_database"], users)
 
     def _create_user(self, user_id: int) -> dict:
         """
