@@ -5,7 +5,7 @@
         "edgegpt": true,
         "dalle": true,
         "bard": true,
-        "bing_imagegen": false,
+        "bing_imagegen": true,
 
         "__comment04__": "Default (initial) module for handling user messages (see RequestResponseContainer.py)",
         "default_module": 0
@@ -95,7 +95,7 @@
         "user_cooldown_seconds": 600
     },
 
-    "__comment05__": "BING IMAGEGEN SETTINGS (CURRENTLY NOT WORKING)",
+    "__comment05__": "BING IMAGEGEN SETTINGS",
     "bing_imagegen": {
         "__comment01__": "PATH TO COOKIES FILE (JSON) https://github.com/acheong08/EdgeGPT#collect-cookies",
         "cookies_file": "EdgeGPT_cookies.json",
@@ -151,7 +151,10 @@
         "add_cursor_symbol": true,
         "cursor_symbol": "▯",
 
-        "__comment07__": "SET TO true FOR THE BOT TO REPLY TO PLAIN MESSAGES AS WELL AS DIRECT MODULE COMMANDS",
+        "__comment07__": "EMPTY SYMBOL FOR REPLY MARKUP WITHOUT TEXT (FOR SENDING MULTIPLE PHOTOS)",
+        "empty_message_symbol": "ㅤ",
+
+        "__comment08__": "SET TO true FOR THE BOT TO REPLY TO PLAIN MESSAGES AS WELL AS DIRECT MODULE COMMANDS",
         "reply_to_messages": true
     },
 

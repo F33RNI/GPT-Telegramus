@@ -26,7 +26,7 @@ import time
 from typing import List, Dict
 
 import telegram
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters, CallbackQueryHandler
 
 import LoggingHandler
@@ -128,8 +128,11 @@ async def send_message_async(config: dict, messages: List[Dict],
         lang = UsersHandler.get_key_or_none(request_response.user, "lang", 0)
 
         # Fix empty message
-        if len(request_response.response.strip()) <= 0 and end:
-            request_response.response = messages[lang]["empty_message"]
+        if end:
+            if not request_response.response \
+                    or (type(request_response.response) == list and len(request_response.response) == 0) \
+                    or (type(request_response.response) == str and len(request_response.response.strip()) <= 0):
+                request_response.response = messages[lang]["empty_message"]
 
         # The last message
         if end:
@@ -180,13 +183,38 @@ async def send_message_async(config: dict, messages: List[Dict],
             if (request_response.request_type == RequestResponseContainer.REQUEST_TYPE_DALLE
                 or request_response.request_type == RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN) \
                     and not request_response.error:
-                request_response.message_id = (await (telegram.Bot(config["telegram"]["api_key"]).sendPhoto(
-                    chat_id=request_response.user["user_id"],
-                    photo=request_response.response,
-                    reply_to_message_id=request_response
-                    .reply_message_id,
-                    reply_markup=request_response.reply_markup))) \
-                    .message_id
+                # Single photo
+                if type(request_response.response) == str:
+                    request_response.message_id = (await (telegram.Bot(config["telegram"]["api_key"]).sendPhoto(
+                        chat_id=request_response.user["user_id"],
+                        photo=request_response.response,
+                        reply_to_message_id=request_response
+                        .reply_message_id,
+                        reply_markup=request_response.reply_markup))) \
+                        .message_id
+
+                # Multiple photos (send media group + markup as seperate messages)
+                else:
+                    # Collect media group
+                    media_group = []
+                    for url in request_response.response:
+                        media_group.append(InputMediaPhoto(media=url))
+
+                    # Send it
+                    await (telegram.Bot(config["telegram"]["api_key"]).sendMediaGroup(
+                        chat_id=request_response.user["user_id"],
+                        media=media_group,
+                        reply_to_message_id=request_response.reply_message_id))
+
+                    # Send reply markup and get message ID
+                    request_response.message_id = await send_reply(config["telegram"]["api_key"],
+                                                                   request_response.user["user_id"],
+                                                                   config["telegram"]["empty_message_symbol"],
+                                                                   request_response.reply_message_id,
+                                                                   markdown=False,
+                                                                   reply_markup=request_response.reply_markup,
+                                                                   edit_message_id=request_response.message_id)
+
             # Send message as text
             else:
                 request_response.message_id = await send_reply(config["telegram"]["api_key"],

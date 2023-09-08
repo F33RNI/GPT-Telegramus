@@ -675,16 +675,23 @@ class QueueHandler:
 
             # Log response
             else:
-                # DALL-E or BingImageGen response without error
-                if (request_response.request_type == RequestResponseContainer.REQUEST_TYPE_DALLE
-                    or request_response.request_type == RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN) \
-                        and not request_response.error:
-                    response = base64.b64encode(requests.get(request_response.response, timeout=120).content) \
-                        .decode("utf-8")
+                response = "None"
+                try:
+                    # DALL-E or BingImageGen response without error
+                    if (request_response.request_type == RequestResponseContainer.REQUEST_TYPE_DALLE
+                        or request_response.request_type == RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN) \
+                            and not request_response.error:
+                        response_url = request_response.response if type(request_response.response) == str\
+                            else request_response.response[0]
+                        response = base64.b64encode(requests.get(response_url, timeout=120).content) \
+                            .decode("utf-8")
 
-                # Text response (ChatGPT, EdgeGPT, Bard)
-                else:
-                    response = request_response.response
+                    # Text response (ChatGPT, EdgeGPT, Bard)
+                    else:
+                        response = request_response.response
+                except Exception as e:
+                    logging.warning("Can't parse response for data logging!", exc_info=e)
+                    response = str(response)
 
                 # Log response
                 response_str_to_format = self.config["data_collecting"]["response_format"].replace("\\n", "\n") \

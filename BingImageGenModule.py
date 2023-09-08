@@ -24,6 +24,7 @@ from BingImageCreator import ImageGen
 
 import BotHandler
 import UsersHandler
+from JSONReaderWriter import load_json
 from RequestResponseContainer import RequestResponseContainer
 
 
@@ -60,8 +61,30 @@ class BingImageGenModule:
                 logging.warning("Bing ImageGen module disabled in config file!")
                 raise Exception("Bing ImageGen module disabled in config file!")
 
+            # Parse cookies
+            auth_cookie = ""
+            auth_cookie_SRCHHPGUSR = ""
+            try:
+                cookies = load_json(self.config["bing_imagegen"]["cookies_file"])
+                if not cookies or len(cookies) < 1:
+                    raise "Error reading bing cookies!"
+                for cookie in cookies:
+                    if cookie["name"] == "_U":
+                        auth_cookie = cookie["value"]
+                    elif cookie["name"] == "SRCHHPGUSR":
+                        auth_cookie_SRCHHPGUSR = cookie["value"]
+                if not auth_cookie:
+                    raise "No _U cookie!"
+                if not auth_cookie_SRCHHPGUSR:
+                    raise "No SRCHHPGUSR cookie!"
+            except Exception as e:
+                raise e
+
             # Initialize Bing ImageGen
-            self._image_generator = ImageGen(self.config["bing_imagegen"]["cookies_file"], quiet=True)
+            self._image_generator = ImageGen(auth_cookie=auth_cookie,
+                                             auth_cookie_SRCHHPGUSR=auth_cookie_SRCHHPGUSR,
+                                             quiet=True,
+                                             all_cookies=cookies)
 
             # Set proxy
             if proxy:
@@ -99,19 +122,17 @@ class BingImageGenModule:
             self.users_handler.save_user(request_response.user)
 
             # Generate images
-            # TODO: Make it work
             logging.info("Requesting images from Bing ImageGen")
             response_urls = self._image_generator.get_images(request_response.request)
-            print(response_urls)
 
             # Check response
             if not response_urls or len(response_urls) < 1:
                 raise Exception("Wrong Bing ImageGen response!")
 
-            # TODO: Use all generated images (for now it's the first one)
+            # Use all generated images
             logging.info("Response successfully processed for user {0} ({1})"
                          .format(request_response.user["user_name"], request_response.user["user_id"]))
-            request_response.response = response_urls[0]
+            request_response.response = response_urls
 
         # Exit requested
         except KeyboardInterrupt:
