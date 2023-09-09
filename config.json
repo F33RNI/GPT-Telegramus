@@ -151,7 +151,10 @@
         "add_cursor_symbol": true,
         "cursor_symbol": "▯",
 
-        "__comment07__": "SET TO true FOR THE BOT TO REPLY TO PLAIN MESSAGES AS WELL AS DIRECT MODULE COMMANDS",
+        "__comment07__": "IF RESPONSE IS LARGER THAN THIS NUMBER (IN CHARS), IT WILL BE SPLIT INTO MULTIPLE MESSAGES",
+        "one_message_limit": 3000,
+
+        "__comment08__": "SET TO true FOR THE BOT TO REPLY TO PLAIN MESSAGES AS WELL AS DIRECT MODULE COMMANDS",
         "reply_to_messages": true
     },
 

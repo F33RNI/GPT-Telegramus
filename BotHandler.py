@@ -134,6 +134,17 @@ async def send_message_async(config: dict, messages: List[Dict],
                     or (type(request_response.response) == str and len(request_response.response.strip()) <= 0):
                 request_response.response = messages[lang]["empty_message"]
 
+        # Split large response into parts (by index)
+        if type(request_response.response) == str and len(request_response.response) > 0:
+            while True:
+                index_start = request_response.response_part_positions[-1]
+                response_part_length = len(request_response.response[index_start:-1])
+                if response_part_length > config["telegram"]["one_message_limit"]:
+                    request_response.response_part_positions\
+                        .append(index_start + config["telegram"]["one_message_limit"])
+                else:
+                    break
+
         # The last message
         if end:
             # Generate regenerate button
@@ -218,15 +229,9 @@ async def send_message_async(config: dict, messages: List[Dict],
 
             # Send message as text
             else:
-                request_response.message_id = await send_reply(config["telegram"]["api_key"],
-                                                               request_response.user["user_id"],
-                                                               request_response.response.strip(),
-                                                               request_response.reply_message_id,
-                                                               markdown=True,
-                                                               reply_markup=request_response.reply_markup,
-                                                               edit_message_id=request_response.message_id)
+                await _send_text_async_split(config, request_response, end)
 
-        # First or any other message
+        # First or any other message (text only)
         else:
             # Get current time
             time_current = time.time()
@@ -238,28 +243,15 @@ async def send_message_async(config: dict, messages: List[Dict],
                     and (request_response.response_len_last <= 0 or len(request_response.response.strip())
                          != request_response.response_len_last):
 
-                # Is it first message?
+                # Generate stop button if it's the first message
                 if request_response.message_id is None or request_response.message_id < 0:
-                    # Generate stop button
                     button_stop = InlineKeyboardButton(messages[lang]["button_stop_generating"],
                                                        callback_data="{0}_stop_{1}".format(
                                                            request_response.request_type,
                                                            request_response.reply_message_id))
                     request_response.reply_markup = InlineKeyboardMarkup(build_menu([button_stop]))
 
-                # Add cursor symbol?
-                response_text = request_response.response.strip()
-                if config["telegram"]["add_cursor_symbol"]:
-                    response_text += config["telegram"]["cursor_symbol"]
-
-                # Send message
-                request_response.message_id = await send_reply(config["telegram"]["api_key"],
-                                                               request_response.user["user_id"],
-                                                               response_text,
-                                                               request_response.reply_message_id,
-                                                               markdown=True,
-                                                               reply_markup=request_response.reply_markup,
-                                                               edit_message_id=request_response.message_id)
+                await _send_text_async_split(config, request_response, end)
 
                 # Save new data
                 request_response.response_len_last = len(request_response.response.strip())
@@ -271,6 +263,71 @@ async def send_message_async(config: dict, messages: List[Dict],
 
     # Save current timestamp to container
     request_response.response_timestamp = time.time()
+
+
+async def _send_text_async_split(config: dict,
+                                 request_response: RequestResponseContainer.RequestResponseContainer,
+                                 end=False):
+    """
+    Sends text in multiple messages if needed (must be previously split)
+    :param config:
+    :param request_response:
+    :param end:
+    :return:
+    """
+    # Send all parts of message
+    response_part_counter_init = request_response.response_part_counter
+    while True:
+        # Get current part of response
+        response_part_index_start \
+            = request_response.response_part_positions[request_response.response_part_counter]
+        response_part_index_stop = -1
+        if request_response.response_part_counter < len(request_response.response_part_positions) - 1:
+            response_part_index_stop \
+                = request_response.response_part_positions[request_response.response_part_counter + 1]
+        response_part \
+            = request_response.response[response_part_index_start:response_part_index_stop].strip()
+
+        # Get message ID to reply to
+        reply_to_id = request_response.reply_message_id
+        if request_response.message_id >= 0 and request_response.response_part_counter > 0:
+            reply_to_id = request_response.message_id
+
+        edit_id = None
+        # Edit last message if first loop enter
+        if response_part_counter_init == request_response.response_part_counter:
+            edit_id = request_response.message_id
+
+        # Check if it is not empty
+        if len(response_part) > 0:
+            # Send with markup and exit from loop if it's the last part
+            if response_part_index_stop == -1:
+                # Add cursor symbol?
+                if not end and config["telegram"]["add_cursor_symbol"]:
+                    response_part += config["telegram"]["cursor_symbol"]
+
+                request_response.message_id = await send_reply(config["telegram"]["api_key"],
+                                                               request_response.user["user_id"],
+                                                               response_part,
+                                                               reply_to_id,
+                                                               markdown=True,
+                                                               reply_markup=request_response.reply_markup,
+                                                               edit_message_id=edit_id)
+                break
+            # Send as new message without markup and increment counter
+            else:
+                request_response.message_id = await send_reply(config["telegram"]["api_key"],
+                                                               request_response.user["user_id"],
+                                                               response_part,
+                                                               reply_to_id,
+                                                               markdown=True,
+                                                               reply_markup=None,
+                                                               edit_message_id=edit_id)
+                request_response.response_part_counter += 1
+
+        # Exit from loop if no response in current part
+        else:
+            break
 
 
 async def send_reply(api_key: str, chat_id: int, message: str, reply_to_message_id: int | None,
