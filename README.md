@@ -14,7 +14,7 @@
    </p>
 </div>
 
-![](Banner.jpg)
+![](Banner.png)
 
 ----------
 
