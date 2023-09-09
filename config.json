@@ -5,7 +5,7 @@
         "edgegpt": true,
         "dalle": true,
         "bard": true,
-        "bing_imagegen": false,
+        "bing_imagegen": true,
 
         "__comment04__": "Default (initial) module for handling user messages (see RequestResponseContainer.py)",
         "default_module": 0
@@ -92,10 +92,10 @@
         "timeout_seconds": 120,
 
         "__comment15__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
-        "user_cooldown_seconds": 600
+        "user_cooldown_seconds": 120
     },
 
-    "__comment05__": "BING IMAGEGEN SETTINGS (CURRENTLY NOT WORKING)",
+    "__comment05__": "BING IMAGEGEN SETTINGS",
     "bing_imagegen": {
         "__comment01__": "PATH TO COOKIES FILE (JSON) https://github.com/acheong08/EdgeGPT#collect-cookies",
         "cookies_file": "EdgeGPT_cookies.json",
@@ -108,7 +108,7 @@
         "timeout_seconds": 120,
 
         "__comment15__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
-        "user_cooldown_seconds": 0
+        "user_cooldown_seconds": 120
     },
 
     "__comment06__": "BARD SETTINGS",
@@ -151,7 +151,10 @@
         "add_cursor_symbol": true,
         "cursor_symbol": "▯",
 
-        "__comment07__": "SET TO true FOR THE BOT TO REPLY TO PLAIN MESSAGES AS WELL AS DIRECT MODULE COMMANDS",
+        "__comment07__": "IF RESPONSE IS LARGER THAN THIS NUMBER (IN CHARS), IT WILL BE SPLIT INTO MULTIPLE MESSAGES",
+        "one_message_limit": 3000,
+
+        "__comment08__": "SET TO true FOR THE BOT TO REPLY TO PLAIN MESSAGES AS WELL AS DIRECT MODULE COMMANDS",
         "reply_to_messages": true
     },
 
