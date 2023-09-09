@@ -201,16 +201,17 @@ async def send_message_async(config: dict, messages: List[Dict],
                         media_group.append(InputMediaPhoto(media=url))
 
                     # Send it
-                    await (telegram.Bot(config["telegram"]["api_key"]).sendMediaGroup(
+                    media_group_message_id = (await (telegram.Bot(config["telegram"]["api_key"]).sendMediaGroup(
                         chat_id=request_response.user["user_id"],
                         media=media_group,
-                        reply_to_message_id=request_response.reply_message_id))
+                        reply_to_message_id=request_response.reply_message_id)))[0].message_id
 
                     # Send reply markup and get message ID
                     request_response.message_id = await send_reply(config["telegram"]["api_key"],
                                                                    request_response.user["user_id"],
-                                                                   config["telegram"]["empty_message_symbol"],
-                                                                   request_response.reply_message_id,
+                                                                   messages[lang]["media_group_response"]
+                                                                   .format(request_response.request),
+                                                                   media_group_message_id,
                                                                    markdown=False,
                                                                    reply_markup=request_response.reply_markup,
                                                                    edit_message_id=request_response.message_id)
