@@ -82,5 +82,8 @@ class RequestResponseContainer:
         self.processing_start_timestamp = 0.
         self.error = False
 
+        # Used by BotHandler to split large message into smaller ones
+        self.response_parts = []
+
         # Unique ID for container to get it from queue (address)
         self.id = -1

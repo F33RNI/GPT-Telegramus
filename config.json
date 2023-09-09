@@ -73,7 +73,7 @@
         "timeout_seconds": 240,
 
         "__comment07__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
-        "user_cooldown_seconds": 120
+        "user_cooldown_seconds": 0
     },
 
     "__comment04__": "DALL-E SETTINGS",
@@ -108,7 +108,7 @@
         "timeout_seconds": 120,
 
         "__comment15__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
-        "user_cooldown_seconds": 0
+        "user_cooldown_seconds": 120
     },
 
     "__comment06__": "BARD SETTINGS",
