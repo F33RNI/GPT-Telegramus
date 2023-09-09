@@ -134,6 +134,13 @@ async def send_message_async(config: dict, messages: List[Dict],
                     or (type(request_response.response) == str and len(request_response.response.strip()) <= 0):
                 request_response.response = messages[lang]["empty_message"]
 
+        # Reset message parts if new response is smaller than previous one (EdgeGPT API bug)
+        # TODO: Fix API code instead
+        if len(request_response.response) < request_response.response_raw_len_last:
+            request_response.response_part_positions = [0]
+            request_response.response_part_counter = 0
+        request_response.response_raw_len_last = len(request_response.response)
+
         # Split large response into parts (by index)
         if type(request_response.response) == str and len(request_response.response) > 0:
             while True:
