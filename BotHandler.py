@@ -138,7 +138,7 @@ async def send_message_async(config: dict, messages: List[Dict],
         if type(request_response.response) == str and len(request_response.response) > 0:
             while True:
                 index_start = request_response.response_part_positions[-1]
-                response_part_length = len(request_response.response[index_start:-1])
+                response_part_length = len(request_response.response[index_start:])
                 if response_part_length > config["telegram"]["one_message_limit"]:
                     request_response.response_part_positions\
                         .append(index_start + config["telegram"]["one_message_limit"])
@@ -281,7 +281,7 @@ async def _send_text_async_split(config: dict,
         # Get current part of response
         response_part_index_start \
             = request_response.response_part_positions[request_response.response_part_counter]
-        response_part_index_stop = -1
+        response_part_index_stop = len(request_response.response)
         if request_response.response_part_counter < len(request_response.response_part_positions) - 1:
             response_part_index_stop \
                 = request_response.response_part_positions[request_response.response_part_counter + 1]
@@ -301,7 +301,7 @@ async def _send_text_async_split(config: dict,
         # Check if it is not empty
         if len(response_part) > 0:
             # Send with markup and exit from loop if it's the last part
-            if response_part_index_stop == -1:
+            if response_part_index_stop == len(request_response.response):
                 # Add cursor symbol?
                 if not end and config["telegram"]["add_cursor_symbol"]:
                     response_part += config["telegram"]["cursor_symbol"]
