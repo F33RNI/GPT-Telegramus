@@ -14,10 +14,7 @@
    </p>
 </div>
 
-|      ![](Screenshots/lang.png)      |  ![](Screenshots/start.png)  | ![](Screenshots/module.png) |
-|:-----------------------------------:|:----------------------------:|:---------------------------:|
-| ![](Screenshots/chatgpt_stream.png) | ![](Screenshots/chatgpt.png) | ![](Screenshots/style.png)  |
-|    ![](Screenshots/edgegpt.png)     |  ![](Screenshots/dalle.png)  |  ![](Screenshots/bard.png)  |
+![](Banner.jpg)
 
 ----------
 
