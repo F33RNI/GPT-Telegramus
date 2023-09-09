@@ -83,6 +83,7 @@ class RequestResponseContainer:
         self.error = False
 
         # Used by BotHandler to split large message into smaller ones (list of indexes of text in response)
+        self.response_raw_len_last = 0
         self.response_part_positions = [0]
         self.response_part_counter = 0
 
