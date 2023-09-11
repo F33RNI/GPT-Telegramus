@@ -1,5 +1,5 @@
 # 🤖 GPT-Telegramus
-### The best Telegram bot for ChatGPT, EdgeGPT, DALL-E and Bard with stream writing, multiple languages, admin control, automatic proxy searcher, data logging and more!
+### The best Telegram bot for ChatGPT, EdgeGPT, DALL-E, Bing Image generator and Bard with stream writing, multiple languages, admin control, automatic proxy searcher, data logging and more!
 <div style="width:100%;text-align:center;">
    <p align="center">
       <img src="https://badges.frapsoft.com/os/v1/open-source.png?v=103" >
@@ -40,12 +40,13 @@ Support the project by buying and listening to my music 🎵
 ## 📙 Dependencies
 
 - **ChatGPT** (ChatGPT by OpenAI): https://chat.openai.com/chat
-- **EdgeGPT** (EdgeGPT by Microsoft): https://bing.com/chat
+- **Bing chat** (EdgeGPT by Microsoft): https://bing.com/chat
 - **DALL-E** (DALLE by OpenAI): https://openai.com/dall-e-2/
 - **Bard** (Bard by Google): https://bard.google.com/
 - **acheong08/ChatGPT** (API): https://github.com/acheong08/ChatGPT
 - **acheong08/EdgeGPT** (API): https://github.com/acheong08/EdgeGPT
 - **acheong08/Bard** (API): https://github.com/acheong08/Bard
+- **acheong08/BingImageCreator** (API): https://github.com/acheong08/BingImageCreator
 - **python-telegram-bot** (Telegram bot API): https://github.com/python-telegram-bot/python-telegram-bot
 
 ----------
@@ -177,7 +178,7 @@ GPT-Telegramus saves chat history for some modules locally (`"conversations_dir"
 GPT-Telegramus has a built-in data collecting function (request and response)
 
 - **For ChatGPT, EdgeGPT and Bard** response is saved as plain text
-- **For DALL-E** response is saved as Base64-encoded image (in the same text file)
+- **For DALL-E and Bing Image generator** response is saved as Base64-encoded image (in the same text file)
 
 You can enable and configure data collection in config in `data_collecting` block
 
