@@ -29,6 +29,14 @@ Support the project by buying and listening to my music 🎵
 
 ----------
 
+## 🤗 Contributors
+
+- 1️⃣ [Sprav04ka](https://github.com/Sprav04ka) - *Tofii'skovyi' language, Testing, Motivation*
+- 2️⃣ [Sergey Krashevich](https://github.com/skrashevich) - *Docker, GitHub Actions*
+- 3️⃣ [Wahit Fitriyanto](https://github.com/wahitftry) - *Indonesian language* 
+
+----------
+
 ## 📙 Dependencies
 
 - **ChatGPT** (ChatGPT by OpenAI): https://chat.openai.com/chat
@@ -61,6 +69,15 @@ Support the project by buying and listening to my music 🎵
 - You can add a new language simply by copying one of existing language (with `{}`) to the end of file (before the last `]`) and translating all values
 
 **Note:** make sure you don't delete argumensts `{0}`, `{1}`, ... in message and please restart python script to apply changes
+
+### Currently available languages:
+
+- 🇺🇸 English
+- 🇷🇺 Русский
+- ‍☠️ Тофийсковый
+- 🇮🇩 Bahasa Indonesia
+
+If you want to add a language, create a pull request 💜
 
 ----------
 
