@@ -186,6 +186,8 @@ Default base URL by acheong08/ChatGPT stopped working. Below is an instruction o
    2. `sudo systemctl start chatgpt-proxy.service`
 8. See logs to make sure it's running and see current port
    1. `systemctl status chatgpt-proxy.service`
+9. Add it's IP to `config.json`
+   1. ex. `"base_url": "http://127.0.0.0:9090/api/",`
 
 ----------
 
