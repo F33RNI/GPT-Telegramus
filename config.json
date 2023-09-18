@@ -34,23 +34,25 @@
         "__comment08__": "SET TO TRUE IF YOU HAVE PAID ACCOUNT",
         "paid": false,
 
-        "__comment09__": "URL FOR API REQUESTS. ONLY FOR API TYPE 1. SPECIFY NOTHING TO USE DEFAULT VALUE",
+        "__comment09__": "READ Base URL SECTION IN README. ONLY FOR API TYPE 1. SPECIFY NOTHING TO USE DEFAULT VALUE",
+        "__comment10__": "MUST BE IN FORMAT http://IP:PORT/api/ (ex. http://192.168.0.2:9090/api/)",
+        "__comment11__": "ENDING SLASH AND http:// (https://) IS MANDATORY!",
         "base_url": "",
 
-        "__comment10__": "WHAT MESSAGE DOES THE Continue BUTTON SEND",
+        "__comment12__": "WHAT MESSAGE DOES THE Continue BUTTON SEND",
         "continue_request_text": "continue",
 
-        "__comment11__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
-        "__comment12__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
+        "__comment13__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+        "__comment14__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
         "proxy": "",
 
-        "__comment13__": "MINIMUM INTERVAL (IN SECONDS) BETWEEN EACH CHATGPT REQUEST",
+        "__comment15__": "MINIMUM INTERVAL (IN SECONDS) BETWEEN EACH CHATGPT REQUEST",
         "cooldown_seconds": 20,
 
-        "__comment14__": "RESPONSE TIMEOUT (IN SECONDS)",
+        "__comment16__": "RESPONSE TIMEOUT (IN SECONDS)",
         "timeout_seconds": 120,
 
-        "__comment15__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
+        "__comment17__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
         "user_cooldown_seconds": 0
     },
 

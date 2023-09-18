@@ -74,6 +74,11 @@ class ChatGPTModule:
             # API type 1
             if self.config["chatgpt"]["api_type"] == 1:
                 logging.info("Initializing ChatGPT module with API type 1")
+
+                # Set CHATGPT_BASE_URL
+                if self.config["chatgpt"]["base_url"]:
+                    os.environ["CHATGPT_BASE_URL"] = self.config["chatgpt"]["base_url"]
+
                 from revChatGPT.V1 import Chatbot
                 self._chatbot = Chatbot(config=self._get_chatbot_config(proxy))
 

@@ -86,28 +86,34 @@ If you want to add a language, create a pull request 💜
 
 1. Install Python and pip
 2. Clone repo
+   1. `git clone https://github.com/F33RNI/GPT-Telegramus/`
+   2. `cd GPT-Telegramus`
 3. Edit `config.json`
-4. Install systemd `sudo apt-get install -y systemd`
-5. Create new service file `sudo nano /etc/systemd/system/gpt-telegramus.service`
-   ```
-   [Unit]
-   Description=GPT-Telegramus service
-   After=multi-user.target
-   
-   [Service]
-   Type=simple
-   Restart=always
-   WorkingDirectory=YOUR DIRECTORY HERE/GPT-Telegramus
-   ExecStart=YOUR DIRECTORY HERE/GPT-Telegramus/run.sh
-   RestartSec=5
-   
-   [Install]
-   WantedBy=multi-user.target
-   
-   ```
-6. Reload systemctl daemon `sudo systemctl daemon-reload`
-7. Enable service `sudo systemctl enable gpt-telegramus.service`
-8. Start service `sudo systemctl start gpt-telegramus.service`
+4. Install systemd
+   1. `sudo apt-get install -y systemd`
+5. Create new service file
+   1. `sudo nano /etc/systemd/system/gpt-telegramus.service`
+      ```
+      [Unit]
+      Description=GPT-Telegramus service
+      After=multi-user.target
+      
+      [Service]
+      Type=simple
+      Restart=always
+      WorkingDirectory=YOUR DIRECTORY HERE/GPT-Telegramus
+      ExecStart=YOUR DIRECTORY HERE/GPT-Telegramus/run.sh
+      RestartSec=5
+      
+      [Install]
+      WantedBy=multi-user.target
+      
+      ```
+6. Reload systemctl daemon
+   1. `sudo systemctl daemon-reload`
+7. Enable and start service
+   1. `sudo systemctl enable gpt-telegramus.service`
+   2. `sudo systemctl start gpt-telegramus.service`
 
 ----------
 
@@ -133,7 +139,59 @@ docker run -d -e TELEGRAMUS_SETTINGS_FILE="PATH_TO_config.json" --name gpt-teleg
 
 ----------
 
+## 🔗 Chat-GPT Base URL (proxy)
+
+Default base URL by acheong08/ChatGPT stopped working. Below is an instruction on how to launch your own ChatGPT proxy server (on Linux)
+
+1. Install GO
+   1. `sudo apt-get update`
+   2. `sudo apt-get install golang-go`
+2. Clone acheong08/ChatGPTProxy repo
+   1. `git clone https://github.com/acheong08/ChatGPTProxy/tree/main`
+   2. `cd ChatGPTProxy`
+3. Build it
+   1. `go build`
+4. Install systemd
+   1. `sudo apt-get install systemd`
+5. Create service
+   1. `sudo nano /etc/systemd/system/chatgpt-proxy.service`
+      ```
+      [Unit]
+      Description=ChatGPTProxy service
+      After=multi-user.target
+      
+      [Service]
+      Type=simple
+      Restart=always
+      
+      # Proxy (if needed, or remove this and next line)
+      Environment="http_proxy=http://USERNAME:PASSWORD@IP:PORT"
+      
+      # ChatGPT login
+      Environment="OPENAI_EMAIL=YOUR_EMAIL"
+      Environment="OPENAI_PASSWORD=YOUR_PASSWORD"
+      
+      WorkingDirectory=PATH_TO_ChatGPTProxy_DIRECTORY
+      ExecStart=PATH_TO_ChatGPTProxy_DIRECTORY/ChatGPTProxy
+      RestartSec=5
+      
+      [Install]
+      WantedBy=multi-user.target
+      
+      ```
+6. Reload systemctl daemon
+   1. `sudo systemctl daemon-reload`
+7. Enable and start service
+   1. `sudo systemctl enable chatgpt-proxy.service`
+   2. `sudo systemctl start chatgpt-proxy.service`
+8. See logs to make sure it's running and see current port
+   1. `systemctl status chatgpt-proxy.service`
+
+----------
+
 ## 🌎 Proxy to bypass geo-blocking
+
+#### NOT TESTED
 
 It is possible to bypass geo-blocking of ChatGPT, EdgeGPT, DALL-E or Bard. GPT-Telegramus includes automatic proxy-list downloading with periodic checks
 
