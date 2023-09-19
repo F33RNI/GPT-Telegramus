@@ -826,7 +826,7 @@ class BotHandler:
                     # Wait some time
                     time.sleep(self.config["telegram"]["broadcast_delay_per_user_seconds"])
                 except Exception as e:
-                    logging.error("Error sending message!", exc_info=e)
+                    logging.warning("Error sending message to {}!".format(broadcast_user["user_id"]), exc_info=e)
 
         # Send final message
         await _send_safe(user["user_id"],
