@@ -952,6 +952,12 @@ class BotHandler:
             else:
                 message += "  "
 
+            # Language
+            message += self.messages[UsersHandler.get_key_or_none(user_info, "lang", 0)]["language_icon"] + " "
+
+            # Module
+            message += self.messages[0]["module_icons"][UsersHandler.get_key_or_none(user_info, "module", 0)] + " "
+
             # User ID, name, total requests
             message += "{0} ({1}) - {2}\n".format(user_info["user_id"], user_info["user_name"],
                                                   user_info["requests_total"])
