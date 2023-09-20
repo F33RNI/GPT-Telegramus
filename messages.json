@@ -1,6 +1,7 @@
 [
     {
         "language_name": "🇺🇸 English",
+        "language_icon": "🇺🇸",
         "language_select_error": "❌ Error selecting language!\\n\\n{0}",
         "language_select": "Please select an interface language",
         "language_changed": "🇺🇸 You've selected English\\n\\nYou can change the language at any time by typing the /lang command",
@@ -21,7 +22,7 @@
         "stop_error_not_last": "❌ Error! Can only abort the last request!",
         "stop_error": "❌ Error! Can not stop generating!",
         "edgegpt_sources": "\\n📄 {0}: {1}",
-        "users_admin": "Banned? Admin? UserID (Name) - Requests\\n\\n{0}",
+        "users_admin": "Banned? Admin? Language Module UserID (Name) - Requests\\n\\n{0}",
         "restarting": "🙏 Restarting in progress...\\nPlease wait",
         "restarting_done": "✅ The restart is completed",
         "chat_cleared": "✅ Chat history cleared for {0}",
@@ -39,6 +40,8 @@
         "unban_message_admin": "✅ Unbanned user: {0}",
         "broadcast_no_message": "❌ No message to broadcast!",
         "broadcast": "📢 {0}",
+        "broadcast_initiated": "⏳ Broadcasting in progress... Please wait and don't send new messages!",
+        "broadcast_done": "✅ Broadcast completed! Messages sent to users:\\n{0}",
         "style_changed": "✅ Conversation style changed to {0}",
         "style_change_error": "❌ Error changing conversation style!\\n\\n{0}",
         "style_select": "Your conversation style: {}\\nSelect new conversation style of EdgeGPT,\\nor ignore this message",
@@ -56,11 +59,19 @@
             "🖼 DALL-E",
             "🔵 EdgeGPT",
             "🖥 Bard",
-            "🖼 Bing ImageGen"
+            "🎨 Bing ImageGen"
+        ],
+        "module_icons": [
+            "💬",
+            "🖼",
+            "🔵",
+            "🖥",
+            "🎨"
         ]
     },
     {
         "language_name": "🇷🇺 Русский",
+        "language_icon": "🇷🇺",
         "language_select": "Пожалуйста, выберите язык интерфейса",
         "language_changed": "🇷🇺 Вы выбрали русский язык\\n\\nВы можете изменить язык в любое время прописав команду /lang",
         "start_message": "Привет, 👋 чумба! 👋\\n\\n📄 GPT-Telegramus version {0}\\n\\n💜 Разработка: Ферн (F3RNI)\\n💻 Соавторы:\\n1️⃣ Keepalove (Azarell) (Sprav04ka)\\n2️⃣ Sergey Krashevich\\n3️⃣ Wahit Fitriyanto\\n\\n😺 Страница GitHub: https://github.com/F33RNI/GPT-Telegramus\\n\\n🎵 Поддержите проект, купив мою музыку: https://f3rni.bandcamp.com",
@@ -80,7 +91,7 @@
         "stop_error_not_last": "❌ Ошибка! Можно прервать только последний запрос!",
         "stop_error": "❌ Ошибка! Невозможно прекратить дегенерацию!",
         "edgegpt_sources": "\\n📄 {0}: {1}",
-        "users_admin": "Забанен? Админ? UserID (Name) - Запросов\\n\\n{0}",
+        "users_admin": "Забанен? Админ? Язык Модуль UserID (Имя) - Запросов\\n\\n{0}",
         "restarting": "🙏 Выполняется перезапуск...\\nПожалуйста, подождите",
         "restarting_done": "✅ Перезапуск завершен",
         "chat_cleared": "✅ История чата была очищена для {0}",
@@ -98,6 +109,8 @@
         "unban_message_admin": "✅ Разблокирован пользователь: {0}",
         "broadcast_no_message": "❌ Нет сообщения для вещания!",
         "broadcast": "📢 {0}",
+        "broadcast_initiated": "⏳ Bещание в процессе... Пожалуйста ожидайте и не отправляйте новых сообщений!",
+        "broadcast_done": "✅ Вещание завершено! Сообщения отправлены пользователям:\\n{0}",
         "style_changed": "✅ Стиль общения изменен на {0}",
         "style_change_error": "❌ Ошибка смены стиля общения!\\n\\n{0}",
         "style_select": "Текущий стиль общения: {}\\nВыберите новый стиль общения EdgeGPT,\\nИли проигнорируйте это сообщение",
@@ -115,11 +128,12 @@
             "🖼 DALL-E",
             "🔵 EdgeGPT",
             "🖥 Bard",
-            "🖼 Bing ImageGen"
+            "🎨 Bing ImageGen"
         ]
     },
     {
         "language_name": "🏴‍☠️ Тофийсковый",
+        "language_icon": "🏴‍☠",
         "language_select": "Пожамлуста, выберитеб языкб интерфейсба",
         "language_changed": "🏴‍☠️ Вы вымбрали тофийский язык\\n\\nВы можитеб изменитьб язык в любои время прописаф командуб /lang",
         "start_message": "Преветб, 👋 тчумба! 👋\\n\\n📄 GPT-Telegramus version {0}\\n\\n💜 Разработбка: Ферн (F3RNI)\\n💻 Соавторы:\\n1️⃣ Keepalove (Azarell) (Sprav04ka)\\n2️⃣ Sergey Krashevich\\n3️⃣ Wahit Fitriyanto\\n\\n😺 Странитса GitHub: https://github.com/F33RNI/GPT-Telegramus\\n\\n🎵 Подержите проектб, купив моюб музыкбу: https://f3rni.bandcamp.com",
@@ -139,7 +153,7 @@
         "stop_error_not_last": "❌ Ошибка! Можноб прерватб толбко последневый запрос!",
         "stop_error": "❌ Ошибка! Невозможноб прекратитб дегенерацию!",
         "edgegpt_sources": "\\n📄 {0}: {1}",
-        "users_admin": "Забананенб? Админ? UserID (Name) - Запрософ\\n\\n{0}",
+        "users_admin": "Забананенб? Админ? Языкб Мобдулб UserID (Name) - Запрософ\\n\\n{0}",
         "restarting": "🙏 Выполняется перезампуск...\\nПожамлеста, подождите чучутб",
         "restarting_done": "✅ Перезампуск завершен",
         "chat_cleared": "✅ История чатба была очищена для {0}",
@@ -157,6 +171,8 @@
         "unban_message_admin": "✅ Разблокирован пользователь: {0}",
         "broadcast_no_message": "❌ Нет сообщення для вещання!",
         "broadcast": "📢 {0}",
+        "broadcast_initiated": "⏳ Bесчание в процесбе... Пожамлусто пождите и не черыкайти нововых собщениев!",
+        "broadcast_done": "✅ Весчание покончено! Собщчення начерыканы юзверям:\\n{0}",
         "style_changed": "✅ Стилб общення изменен на {0}",
         "style_change_error": "❌ Ошибка смены стиля общення!\\n\\n{0}",
         "style_select": "Текущий стиль общення: {}\\nВымберитеб новый стилб общення EdgeGPT,\\nИли проигнорируйте это сообщенне",
@@ -174,11 +190,12 @@
             "🖼 Каляка малака",
             "🔵 Девиантнутый",
             "🖥 Лютик, мать твою",
-            "🖼 Маляка каляка"
+            "🎨 Маляка каляка"
         ]
     },
     {
         "language_name": "🇮🇩 Bahasa Indonesia",
+        "language_icon": "🇮🇩",
         "language_select_error": "❌ Kesalahan dalam memilih bahasa!\\n\\n{0}",
         "language_select": "Silakan pilih bahasa antarmuka",
         "language_changed": "🇮🇩 Anda telah memilih Bahasa Indonesia\\n\\nAnda dapat mengganti bahasa kapan saja dengan mengetik perintah /lang",
@@ -199,7 +216,7 @@
         "stop_error_not_last": "❌ Kesalahan! Hanya bisa menghentikan permintaan terakhir!",
         "stop_error": "❌ Kesalahan! Tidak dapat menghentikan penghasilan!",
         "edgegpt_sources": "\\n📄 {0}: {1}",
-        "users_admin": "Dilarang? Admin? UserID (Nama) - Permintaan\\n\\n{0}",
+        "users_admin": "Dilarang? Admin? Bahasa Modul UserID (Nama) - Permintaan\\n\\n{0}",
         "restarting": "🙏 Sedang dilakukan proses restart...\\nTunggu sebentar",
         "restarting_done": "✅ Restart selesai",
         "chat_cleared": "✅ Riwayat obrolan dibersihkan untuk {0}",
@@ -217,6 +234,8 @@
         "unban_message_admin": "✅ Pengguna dibuka blokir: {0}",
         "broadcast_no_message": "❌ Tidak ada pesan untuk disiarkan!",
         "broadcast": "📢 {0}",
+        "broadcast_initiated": "⏳ Proses siaran sedang berlangsung... Harap tunggu dan jangan kirim pesan baru!",
+        "broadcast_done": "✅ Siaran selesai! Pesan telah dikirim ke pengguna:\\n{0}",
         "style_changed": "✅ Gaya percakapan diubah menjadi {0}",
         "style_change_error": "❌ Kesalahan mengubah gaya percakapan!\\n\\n{0}",
         "style_select": "Gaya percakapan Anda: {}\\nPilih gaya percakapan baru EdgeGPT,\\natau abaikan pesan ini",
@@ -234,7 +253,7 @@
             "🖼 DALL-E",
             "🔵 EdgeGPT",
             "🖥 Bard",
-            "🖼 Bing ImageGen"
+            "🎨 Bing ImageGen"
         ]
     }
 ]

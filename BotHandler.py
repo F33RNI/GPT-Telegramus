@@ -147,7 +147,7 @@ async def send_message_async(config: dict, messages: List[Dict],
                 index_start = request_response.response_part_positions[-1]
                 response_part_length = len(request_response.response[index_start:])
                 if response_part_length > config["telegram"]["one_message_limit"]:
-                    request_response.response_part_positions\
+                    request_response.response_part_positions \
                         .append(index_start + config["telegram"]["one_message_limit"])
                 else:
                     break
@@ -795,24 +795,43 @@ class BotHandler:
             await _send_safe(user["user_id"], self.messages[lang]["broadcast_no_message"], context)
             return
 
+        # Send initial message
+        await _send_safe(user["user_id"], self.messages[lang]["broadcast_initiated"], context)
+
         # Get message
         broadcast_message = str(" ".join(context.args)).strip()
 
         # Get list of users
         users = self.users_handler.read_users()
 
+        # List of successful users
+        broadcast_ok_users = []
+
         # Broadcast to non-banned users
         for broadcast_user in users:
             if not broadcast_user["banned"]:
                 try:
-                    logging.info("broadcasting to: {0} ({1})".format(broadcast_user["user_name"],
-                                                                     broadcast_user["user_id"]))
-                    await telegram.Bot(self.config["telegram"]["api_key"]) \
-                        .sendMessage(chat_id=broadcast_user["user_id"],
-                                     text=self.messages[lang]["broadcast"].replace("\\n", "\n").format(
-                                         broadcast_message))
+                    # Try to send message and get message ID
+                    message_id = (await telegram.Bot(self.config["telegram"]["api_key"]).sendMessage(
+                        chat_id=broadcast_user["user_id"],
+                        text=self.messages[lang]["broadcast"].replace("\\n", "\n").format(
+                            broadcast_message))).message_id
+
+                    # Check
+                    if message_id is not None and message_id != 0:
+                        logging.info("Message sent to: {0} ({1})".format(broadcast_user["user_name"],
+                                                                         broadcast_user["user_id"]))
+                        broadcast_ok_users.append(broadcast_user["user_name"])
+
+                    # Wait some time
+                    time.sleep(self.config["telegram"]["broadcast_delay_per_user_seconds"])
                 except Exception as e:
-                    logging.error("Error sending message!", exc_info=e)
+                    logging.warning("Error sending message to {}!".format(broadcast_user["user_id"]), exc_info=e)
+
+        # Send final message
+        await _send_safe(user["user_id"],
+                         self.messages[lang]["broadcast_done"].format("\n".join(broadcast_ok_users)),
+                         context)
 
     async def bot_command_ban(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await self.bot_command_ban_unban(True, update, context)
@@ -932,6 +951,12 @@ class BotHandler:
                 message += "A "
             else:
                 message += "  "
+
+            # Language
+            message += self.messages[UsersHandler.get_key_or_none(user_info, "lang", 0)]["language_icon"] + " "
+
+            # Module
+            message += self.messages[0]["module_icons"][UsersHandler.get_key_or_none(user_info, "module", 0)] + " "
 
             # User ID, name, total requests
             message += "{0} ({1}) - {2}\n".format(user_info["user_id"], user_info["user_name"],

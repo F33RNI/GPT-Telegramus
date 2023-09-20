@@ -157,7 +157,10 @@
         "one_message_limit": 3000,
 
         "__comment08__": "SET TO true FOR THE BOT TO REPLY TO PLAIN MESSAGES AS WELL AS DIRECT MODULE COMMANDS",
-        "reply_to_messages": true
+        "reply_to_messages": true,
+
+        "__comment09__": "HOW MANY SECONDS TO WAIT BETWEEN EACH MESSAGE WHEN BROADCASTING",
+        "broadcast_delay_per_user_seconds": 0.5
     },
 
     "__comment08__": "FILES AND DIRECTORIES SETTINGS",
