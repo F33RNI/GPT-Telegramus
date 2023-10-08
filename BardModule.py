@@ -144,7 +144,7 @@ class BardModule:
             image_bytes = None
             if request_response.image_url:
                 logging.info("Downloading user image")
-                image_bytes = requests.get(request_response.image_url).content
+                image_bytes = requests.get(request_response.image_url, timeout=120).content
 
             # Ask Bard
             logging.info("Asking Bard...")
