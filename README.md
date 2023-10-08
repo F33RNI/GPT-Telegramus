@@ -33,7 +33,8 @@ Support the project by buying and listening to my music 🎵
 
 - 1️⃣ [Sprav04ka](https://github.com/Sprav04ka) - *Tofii'skovyi' language, Testing, Motivation*
 - 2️⃣ [Sergey Krashevich](https://github.com/skrashevich) - *Docker, GitHub Actions*
-- 3️⃣ [Wahit Fitriyanto](https://github.com/wahitftry) - *Indonesian language* 
+- 3️⃣ [Wahit Fitriyanto](https://github.com/wahitftry) - *Indonesian language*
+- 4️⃣ [Alexander Fadeyev](https://github.com/alfsoft) - *EdgeGPT Fix*
 
 ----------
 
