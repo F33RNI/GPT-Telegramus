@@ -14,7 +14,7 @@
         "queue_overflow": "Queue is full. Try again later ⏳",
         "queue_empty": "🗑 Queue is empty",
         "queue_accepted": "✅ Request to the {0} module added to the queue.\\nPosition: {1}/{2} ⏳",
-        "response_error": "❌ Error: {0}\\n\\nClear the story and make another request or try again later",
+        "response_error": "❌ Error: {0}\\n\\nClear the history and make another request or try again later",
         "empty_message": "⚠️ Empty! See logs for details",
         "regenerate_error_not_last": "❌ Error! Can only regenerate the last request!",
         "regenerate_error_empty": "❌ Error! Empty request!",
