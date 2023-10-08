@@ -40,7 +40,7 @@ from main import __version__
 BOT_COMMAND_START = "start"
 BOT_COMMAND_HELP = "help"
 BOT_COMMAND_CHATGPT = "chatgpt"
-BOT_COMMAND_EDGEGPT = "edgegpt"
+BOT_COMMAND_EDGEGPT = "bing"
 BOT_COMMAND_DALLE = "dalle"
 BOT_COMMAND_BARD = "bard"
 BOT_COMMAND_BING_IMAGEGEN = "bingigen"
