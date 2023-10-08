@@ -269,6 +269,7 @@ def _request_processor(config: dict,
 
         # Save request data (for regenerate function)
         request_.user["request_last"] = request_.request
+        request_.user["request_last_image_url"] = request_.image_url
         request_.user["reply_message_id_last"] = request_.reply_message_id
 
         # Save user

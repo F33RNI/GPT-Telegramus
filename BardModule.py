@@ -14,18 +14,18 @@
  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  OTHER DEALINGS IN THE SOFTWARE.
 """
-import asyncio
 import ctypes
 import logging
 import multiprocessing
 import os
-import uuid
 from typing import List, Dict
 
-import Bard
+import requests
+from bardapi import Bard
 
 import BotHandler
 import UsersHandler
+from JSONReaderWriter import load_json, save_json
 from RequestResponseContainer import RequestResponseContainer
 
 
@@ -61,14 +61,36 @@ class BardModule:
                 logging.warning("Bard module disabled in config file!")
                 raise Exception("Bard module disabled in config file!")
 
+            # Load cookies and secure_1psid
+            secure_1psid = None
+            session = requests.Session()
+            session_cookies = load_json(self.config["bard"]["cookies_file"], logging_enabled=True)
+            for i in range(len(session_cookies)):
+                session.cookies.set(session_cookies[i]["name"],
+                                    session_cookies[i]["value"],
+                                    domain=session_cookies[i]["domain"],
+                                    path=session_cookies[i]["path"])
+                if secure_1psid is None and session_cookies[i]["name"] == "__Secure-1PSID":
+                    secure_1psid = session_cookies[i]["value"]
+
+            # Set headers
+            session.headers = {
+                "Host": "bard.google.com",
+                "X-Same-Domain": "1",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) "
+                              "AppleWebKit/537.36 (KHTML, like Gecko) "
+                              "Chrome/91.4472.114 Safari/537.36",
+                "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+                "Origin": "https://bard.google.com",
+                "Referer": "https://bard.google.com/",
+            }
+
             # Initialize chatbot
             if proxy:
-                self._chatbot = Bard.Chatbot(self.config["bard"]["secure_1psid"],
-                                             self.config["bard"]["secure_1psidts"],
-                                             proxy=proxy)
+                self._chatbot = Bard(token=secure_1psid, proxies={"https": proxy, "http": proxy}, session=session)
             else:
-                self._chatbot = Bard.Chatbot(self.config["bard"]["secure_1psid"],
-                                             self.config["bard"]["secure_1psidts"])
+                self._chatbot = Bard(token=secure_1psid, session=session)
+
             # Done?
             if self._chatbot is not None:
                 logging.info("Bard module initialized")
@@ -101,25 +123,32 @@ class BardModule:
             self.processing_flag.value = True
 
             # Get user data
-            bard_conversation_id = UsersHandler.get_key_or_none(request_response.user, "bard_conversation_id")
+            conversation_id = UsersHandler.get_key_or_none(request_response.user, "bard_conversation_id")
+            response_id = UsersHandler.get_key_or_none(request_response.user, "bard_response_id")
+            choice_id = UsersHandler.get_key_or_none(request_response.user, "bard_choice_id")
 
             # Increment requests_total for statistics
             request_response.user["requests_total"] += 1
             self.users_handler.save_user(request_response.user)
 
             # Try to load conversation
-            if bard_conversation_id:
-                conversation_file = os.path.join(self.config["files"]["conversations_dir"],
-                                                 bard_conversation_id + ".json")
-                if os.path.exists(conversation_file):
-                    logging.info("Loading conversation from {}".format(conversation_file))
-                    self._chatbot.load_conversation(conversation_file, bard_conversation_id)
-                else:
-                    bard_conversation_id = None
+            if conversation_id and response_id and choice_id:
+                logging.info("Using conversation_id: {}, response_id: {} and choice_id: {}".format(conversation_id,
+                                                                                                   response_id,
+                                                                                                   choice_id))
+                self._chatbot.conversation_id = conversation_id
+                self._chatbot.response_id = response_id
+                self._chatbot.choice_id = choice_id
+
+            # Try to download image
+            image_bytes = None
+            if request_response.image_url:
+                logging.info("Downloading user image")
+                image_bytes = requests.get(request_response.image_url).content
 
             # Ask Bard
             logging.info("Asking Bard...")
-            bard_response = self._chatbot.ask(request_response.request)
+            bard_response = self._chatbot.get_answer(request_response.request, image=image_bytes)
 
             # Check response
             if not bard_response or len(bard_response) < 1 or "content" not in bard_response:
@@ -130,17 +159,20 @@ class BardModule:
                          .format(request_response.user["user_name"], request_response.user["user_id"]))
             request_response.response = bard_response["content"]
 
-            # Generate new conversation id
-            if not bard_conversation_id:
-                bard_conversation_id = str(uuid.uuid4()) + "_bard"
+            # Save cookies
+            session_cookies = load_json(self.config["bard"]["cookies_file"], logging_enabled=True)
+            for i in range(len(session_cookies)):
+                session_cookies[i]["value"] = self._chatbot.session.cookies.get(session_cookies[i]["name"],
+                                                                                domain=session_cookies[i]["domain"],
+                                                                                path=session_cookies[i]["path"])
+            save_json(self.config["bard"]["cookies_file"], session_cookies, True)
 
             # Save conversation
-            logging.info("Saving conversation to {}".format(bard_conversation_id))
-            self._chatbot.save_conversation(os.path.join(self.config["files"]["conversations_dir"],
-                                                         bard_conversation_id + ".json"), bard_conversation_id)
-
-            # Save to user data
-            request_response.user["bard_conversation_id"] = bard_conversation_id
+            logging.info("Saving conversation_id as {} and response_id as {} and choice_id as {}".
+                         format(self._chatbot.conversation_id, self._chatbot.response_id, self._chatbot.choice_id))
+            request_response.user["bard_conversation_id"] = self._chatbot.conversation_id
+            request_response.user["bard_response_id"] = self._chatbot.response_id
+            request_response.user["bard_choice_id"] = self._chatbot.choice_id
             self.users_handler.save_user(request_response.user)
 
         # Exit requested
@@ -188,6 +220,8 @@ class BardModule:
 
         # Reset user data
         user["bard_conversation_id"] = None
+        user["bard_response_id"] = None
+        user["bard_choice_id"] = None
         self.users_handler.save_user(user)
 
     def exit(self):

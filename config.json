@@ -58,23 +58,27 @@
 
     "__comment03__": "EDGEGPT SETTINGS",
     "edgegpt": {
-        "__comment01__": "PATH TO COOKIES FILE (JSON) (POSSIBLY NOT REQUIRED) https://github.com/acheong08/EdgeGPT#collect-cookies",
+        "__comment01__": "Install cookie editor extension: https://chrome.google.com/webstore/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm",
+        "__comment02__": "Go to bing.com/chat and ask Bing about something",
+        "__comment03__": "Open the extension",
+        "__comment04__": "Click Export on the bottom right, then Export as JSON (This saves your cookies to clipboard)",
+        "__comment05__": "Create new .json file and paste cookies into it, save file and specify path to it here",
         "cookies_file": "EdgeGPT_cookies.json",
 
-        "__comment02__": "WSS LINK FOR EDGE-GPT (LEAVE EMPTY FOR THE DEFAULT VALUE)",
+        "__comment06__": "WSS LINK FOR EDGE-GPT (LEAVE EMPTY FOR THE DEFAULT VALUE)",
         "wss_link": "",
 
-        "__comment03__": "DEFAULT CONVERSATION STYLE (0 - PRECISE, 1 - BALANCED, 3 - CREATIVE)",
+        "__comment07__": "DEFAULT CONVERSATION STYLE (0 - PRECISE, 1 - BALANCED, 3 - CREATIVE)",
         "conversation_style_type_default": 1,
 
-        "__comment04__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
-        "__comment05__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
+        "__comment08__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+        "__comment09__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
         "proxy": "",
 
-        "__comment06__": "RESPONSE TIMEOUT (IN SECONDS)",
+        "__comment10__": "RESPONSE TIMEOUT (IN SECONDS)",
         "timeout_seconds": 240,
 
-        "__comment07__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
+        "__comment11__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
         "user_cooldown_seconds": 0
     },
 
@@ -93,42 +97,47 @@
         "__comment05__": "RESPONSE TIMEOUT (IN SECONDS)",
         "timeout_seconds": 120,
 
-        "__comment15__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
+        "__comment06__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
         "user_cooldown_seconds": 120
     },
 
     "__comment05__": "BING IMAGEGEN SETTINGS",
     "bing_imagegen": {
-        "__comment01__": "PATH TO COOKIES FILE (JSON) https://github.com/acheong08/EdgeGPT#collect-cookies",
+        "__comment01__": "Install cookie editor extension: https://chrome.google.com/webstore/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm",
+        "__comment02__": "Go to bing.com/chat and ask Bing about something",
+        "__comment03__": "Open the extension",
+        "__comment04__": "Click Export on the bottom right, then Export as JSON (This saves your cookies to clipboard)",
+        "__comment05__": "Create new .json file and paste cookies into it, save file and specify path to it here",
         "cookies_file": "EdgeGPT_cookies.json",
 
-        "__comment04__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
-        "__comment05__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
+        "__comment06__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+        "__comment07__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
         "proxy": "",
 
-        "__comment06__": "RESPONSE TIMEOUT (IN SECONDS)",
+        "__comment08__": "RESPONSE TIMEOUT (IN SECONDS)",
         "timeout_seconds": 120,
 
-        "__comment15__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
-        "user_cooldown_seconds": 120
+        "__comment09__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
+        "user_cooldown_seconds": 30
     },
 
     "__comment06__": "BARD SETTINGS",
     "bard": {
-        "__comment01__": "Go to Application -> Cookies -> __Secure-1PSID. Copy the value of that cookie",
-        "secure_1psid": "",
+        "__comment01__": "Install cookie editor extension: https://chrome.google.com/webstore/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm",
+        "__comment02__": "Go to https://bard.google.com/ and ask Bard about something",
+        "__comment03__": "Open the extension",
+        "__comment04__": "Click Export on the bottom right, then Export as JSON (This saves your cookies to clipboard)",
+        "__comment05__": "Create new .json file and paste cookies into it, save file and specify path to it here",
+        "cookies_file": "Bard_cookies.json",
 
-        "__comment02__": "Go to Application -> Cookies -> __Secure-1PSIDTS. Copy the value of that cookie",
-        "secure_1psidts": "",
-
-        "__comment03__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
-        "__comment04__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
+        "__comment06__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+        "__comment07__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
         "proxy": "",
 
-        "__comment05__": "RESPONSE TIMEOUT (IN SECONDS)",
+        "__comment08__": "RESPONSE TIMEOUT (IN SECONDS)",
         "timeout_seconds": 120,
 
-        "__comment15__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
+        "__comment09__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
         "user_cooldown_seconds": 0
     },
 

@@ -590,6 +590,7 @@ class BotHandler:
                 # Handle requests as messages
                 if self.config["telegram"]["reply_to_messages"]:
                     self._application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), self.bot_message))
+                    self._application.add_handler(MessageHandler(filters.PHOTO & (~filters.COMMAND), self.bot_message))
 
                 # Admin commands
                 self._application.add_handler(CommandHandler(BOT_COMMAND_ADMIN_QUEUE, self.bot_command_queue))
@@ -681,11 +682,13 @@ class BotHandler:
                         # Check if we have the last request
                         if request:
                             # Ask
+                            request_image_url = UsersHandler.get_key_or_none(user, "request_last_image_url")
                             await self.bot_command_or_message_request_raw(request_type,
                                                                           request,
                                                                           user,
                                                                           reply_message_id_last,
-                                                                          context)
+                                                                          context,
+                                                                          request_image_url)
 
                         # No or empty request
                         else:
@@ -1479,27 +1482,40 @@ class BotHandler:
         if user["banned"]:
             return
 
-        # Extract request
-        if request_type >= 0:
+        # Check for image
+        image_url = None
+        if update.message.photo:
+            image_file_id = update.message.photo[-1].file_id
+            image_url = (await (telegram.Bot(self.config["telegram"]["api_key"]).getFile(image_file_id))).file_path
+
+        # Extract text request
+        if update.message.caption:
+            request_message = update.message.caption.strip()
+        elif request_type >= 0:
             if context.args:
                 request_message = str(" ".join(context.args)).strip()
             else:
                 request_message = ""
         else:
-            request_message = update.message.text.strip()
+            if update.message.text:
+                request_message = update.message.text.strip()
+            else:
+                request_message = ""
 
         # Process request
         await self.bot_command_or_message_request_raw(request_type,
                                                       request_message,
                                                       user,
                                                       update.message.message_id,
-                                                      context)
+                                                      context,
+                                                      image_url=image_url)
 
     async def bot_command_or_message_request_raw(self, request_type: int,
                                                  request_message: str,
                                                  user: dict,
                                                  reply_message_id: int,
-                                                 context: ContextTypes.DEFAULT_TYPE):
+                                                 context: ContextTypes.DEFAULT_TYPE,
+                                                 image_url=None):
         """
         Processes request to module
         :param request_type:
@@ -1507,6 +1523,7 @@ class BotHandler:
         :param user:
         :param reply_message_id:
         :param context:
+        :param image_url:
         :return:
         """
         # Set default user module
@@ -1544,7 +1561,8 @@ class BotHandler:
                                                                              reply_message_id=reply_message_id,
                                                                              request=request_message,
                                                                              request_type=request_type,
-                                                                             request_timestamp=request_timestamp)
+                                                                             request_timestamp=request_timestamp,
+                                                                             image_url=image_url)
 
         # Add request to the queue
         logging.info("Adding new request with type {0} from {1} ({2}) to the queue".format(request_type,
