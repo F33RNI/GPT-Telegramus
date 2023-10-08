@@ -159,14 +159,6 @@ class BardModule:
                          .format(request_response.user["user_name"], request_response.user["user_id"]))
             request_response.response = bard_response["content"]
 
-            # Save cookies
-            session_cookies = load_json(self.config["bard"]["cookies_file"], logging_enabled=True)
-            for i in range(len(session_cookies)):
-                session_cookies[i]["value"] = self._chatbot.session.cookies.get(session_cookies[i]["name"],
-                                                                                domain=session_cookies[i]["domain"],
-                                                                                path=session_cookies[i]["path"])
-            save_json(self.config["bard"]["cookies_file"], session_cookies, True)
-
             # Save conversation
             logging.info("Saving conversation_id as {} and response_id as {} and choice_id as {}".
                          format(self._chatbot.conversation_id, self._chatbot.response_id, self._chatbot.choice_id))
@@ -190,6 +182,18 @@ class BardModule:
             lang = UsersHandler.get_key_or_none(request_response.user, "lang", 0)
             request_response.response = self.messages[lang]["response_error"].replace("\\n", "\n").format(error_text)
             request_response.error = True
+
+        # Try to save cookies
+        try:
+            if self._chatbot and self._chatbot.session and self._chatbot.session.cookies:
+                session_cookies = load_json(self.config["bard"]["cookies_file"], logging_enabled=True)
+                for i in range(len(session_cookies)):
+                    session_cookies[i]["value"] = self._chatbot.session.cookies.get(session_cookies[i]["name"],
+                                                                                    domain=session_cookies[i]["domain"],
+                                                                                    path=session_cookies[i]["path"])
+                save_json(self.config["bard"]["cookies_file"], session_cookies, True)
+        except Exception as e:
+            logging.error("Error saving cookies!", exc_info=e)
 
         # Finish message
         BotHandler.async_helper(BotHandler.send_message_async(self.config, self.messages, request_response, end=True))
