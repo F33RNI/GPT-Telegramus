@@ -25,13 +25,15 @@ Support the project by buying and listening to my music 🎵
 - 🟦 [Bandcamp](https://f3rni.bandcamp.com)
 - 🟧 [SoundCloud](https://soundcloud.com/f3rni)
 
+Or message me if you would like to donate 💰
+
 [![Star History Chart](https://api.star-history.com/svg?repos=F33RNI/GPT-Telegramus&type=Date)](https://star-history.com/#F33RNI/GPT-Telegramus&Date)
 
 ----------
 
 ## 🤗 Contributors
 
-- 1️⃣ [Sprav04ka](https://github.com/Sprav04ka) - *Tofii'skovyi' language, Testing, Motivation*
+- 1️⃣ [Sprav04ka](https://github.com/Sprav04ka) - *Tofii'skovyi' language, Testing, Super beautiful DIY jack o'lantern (for poster), Motivation*
 - 2️⃣ [Sergey Krashevich](https://github.com/skrashevich) - *Docker, GitHub Actions*
 - 3️⃣ [Wahit Fitriyanto](https://github.com/wahitftry) - *Indonesian language*
 - 4️⃣ [Alexander Fadeyev](https://github.com/alfsoft) - *EdgeGPT Fix*
