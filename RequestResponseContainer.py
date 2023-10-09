@@ -47,7 +47,8 @@ class RequestResponseContainer:
                  response_timestamp="",
                  response_send_timestamp_last=0,
                  reply_markup=None,
-                 pid=0) -> None:
+                 pid=0,
+                 image_url=None) -> None:
         """
         Contains all info about request
         :param user: user data as dictionary from UsersHandler class
@@ -63,6 +64,7 @@ class RequestResponseContainer:
         :param response_send_timestamp_last: timestamp of last response (for editing aka live replying)
         :param reply_markup: message buttons
         :param pid: current multiprocessing process PID for handling this container
+        :param image_url: URL of the photo inside the message
         """
         self.user = user
         self.reply_message_id = reply_message_id
@@ -78,6 +80,7 @@ class RequestResponseContainer:
         self.response_send_timestamp_last = response_send_timestamp_last
         self.reply_markup = reply_markup
         self.pid = pid
+        self.image_url = image_url
 
         self.processing_start_timestamp = 0.
         self.error = False

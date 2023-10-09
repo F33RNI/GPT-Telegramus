@@ -1,5 +1,5 @@
 # 🤖 GPT-Telegramus
-### The best Telegram bot for ChatGPT, EdgeGPT, DALL-E, Bing Image generator and Bard with stream writing, multiple languages, admin control, automatic proxy searcher, data logging and more!
+### The best Telegram bot for ChatGPT, EdgeGPT (aka Bing AI), DALL-E, Bing Image generator and Bard with stream writing, requests with images (for Bard only), multiple languages, admin control, automatic proxy searcher, data logging and more!
 <div style="width:100%;text-align:center;">
    <p align="center">
       <img src="https://badges.frapsoft.com/os/v1/open-source.png?v=103" >
@@ -25,13 +25,15 @@ Support the project by buying and listening to my music 🎵
 - 🟦 [Bandcamp](https://f3rni.bandcamp.com)
 - 🟧 [SoundCloud](https://soundcloud.com/f3rni)
 
+Or message me if you would like to donate 💰
+
 [![Star History Chart](https://api.star-history.com/svg?repos=F33RNI/GPT-Telegramus&type=Date)](https://star-history.com/#F33RNI/GPT-Telegramus&Date)
 
 ----------
 
 ## 🤗 Contributors
 
-- 1️⃣ [Sprav04ka](https://github.com/Sprav04ka) - *Tofii'skovyi' language, Testing, Motivation*
+- 1️⃣ [Sprav04ka](https://github.com/Sprav04ka) - *Tofii'skovyi' language, Testing, Super beautiful DIY jack o'lantern (for poster), Motivation*
 - 2️⃣ [Sergey Krashevich](https://github.com/skrashevich) - *Docker, GitHub Actions*
 - 3️⃣ [Wahit Fitriyanto](https://github.com/wahitftry) - *Indonesian language*
 - 4️⃣ [Alexander Fadeyev](https://github.com/alfsoft) - *EdgeGPT Fix*
@@ -46,7 +48,8 @@ Support the project by buying and listening to my music 🎵
 - **Bard** (Bard by Google): https://bard.google.com/
 - **acheong08/ChatGPT** (API): https://github.com/acheong08/ChatGPT
 - **acheong08/EdgeGPT** (API): https://github.com/acheong08/EdgeGPT
-- **acheong08/Bard** (API): https://github.com/acheong08/Bard
+- **jacobgelling/EdgeGPT** (API): https://github.com/jacobgelling/EdgeGPT
+- **dsdanielpark/Bard-API** (API): https://github.com/dsdanielpark/Bard-API
 - **acheong08/BingImageCreator** (API): https://github.com/acheong08/BingImageCreator
 - **python-telegram-bot** (Telegram bot API): https://github.com/python-telegram-bot/python-telegram-bot
 
@@ -62,6 +65,31 @@ Support the project by buying and listening to my music 🎵
 6. Create bot at https://t.me/BotFather
 7. Type Bot's token into `api_key` in `telegram` in `config.json` file
 8. Run main script `python main.py`
+
+- **ChatGPT**
+  - Browser-like Chat-GPT. Currently, without extensions and image requests (text only) (because I don't have a paid account to test it)
+  - Stream response support
+  - Chat history support
+  - Works better with API type 1 and an access_token for authentication
+  - Note: Please refer to the `🔗 Chat-GPT Base URL (proxy)` section for correct usage.
+- **DALL·E**
+  - Image generation tool from OpenAI
+  - Requires an OpenAI account with unexpired credits
+- **EdgeGPT (aka Bing AI) (aka Sydney)**
+  - Supports conversation style `/style`
+  - Stream response support
+  - Chat history support
+  - Web-browsing and sources support
+  - Unfortunately, it can't accept images as input yet, nor can it generate them. Please use Bing ImageGen to generate images.
+- **Bing ImageGen**
+  - Bing Image Generator. Used as a separate module due to issues with the EdgeGPT module
+  - Free and unlimited
+- **Bard**
+  - Google's Bard AI
+  - Stream response support
+  - Chat history support
+  - Web-browsing support
+  - Now supports requests with images (you can send an image with text to it) **NEW**
 
 ----------
 
@@ -194,7 +222,7 @@ Default base URL by acheong08/ChatGPT stopped working. Below is an instruction o
 
 ## 🌎 Proxy to bypass geo-blocking
 
-#### NOT TESTED
+### NOT TESTED
 
 It is possible to bypass geo-blocking of ChatGPT, EdgeGPT, DALL-E or Bard. GPT-Telegramus includes automatic proxy-list downloading with periodic checks
 
@@ -238,7 +266,7 @@ GPT-Telegramus saves chat history for some modules locally (`"conversations_dir"
 
 GPT-Telegramus has a built-in data collecting function (request and response)
 
-- **For ChatGPT, EdgeGPT and Bard** response is saved as plain text
+- **For ChatGPT, EdgeGPT (aka Bing AI) and Bard** response is saved as plain text and Base64-encoded images
 - **For DALL-E and Bing Image generator** response is saved as Base64-encoded image (in the same text file)
 
 You can enable and configure data collection in config in `data_collecting` block
@@ -250,6 +278,7 @@ You can enable and configure data collection in config in `data_collecting` bloc
 ## 📝 TODO
 
 - Add some free GPT-4 model
+- Add image input and generation for EdgeGPT (and ChatGPT?)
 - Add list of commands
 
 ----------

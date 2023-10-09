@@ -269,6 +269,7 @@ def _request_processor(config: dict,
 
         # Save request data (for regenerate function)
         request_.user["request_last"] = request_.request
+        request_.user["request_last_image_url"] = request_.image_url
         request_.user["reply_message_id_last"] = request_.reply_message_id
 
         # Save user
@@ -665,6 +666,24 @@ class QueueHandler:
             if log_request:
                 request_str_to_format = self.config["data_collecting"]["request_format"].replace("\\n", "\n") \
                     .replace("\\t", "\t").replace("\\r", "\r")
+
+                # Log image
+                try:
+                    if request_response.image_url:
+                        logging.info("Downloading user image")
+                        image_request = base64.b64encode(requests.get(request_response.image_url,
+                                                                      timeout=120).content).decode("utf-8")
+                        log_file.write(request_str_to_format.format(request_response.request_timestamp,
+                                                                    request_response.id,
+                                                                    request_response.user["user_name"],
+                                                                    request_response.user["user_id"],
+                                                                    RequestResponseContainer
+                                                                    .REQUEST_NAMES[request_response.request_type],
+                                                                    image_request))
+                except Exception as e:
+                    logging.warning("Error logging image request!", exc_info=e)
+
+                # Log text
                 log_file.write(request_str_to_format.format(request_response.request_timestamp,
                                                             request_response.id,
                                                             request_response.user["user_name"],

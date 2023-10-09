@@ -44,7 +44,7 @@
         "broadcast_done": "✅ Broadcast completed! Messages sent to users:\\n{0}",
         "style_changed": "✅ Conversation style changed to {0}",
         "style_change_error": "❌ Error changing conversation style!\\n\\n{0}",
-        "style_select": "Your conversation style: {}\\nSelect new conversation style of EdgeGPT,\\nor ignore this message",
+        "style_select": "Your conversation style: {}\\nSelect new conversation style of Bing,\\nor ignore this message",
         "style_precise": "📏 Precise",
         "style_balanced": "⚖️ Balanced",
         "style_creative": "🎨 Creative",
@@ -57,7 +57,7 @@
         "modules": [
             "💬 ChatGPT",
             "🖼 DALL-E",
-            "🔵 EdgeGPT",
+            "🔵 Bing AI",
             "🖥 Bard",
             "🎨 Bing ImageGen"
         ],
@@ -113,7 +113,7 @@
         "broadcast_done": "✅ Вещание завершено! Сообщения отправлены пользователям:\\n{0}",
         "style_changed": "✅ Стиль общения изменен на {0}",
         "style_change_error": "❌ Ошибка смены стиля общения!\\n\\n{0}",
-        "style_select": "Текущий стиль общения: {}\\nВыберите новый стиль общения EdgeGPT,\\nИли проигнорируйте это сообщение",
+        "style_select": "Текущий стиль общения: {}\\nВыберите новый стиль общения Bing,\\nИли проигнорируйте это сообщение",
         "style_precise": "📏 Точный",
         "style_balanced": "⚖️ Сбалансированный",
         "style_creative": "🎨 Творческий",
@@ -126,7 +126,7 @@
         "modules": [
             "💬 ChatGPT",
             "🖼 DALL-E",
-            "🔵 EdgeGPT",
+            "🔵 Bing AI",
             "🖥 Bard",
             "🎨 Bing ImageGen"
         ]
@@ -175,7 +175,7 @@
         "broadcast_done": "✅ Весчание покончено! Собщчення начерыканы юзверям:\\n{0}",
         "style_changed": "✅ Стилб общення изменен на {0}",
         "style_change_error": "❌ Ошибка смены стиля общення!\\n\\n{0}",
-        "style_select": "Текущий стиль общення: {}\\nВымберитеб новый стилб общення EdgeGPT,\\nИли проигнорируйте это сообщенне",
+        "style_select": "Текущий стиль общення: {}\\nВымберитеб новый стилб общення девианта,\\nИли проигнорируйте это сообщенне",
         "style_precise": "📏 Точновый",
         "style_balanced": "⚖️ Сбалансированновый",
         "style_creative": "🎨 Творческовый",
@@ -238,7 +238,7 @@
         "broadcast_done": "✅ Siaran selesai! Pesan telah dikirim ke pengguna:\\n{0}",
         "style_changed": "✅ Gaya percakapan diubah menjadi {0}",
         "style_change_error": "❌ Kesalahan mengubah gaya percakapan!\\n\\n{0}",
-        "style_select": "Gaya percakapan Anda: {}\\nPilih gaya percakapan baru EdgeGPT,\\natau abaikan pesan ini",
+        "style_select": "Gaya percakapan Anda: {}\\nPilih gaya percakapan baru Bing,\\natau abaikan pesan ini",
         "style_precise": "📏 Presisi",
         "style_balanced": "⚖️ Seimbang",
         "style_creative": "🎨 Kreatif",
@@ -251,7 +251,7 @@
         "modules": [
             "💬 ChatGPT",
             "🖼 DALL-E",
-            "🔵 EdgeGPT",
+            "🔵 Bing AI",
             "🖥 Bard",
             "🎨 Bing ImageGen"
         ]
