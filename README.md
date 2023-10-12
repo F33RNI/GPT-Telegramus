@@ -86,9 +86,8 @@ Or message me if you would like to donate 💰
   - Free and unlimited
 - **Bard**
   - Google's Bard AI
-  - Stream response support
   - Chat history support
-  - Web-browsing support
+  - Web-browsing support (probably)
   - Now supports requests with images (you can send an image with text to it) **NEW**
 
 ----------
@@ -245,6 +244,13 @@ Sometimes, searching for a proxy can take a long time. If you think that the fou
 - 🧹 `/clear` - Clear chat history
 - 🌎 `/lang` - Change the language
 - 🆔 `/chatid` - Show your chat_id
+- `/style` - Bing AI conversation style
+- `/chatgpt <Text request>` - Request to the ChatGPT module
+- `/dalle <Text request>` - Request to the DALL-E module
+- `/bing <Text request>` - Request to the Bing AI module
+- `/bingigen <Text request>` - Request to the Bing Image Generator
+- `/bard <Text request>` - Request to the Bard module
+
 
 ### Admin commands:
 - 💬 `/queue` - Show requests queue
@@ -279,6 +285,7 @@ You can enable and configure data collection in config in `data_collecting` bloc
 
 - Add some free GPT-4 model
 - Add image input and generation for EdgeGPT (and ChatGPT?)
+- Add Bard's text-to-speech
 - Add list of commands
 
 ----------
@@ -291,4 +298,4 @@ You can enable and configure data collection in config in `data_collecting` bloc
 
 ### 🚧 P.S. This project is still under development!
 
-- If you find a bug, please create an Issue
+- If you find a **bug** in GPT-Telegramus, please create an Issue
