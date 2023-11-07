@@ -1,13 +1,15 @@
 # 🤖 GPT-Telegramus
-### The best Telegram bot for ChatGPT, EdgeGPT (aka Bing AI), DALL-E, Bing Image generator and Bard with stream writing, requests with images (for Bard only), multiple languages, admin control, automatic proxy searcher, data logging and more!
+
+| <img src="Logo.png" alt="GPT-Telegramus logo"/> | <h3>The best Telegram bot for ChatGPT, EdgeGPT (aka Bing AI), DALL-E, Bing Image generator and Bard with stream writing, requests with images (for Bard only), multiple languages, admin control, automatic proxy searcher, data logging and more!</h3> |
+|-------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+
 <div style="width:100%;text-align:center;">
     <p align="center">
-        <img src="Logo.png" alt="GPT-Telegramus logo" width="100"/>
+        <img src="https://badges.frapsoft.com/os/v1/open-source.png?v=103" >
     </p>
 </div>
 <div style="width:100%;text-align:center;">
     <p align="center">
-        <img src="https://badges.frapsoft.com/os/v1/open-source.png?v=103" >
         <a href="https://www.youtube.com/@F3RNI"><img alt="YouTube" src="https://img.shields.io/badge/-YouTube-red" ></a>
         <a href="https://f3rni.bandcamp.com"><img alt="Bandcamp" src="https://img.shields.io/badge/-Bandcamp-cyan" ></a>
         <a href="https://open.spotify.com/artist/22PQ62alehywlYiksbtzsm"><img alt="Spotify" src="https://img.shields.io/badge/-Spotify-green" ></a>
@@ -69,21 +71,25 @@ Or message me if you would like to donate 💰
 
 ## ❓ Get started
 
-1. Install Python and pip
+1. Install Python 3.10, `venv` and `pip`
 2. Download source code
-3. Install requirements `pip install -r requirements.txt --upgrade`
-4. Access the modules you want to use (Generate an API key to ChatGPT / DALL-E, save cookies for EdgeGPT / Bard)
-5. Carefully change all the settings (in the `config.json` file) to suit your needs. If you have questions regarding any setting, open an issue, I will add a more detailed description
-6. Create bot at https://t.me/BotFather
-7. Type Bot's token into `api_key` in `telegram` in `config.json` file
-8. Run main script `python main.py`
+3. Create venv `python -m venv venv` / `python3 -m venv venv` / `python3.10 -m venv venv`
+4. Activate venv `source venv/bin/activate` / `venv\Scripts\activate.bat`
+5. Check python version using `python --version` command. It should be 3.10.X
+6. Install requirements `pip install -r requirements.txt --upgrade`
+7. Access the modules you want to use (Generate an API key / access token for ChatGPT / DALL-E, save cookies for EdgeGPT / Bard)
+8. Start ChatGPTProxy for ChatGPT (see **🔗 Chat-GPT Base URL (proxy)** section)
+9. Carefully change all the settings (in the `config.json` file) to suit your needs. If you have questions regarding any setting, open an issue, I will add a more detailed description
+10. Create bot at https://t.me/BotFather
+11. Type Bot's token into `api_key` in `telegram` in `config.json` file
+12. Run main script `python main.py`
 
 - **ChatGPT**
   - Browser-like Chat-GPT. Currently, without extensions and image requests (text only) (because I don't have a paid account to test it)
   - Stream response support
   - Chat history support
   - Works better with API type 1 and an access_token for authentication
-  - Note: Please refer to the `🔗 Chat-GPT Base URL (proxy)` section for correct usage.
+  - **Note**: Please refer to the `🔗 Chat-GPT Base URL (proxy)` section for correct usage.
 - **DALL·E**
   - Image generation tool from OpenAI
   - Requires an OpenAI account with unexpired credits
@@ -91,7 +97,7 @@ Or message me if you would like to donate 💰
   - Supports conversation style `/style`
   - Stream response support
   - Chat history support
-  - Web-browsing and sources support
+  - Web-browsing (probably) and sources support
   - Unfortunately, it can't accept images as input yet, nor can it generate them. Please use Bing ImageGen to generate images.
 - **Bing ImageGen**
   - Bing Image Generator. Used as a separate module due to issues with the EdgeGPT module
@@ -124,14 +130,16 @@ If you want to add a language, create a pull request 💜
 
 ## 🐧 Running as service on linux
 
-1. Install Python and pip
-2. Clone repo
+1. Install Python 3.10, `venv` and `pip`
+2. Download source code
+3. Create venv `python -m venv venv` / `python3 -m venv venv` / `python3.10 -m venv venv`
+4. Clone repo
    1. `git clone https://github.com/F33RNI/GPT-Telegramus/`
    2. `cd GPT-Telegramus`
-3. Edit `config.json`
-4. Install systemd
+5. Edit `config.json`
+6. Install systemd
    1. `sudo apt-get install -y systemd`
-5. Create new service file
+7. Create new service file
    1. `sudo nano /etc/systemd/system/gpt-telegramus.service`
       ```
       [Unit]
@@ -140,20 +148,22 @@ If you want to add a language, create a pull request 💜
       
       [Service]
       Type=simple
-      Restart=always
+      Restart=on-failure
+      RestartSec=5
+      
       WorkingDirectory=YOUR DIRECTORY HERE/GPT-Telegramus
       ExecStart=YOUR DIRECTORY HERE/GPT-Telegramus/run.sh
-      RestartSec=5
       
       [Install]
       WantedBy=multi-user.target
       
       ```
-6. Reload systemctl daemon
+8. Reload systemctl daemon
    1. `sudo systemctl daemon-reload`
-7. Enable and start service
+9. Enable and start service
    1. `sudo systemctl enable gpt-telegramus`
    2. `sudo systemctl start gpt-telegramus`
+10. Note: Please use `sudo systemctl kill gpt-telegramus` and then `sudo systemctl stop gpt-telegramus` if only `sudo systemctl stop gpt-telegramus` not working
 
 ----------
 
@@ -236,7 +246,8 @@ Default base URL by acheong08/ChatGPT stopped working. Below is an instruction o
       
       [Service]
       Type=simple
-      Restart=always
+      Restart=on-failure
+      RestartSec=5
       
       # Proxy (if needed, or remove this and next line)
       Environment="http_proxy=http://USERNAME:PASSWORD@IP:PORT"
@@ -247,7 +258,6 @@ Default base URL by acheong08/ChatGPT stopped working. Below is an instruction o
       
       WorkingDirectory=PATH_TO_ChatGPTProxy_DIRECTORY
       ExecStart=PATH_TO_ChatGPTProxy_DIRECTORY/ChatGPTProxy
-      RestartSec=5
       
       [Install]
       WantedBy=multi-user.target
@@ -267,7 +277,9 @@ Default base URL by acheong08/ChatGPT stopped working. Below is an instruction o
 
 ## 🌎 Proxy to bypass geo-blocking
 
-### NOT TESTED
+### NOT TESTED AND MOST LIKELY WILL NOT WORK
+
+**I won't respond to the issue if it's related to auto proxy**
 
 It is possible to bypass geo-blocking of ChatGPT, EdgeGPT, DALL-E or Bard. GPT-Telegramus includes automatic proxy-list downloading with periodic checks
 
@@ -339,7 +351,7 @@ You can enable and configure data collection in config in `data_collecting` bloc
 
 ## ✨ Contribution
 
-- Anyone can contribute! Just create a pull request
+- Anyone can contribute! Just create a **pull request**
 
 ----------
 

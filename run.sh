@@ -1,3 +1,3 @@
 #!/bin/bash
-pip install -r requirements.txt --upgrade
-python3 main.py
+venv/bin/python -m pip install -r requirements.txt --upgrade
+venv/bin/python main.py
