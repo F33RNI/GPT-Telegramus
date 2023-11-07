@@ -1,13 +1,14 @@
-# 🤖 GPT-Telegramus
+| <img src="Logo.png" alt="GPT-Telegramus logo" width="100"/> | <h1> 🤖  GPT-Telegramus</h1> |
+|-------------------------------------------------------------|:---------------------------:|
+
 ### The best Telegram bot for ChatGPT, EdgeGPT (aka Bing AI), DALL-E, Bing Image generator and Bard with stream writing, requests with images (for Bard only), multiple languages, admin control, automatic proxy searcher, data logging and more!
 <div style="width:100%;text-align:center;">
     <p align="center">
-        <img src="Logo.png" alt="GPT-Telegramus logo" width="100"/>
+        <img src="https://badges.frapsoft.com/os/v1/open-source.png?v=103" >
     </p>
 </div>
 <div style="width:100%;text-align:center;">
     <p align="center">
-        <img src="https://badges.frapsoft.com/os/v1/open-source.png?v=103" >
         <a href="https://www.youtube.com/@F3RNI"><img alt="YouTube" src="https://img.shields.io/badge/-YouTube-red" ></a>
         <a href="https://f3rni.bandcamp.com"><img alt="Bandcamp" src="https://img.shields.io/badge/-Bandcamp-cyan" ></a>
         <a href="https://open.spotify.com/artist/22PQ62alehywlYiksbtzsm"><img alt="Spotify" src="https://img.shields.io/badge/-Spotify-green" ></a>
