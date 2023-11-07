@@ -7,6 +7,8 @@ users.json
 conversations/
 EdgeGPT_cookies.json
 Bard_cookies.json
+ChatGPT_cookies.json
 data/
 Banner.psd
 Banner.tif
+UsersRecover.py
