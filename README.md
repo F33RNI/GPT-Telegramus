@@ -1,5 +1,5 @@
-| <img src="Logo.png" alt="GPT-Telegramus logo" width="100"/> | <h1> 🤖  GPT-Telegramus</h1> |
-|-------------------------------------------------------------|:---------------------------:|
+| <img src="Logo.png" alt="GPT-Telegramus logo" width="100"/> | <h1>GPT-Telegramus</h1> |
+|-------------------------------------------------------------|:-----------------------:|
 
 ### The best Telegram bot for ChatGPT, EdgeGPT (aka Bing AI), DALL-E, Bing Image generator and Bard with stream writing, requests with images (for Bard only), multiple languages, admin control, automatic proxy searcher, data logging and more!
 <div style="width:100%;text-align:center;">
