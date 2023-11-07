@@ -1,20 +1,23 @@
 # 🤖 GPT-Telegramus
 ### The best Telegram bot for ChatGPT, EdgeGPT (aka Bing AI), DALL-E, Bing Image generator and Bard with stream writing, requests with images (for Bard only), multiple languages, admin control, automatic proxy searcher, data logging and more!
 <div style="width:100%;text-align:center;">
-   <p align="center">
-      <img src="https://badges.frapsoft.com/os/v1/open-source.png?v=103" >
-   </p>
+    <p align="center">
+        <img src="Logo.png" alt="GPT-Telegramus logo" width="100"/>
+    </p>
 </div>
 <div style="width:100%;text-align:center;">
-   <p align="center">
-      <a href="https://www.youtube.com/@F3RNI"><img alt="YouTube" src="https://img.shields.io/badge/-YouTube-red" ></a>
-      <a href="https://f3rni.bandcamp.com"><img alt="Bandcamp" src="https://img.shields.io/badge/-Bandcamp-cyan" ></a>
-      <a href="https://open.spotify.com/artist/22PQ62alehywlYiksbtzsm"><img alt="Spotify" src="https://img.shields.io/badge/-Spotify-green" ></a>
-      <a href="https://soundcloud.com/f3rni"><img alt="SoundCloud" src="https://img.shields.io/badge/-SoundCloud-orange" ></a>
-   </p>
+    <p align="center">
+        <img src="https://badges.frapsoft.com/os/v1/open-source.png?v=103" >
+        <a href="https://www.youtube.com/@F3RNI"><img alt="YouTube" src="https://img.shields.io/badge/-YouTube-red" ></a>
+        <a href="https://f3rni.bandcamp.com"><img alt="Bandcamp" src="https://img.shields.io/badge/-Bandcamp-cyan" ></a>
+        <a href="https://open.spotify.com/artist/22PQ62alehywlYiksbtzsm"><img alt="Spotify" src="https://img.shields.io/badge/-Spotify-green" ></a>
+        <a href="https://soundcloud.com/f3rni"><img alt="SoundCloud" src="https://img.shields.io/badge/-SoundCloud-orange" ></a>
+    </p>
 </div>
 
-![](Banner.png)
+
+
+![]( Banner.png)
 
 ----------
 
@@ -33,14 +36,23 @@ Or message me if you would like to donate 💰
 
 ## 🤗 Contributors
 
-- 1️⃣ [Sprav04ka](https://github.com/Sprav04ka) - *Tofii'skovyi' language, Testing, Super beautiful DIY jack o'lantern (for poster), Motivation*
+- 1️⃣ [Sprav04ka](https://github.com/Sprav04ka) - *Tofii'skovyi' language, Testing, [Super beautiful DIY jack o'lantern (for poster)](Banner.png), [Project Logo](Logo.png), Motivation*
 - 2️⃣ [Sergey Krashevich](https://github.com/skrashevich) - *Docker, GitHub Actions*
 - 3️⃣ [Wahit Fitriyanto](https://github.com/wahitftry) - *Indonesian language*
 - 4️⃣ [Alexander Fadeyev](https://github.com/alfsoft) - *EdgeGPT Fix*
 
 ----------
 
-## 📙 Dependencies
+## 🏗️ Requirements
+
+- Python 3.10
+- GO lang (for ChatGPTProxy)
+- Unblocked access to the telegram bot official API
+- Other requirements specified in the `requirements.txt` file
+
+----------
+
+## 📙 Project based on
 
 - **ChatGPT** (ChatGPT by OpenAI): https://chat.openai.com/chat
 - **Bing chat** (EdgeGPT by Microsoft): https://bing.com/chat
@@ -140,12 +152,46 @@ If you want to add a language, create a pull request 💜
 6. Reload systemctl daemon
    1. `sudo systemctl daemon-reload`
 7. Enable and start service
-   1. `sudo systemctl enable gpt-telegramus.service`
-   2. `sudo systemctl start gpt-telegramus.service`
+   1. `sudo systemctl enable gpt-telegramus`
+   2. `sudo systemctl start gpt-telegramus`
 
 ----------
 
+## 🍓 Running on Raspberry Pi (ARM)
+
+1. Install Python 3.10 if not installed
+   1. ```
+      sudo apt-get update
+      sudo apt-get install -y build-essential tk-dev libncurses5-dev libncursesw5-dev libreadline6-dev libdb5.3-dev libgdbm-dev libsqlite3-dev libssl-dev libbz2-dev libexpat1-dev liblzma-dev zlib1g-dev libffi-dev
+      wget https://www.python.org/ftp/python/3.10.13/Python-3.10.13.tgz
+      sudo tar zxf Python-3.10.13.tgz
+      cd Python-3.10.13
+      sudo ./configure --enable-optimizations
+      sudo make -j 4
+      sudo make altinstall
+      ```
+   2. Check version by typing `python3.10 -V`. After this, you should use `python3.10` command instead of `python` or you can add it to the `bashrc` by typing `echo "alias python=/usr/local/bin/python3.10" >> ~/.bashrc`
+2. For ChatGPTProxy, install GO and tls-client
+   1. ```
+      sudo apt-get install golang-go
+      
+      git clone https://github.com/bogdanfinn/tls-client.git
+      cd tls-client/cffi_dist
+      sudo GOOS=linux CGO_ENABLED=1 GOARCH=arm64 CC="gcc" /usr/local/go/bin/go build -buildmode=c-shared -o tls-client-arm64.so
+      mv ./dist/tls-client-arm64.so /home/pi/.local/lib/python3.10/site-packages/tls_client/dependencies/
+      mv ./dist/tls-client-arm64.h /home/pi/.local/lib/python3.10/site-packages/tls_client/dependencies/
+      ```
+3. Build ChatGPTProxy
+   1. ```
+      git clone https://github.com/acheong08/ChatGPTProxy
+      /usr/local/go/bin/go build
+      ```
+   2. Create and start service as mention in the **🔗 Chat-GPT Base URL (proxy)** section
+4. Follow the **🐧 Running as service on linux** guide
+
 ## 🐋 Running in Docker
+
+----------
 
 **WARNING: not tested**
 
@@ -175,7 +221,7 @@ Default base URL by acheong08/ChatGPT stopped working. Below is an instruction o
    1. `sudo apt-get update`
    2. `sudo apt-get install golang-go`
 2. Clone acheong08/ChatGPTProxy repo
-   1. `git clone https://github.com/acheong08/ChatGPTProxy/tree/main`
+   1. `git clone https://github.com/acheong08/ChatGPTProxy`
    2. `cd ChatGPTProxy`
 3. Build it
    1. `go build`
@@ -210,10 +256,10 @@ Default base URL by acheong08/ChatGPT stopped working. Below is an instruction o
 6. Reload systemctl daemon
    1. `sudo systemctl daemon-reload`
 7. Enable and start service
-   1. `sudo systemctl enable chatgpt-proxy.service`
-   2. `sudo systemctl start chatgpt-proxy.service`
+   1. `sudo systemctl enable chatgpt-proxy`
+   2. `sudo systemctl start chatgpt-proxy`
 8. See logs to make sure it's running and see current port
-   1. `systemctl status chatgpt-proxy.service`
+   1. `systemctl status chatgpt-proxy`
 9. Add it's IP to `config.json`
    1. ex. `"base_url": "http://127.0.0.0:9090/api/",`
 
@@ -287,6 +333,7 @@ You can enable and configure data collection in config in `data_collecting` bloc
 - Add image input and generation for EdgeGPT (and ChatGPT?)
 - Add Bard's text-to-speech
 - Add list of commands
+- Add an API, so you can use GPT-Telegramus from outside the bot
 
 ----------
 
