@@ -39,6 +39,9 @@ def worker_configurer(queue: multiprocessing.Queue):
     # Setup queue handler
     queue_handler = logging.handlers.QueueHandler(queue)
     root_logger = logging.getLogger()
+    if root_logger.handlers:
+        for handler in root_logger.handlers:
+            root_logger.removeHandler(handler)
     root_logger.addHandler(queue_handler)
     root_logger.setLevel(logging.INFO)
 
