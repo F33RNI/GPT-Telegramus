@@ -454,6 +454,14 @@ class QueueHandler:
         self._exit_flag = False
         while not self._exit_flag:
             try:
+                # Clear prevent shutdown flag
+                if self._prevent_shutdown_flag_clear_timer > 0 and \
+                        time.time() - self._prevent_shutdown_flag_clear_timer > CLEAR_PREVENT_SHUTDOWN_FLAG_AFTER and \
+                        self.prevent_shutdown_flag:
+                    logging.info("Clearing prevent_shutdown_flag")
+                    self.prevent_shutdown_flag = False
+                    self._prevent_shutdown_flag_clear_timer = 0
+
                 # Skip one cycle in queue is empty
                 if self.request_response_queue.qsize() == 0:
                     time.sleep(0.1)
@@ -607,14 +615,6 @@ class QueueHandler:
 
                 # Unlock the queue
                 self.lock.release()
-
-                # Clear prevent shutdown flag
-                if self._prevent_shutdown_flag_clear_timer > 0 and \
-                        time.time() - self._prevent_shutdown_flag_clear_timer > CLEAR_PREVENT_SHUTDOWN_FLAG_AFTER and \
-                        self.prevent_shutdown_flag:
-                    logging.info("Clearing prevent_shutdown_flag")
-                    self.prevent_shutdown_flag = False
-                    self._prevent_shutdown_flag_clear_timer = 0
 
                 # Sleep 100ms before next cycle
                 time.sleep(0.1)
