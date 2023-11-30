@@ -37,6 +37,9 @@ import ProxyAutomation
 import RequestResponseContainer
 import UsersHandler
 
+# After how long (seconds) clear self.prevent_shutdown_flag
+CLEAR_PREVENT_SHUTDOWN_FLAG_AFTER = 10.
+
 
 def get_container_from_queue(request_response_queue: multiprocessing.Queue, lock: multiprocessing.Lock,
                              container_id: int) -> RequestResponseContainer.RequestResponseContainer | None:
@@ -415,6 +418,10 @@ class QueueHandler:
         self.request_response_queue = multiprocessing.Queue(maxsize=-1)
         self.lock = multiprocessing.Lock()
 
+        # Prevent bot shutdown in case of event loop close after process.kill()
+        self.prevent_shutdown_flag = False
+        self._prevent_shutdown_flag_clear_timer = 0
+
         self._exit_flag = False
         self._processing_loop_thread = None
         self._log_filename = ""
@@ -569,6 +576,9 @@ class QueueHandler:
                         if request_.pid > 0 and psutil.pid_exists(request_.pid):
                             logging.info("Trying to kill process with PID {}".format(request_.pid))
                             try:
+                                logging.info("Setting prevent_shutdown_flag")
+                                self.prevent_shutdown_flag = True
+                                self._prevent_shutdown_flag_clear_timer = time.time()
                                 process = psutil.Process(request_.pid)
                                 process.terminate()
                                 process.kill()
@@ -597,6 +607,14 @@ class QueueHandler:
 
                 # Unlock the queue
                 self.lock.release()
+
+                # Clear prevent shutdown flag
+                if self._prevent_shutdown_flag_clear_timer > 0 and \
+                        time.time() - self._prevent_shutdown_flag_clear_timer > CLEAR_PREVENT_SHUTDOWN_FLAG_AFTER and \
+                        self.prevent_shutdown_flag:
+                    logging.info("Clearing prevent_shutdown_flag")
+                    self.prevent_shutdown_flag = False
+                    self._prevent_shutdown_flag_clear_timer = 0
 
                 # Sleep 100ms before next cycle
                 time.sleep(0.1)
@@ -699,7 +717,7 @@ class QueueHandler:
                     if (request_response.request_type == RequestResponseContainer.REQUEST_TYPE_DALLE
                         or request_response.request_type == RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN) \
                             and not request_response.error:
-                        response_url = request_response.response if type(request_response.response) == str\
+                        response_url = request_response.response if type(request_response.response) == str \
                             else request_response.response[0]
                         response = base64.b64encode(requests.get(response_url, timeout=120).content) \
                             .decode("utf-8")

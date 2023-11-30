@@ -619,7 +619,7 @@ class BotHandler:
             # Bot error?
             except Exception as e:
                 if "Event loop is closed" in str(e):
-                    if not self._restart_requested_flag:
+                    if not self._restart_requested_flag and not self.queue_handler.prevent_shutdown_flag:
                         logging.warning("Stopping telegram bot")
                         break
                 else:
