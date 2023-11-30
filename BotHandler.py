@@ -216,7 +216,8 @@ async def send_message_async(config: dict, messages: List[Dict],
                     # Collect media group
                     media_group = []
                     for url in request_response.response:
-                        media_group.append(InputMediaPhoto(media=url))
+                        if not url.lower().endswith(".svg"):
+                            media_group.append(InputMediaPhoto(media=url))
 
                     # Send it
                     media_group_message_id = (await (telegram.Bot(config["telegram"]["api_key"]).sendMediaGroup(
