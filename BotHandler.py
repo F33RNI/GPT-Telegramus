@@ -1023,14 +1023,13 @@ class BotHandler:
             logging.info("Waiting for all requests to finish")
             while self.queue_handler.request_response_queue.qsize() > 0:
                 # Cancel all active containers (clear the queue)
-                with self.queue_handler.lock:
-                    queue_list = QueueHandler.queue_to_list(self.queue_handler.request_response_queue)
-                    for container in queue_list:
-                        if container.processing_state != RequestResponseContainer.PROCESSING_STATE_ABORT:
-                            container.processing_state = RequestResponseContainer.PROCESSING_STATE_ABORT
-                            QueueHandler.put_container_to_queue(self.queue_handler.request_response_queue,
-                                                                None,
-                                                                container)
+                self.queue_handler.lock.acquire(block=True)
+                queue_list = QueueHandler.queue_to_list(self.queue_handler.request_response_queue)
+                for container in queue_list:
+                    if container.processing_state != RequestResponseContainer.PROCESSING_STATE_ABORT:
+                        container.processing_state = RequestResponseContainer.PROCESSING_STATE_ABORT
+                        QueueHandler.put_container_to_queue(self.queue_handler.request_response_queue, None, container)
+                self.queue_handler.lock.release()
 
                 # Check every 1s
                 time.sleep(1)
@@ -1041,14 +1040,18 @@ class BotHandler:
 
         # Restart telegram bot
         self._restart_requested_flag = True
+        logging.info("Stopping event loop to restart Telegram bot")
         self._event_loop.stop()
+        time.sleep(1)
         try:
+            logging.info("Closing event loop to restart Telegram bot")
             self._event_loop.close()
         except:
             pass
 
         def send_message_after_restart():
             # Sleep while restarting
+            logging.info("Waiting for _restart_requested_flag")
             while self._restart_requested_flag:
                 time.sleep(1)
 
