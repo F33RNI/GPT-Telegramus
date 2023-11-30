@@ -34,6 +34,7 @@ import ProxyAutomation
 import QueueHandler
 import RequestResponseContainer
 import UsersHandler
+from JSONReaderWriter import load_json
 from main import __version__
 
 # User commands
@@ -216,7 +217,8 @@ async def send_message_async(config: dict, messages: List[Dict],
                     # Collect media group
                     media_group = []
                     for url in request_response.response:
-                        media_group.append(InputMediaPhoto(media=url))
+                        if not url.lower().endswith(".svg"):
+                            media_group.append(InputMediaPhoto(media=url))
 
                     # Send it
                     media_group_message_id = (await (telegram.Bot(config["telegram"]["api_key"]).sendMediaGroup(
@@ -532,13 +534,14 @@ def clear_conversation_process(logging_queue: multiprocessing.Queue, str_or_exce
 
 
 class BotHandler:
-    def __init__(self, config: dict, messages: List[Dict],
+    def __init__(self, config: dict, config_file: str, messages: List[Dict],
                  users_handler: UsersHandler.UsersHandler,
                  queue_handler: QueueHandler.QueueHandler,
                  proxy_automation: ProxyAutomation.ProxyAutomation,
                  logging_queue: multiprocessing.Queue,
                  chatgpt_module, bard_module, edgegpt_module):
         self.config = config
+        self.config_file = config_file
         self.messages = messages
         self.users_handler = users_handler
         self.queue_handler = queue_handler
@@ -619,7 +622,7 @@ class BotHandler:
             # Bot error?
             except Exception as e:
                 if "Event loop is closed" in str(e):
-                    if not self._restart_requested_flag:
+                    if not self._restart_requested_flag and not self.queue_handler.prevent_shutdown_flag:
                         logging.warning("Stopping telegram bot")
                         break
                 else:
@@ -1009,18 +1012,27 @@ class BotHandler:
         logging.info("Stopping ProxyAutomation")
         self.proxy_automation.stop_automation_loop()
 
+        # Reload config
+        logging.info("Reloading config from {} file".format(self.config_file))
+        config_new = load_json(self.config_file)
+        for key, value in config_new.items():
+            self.config[key] = value
+
         # Make sure queue is empty
         if self.queue_handler.request_response_queue.qsize() > 0:
             logging.info("Waiting for all requests to finish")
             while self.queue_handler.request_response_queue.qsize() > 0:
-                # Cancel all active containers
-                with self.queue_handler.lock:
-                    queue_list = QueueHandler.queue_to_list(self.queue_handler.request_response_queue)
-                    for container in queue_list:
-                        container.processing_state = RequestResponseContainer.PROCESSING_STATE_CANCEL
+                # Cancel all active containers (clear the queue)
+                self.queue_handler.lock.acquire(block=True)
+                queue_list = QueueHandler.queue_to_list(self.queue_handler.request_response_queue)
+                for container in queue_list:
+                    if container.processing_state != RequestResponseContainer.PROCESSING_STATE_ABORT:
+                        container.processing_state = RequestResponseContainer.PROCESSING_STATE_ABORT
+                        QueueHandler.put_container_to_queue(self.queue_handler.request_response_queue, None, container)
+                self.queue_handler.lock.release()
 
-                # Check every 100ms
-                time.sleep(0.1)
+                # Check every 1s
+                time.sleep(1)
 
         # Start proxy automation
         logging.info("Starting back ProxyAutomation")
@@ -1028,14 +1040,18 @@ class BotHandler:
 
         # Restart telegram bot
         self._restart_requested_flag = True
+        logging.info("Stopping event loop to restart Telegram bot")
         self._event_loop.stop()
+        time.sleep(1)
         try:
+            logging.info("Closing event loop to restart Telegram bot")
             self._event_loop.close()
         except:
             pass
 
         def send_message_after_restart():
             # Sleep while restarting
+            logging.info("Waiting for _restart_requested_flag")
             while self._restart_requested_flag:
                 time.sleep(1)
 

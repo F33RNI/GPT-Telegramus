@@ -34,7 +34,7 @@ import UsersHandler
 from JSONReaderWriter import load_json
 
 # GPT-Telegramus version
-__version__ = "3.6.1"
+__version__ = "3.6.7"
 
 # Logging level
 LOGGING_LEVEL = logging.INFO
@@ -109,7 +109,7 @@ def main():
                                               bing_image_gen_module)
 
     # Initialize Telegram bot class
-    bot_handler = BotHandler.BotHandler(config, messages, user_handler, queue_handler, proxy_automation,
+    bot_handler = BotHandler.BotHandler(config, args.config, messages, user_handler, queue_handler, proxy_automation,
                                         logging_handler.queue,
                                         chatgpt_module, bard_module, edgegpt_module)
 
