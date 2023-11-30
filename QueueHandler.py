@@ -614,7 +614,6 @@ class QueueHandler:
                             logging.info("Trying to kill process with PID {}".format(container.pid))
                             try:
                                 process = psutil.Process(container.pid)
-                                process.terminate()
                                 process.kill()
                                 process.wait(timeout=5)
                             except Exception as e:
