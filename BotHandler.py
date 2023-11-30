@@ -34,6 +34,7 @@ import ProxyAutomation
 import QueueHandler
 import RequestResponseContainer
 import UsersHandler
+from JSONReaderWriter import load_json
 from main import __version__
 
 # User commands
@@ -533,13 +534,14 @@ def clear_conversation_process(logging_queue: multiprocessing.Queue, str_or_exce
 
 
 class BotHandler:
-    def __init__(self, config: dict, messages: List[Dict],
+    def __init__(self, config: dict, config_file: str, messages: List[Dict],
                  users_handler: UsersHandler.UsersHandler,
                  queue_handler: QueueHandler.QueueHandler,
                  proxy_automation: ProxyAutomation.ProxyAutomation,
                  logging_queue: multiprocessing.Queue,
                  chatgpt_module, bard_module, edgegpt_module):
         self.config = config
+        self.config_file = config_file
         self.messages = messages
         self.users_handler = users_handler
         self.queue_handler = queue_handler
@@ -1010,18 +1012,28 @@ class BotHandler:
         logging.info("Stopping ProxyAutomation")
         self.proxy_automation.stop_automation_loop()
 
+        # Reload config
+        logging.info("Reloading config from {} file".format(self.config_file))
+        config_new = load_json(self.config_file)
+        for key, value in config_new.items():
+            self.config[key] = value
+
         # Make sure queue is empty
         if self.queue_handler.request_response_queue.qsize() > 0:
             logging.info("Waiting for all requests to finish")
             while self.queue_handler.request_response_queue.qsize() > 0:
-                # Cancel all active containers
+                # Cancel all active containers (clear the queue)
                 with self.queue_handler.lock:
                     queue_list = QueueHandler.queue_to_list(self.queue_handler.request_response_queue)
                     for container in queue_list:
-                        container.processing_state = RequestResponseContainer.PROCESSING_STATE_CANCEL
+                        if container.processing_state != RequestResponseContainer.PROCESSING_STATE_ABORT:
+                            container.processing_state = RequestResponseContainer.PROCESSING_STATE_ABORT
+                            QueueHandler.put_container_to_queue(self.queue_handler.request_response_queue,
+                                                                None,
+                                                                container)
 
-                # Check every 100ms
-                time.sleep(0.1)
+                # Check every 1s
+                time.sleep(1)
 
         # Start proxy automation
         logging.info("Starting back ProxyAutomation")

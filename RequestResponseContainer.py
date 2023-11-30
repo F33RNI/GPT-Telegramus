@@ -28,6 +28,7 @@ PROCESSING_STATE_DONE = 3
 PROCESSING_STATE_TIMED_OUT = 4
 PROCESSING_STATE_CANCEL = 5
 PROCESSING_STATE_CANCELING = 6
+PROCESSING_STATE_ABORT = 7
 
 REQUEST_NAMES = ["ChatGPT", "DALL-E", "EdgeGPT", "Bard", "Bing ImageGen"]
 PROCESSING_STATE_NAMES = ["Waiting", "Starting", "Active", "Done", "Timed out", "Canceling", "Canceling"]

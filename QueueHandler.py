@@ -38,7 +38,7 @@ import RequestResponseContainer
 import UsersHandler
 
 # After how long (seconds) clear self.prevent_shutdown_flag
-CLEAR_PREVENT_SHUTDOWN_FLAG_AFTER = 10.
+CLEAR_PREVENT_SHUTDOWN_FLAG_AFTER = 5.
 
 
 def get_container_from_queue(request_response_queue: multiprocessing.Queue, lock: multiprocessing.Lock,
@@ -577,9 +577,10 @@ class QueueHandler:
                         # Update
                         put_container_to_queue(self.request_response_queue, None, request_)
 
-                    # Done processing / Timed out -> log data and finally remove it
+                    # Done processing / Timed out / abort requested -> log data and finally remove it
                     if request_.processing_state == RequestResponseContainer.PROCESSING_STATE_DONE \
-                            or request_.processing_state == RequestResponseContainer.PROCESSING_STATE_TIMED_OUT:
+                            or request_.processing_state == RequestResponseContainer.PROCESSING_STATE_TIMED_OUT \
+                            or request_.processing_state == RequestResponseContainer.PROCESSING_STATE_ABORT:
                         # Kill process if it is active
                         if request_.pid > 0 and psutil.pid_exists(request_.pid):
                             logging.info("Trying to kill process with PID {}".format(request_.pid))
