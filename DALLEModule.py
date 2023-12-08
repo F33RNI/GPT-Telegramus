@@ -18,7 +18,8 @@
 import logging
 from typing import List, Dict
 
-import openai
+import httpx
+from openai import OpenAI
 
 import BotHandler
 import UsersHandler
@@ -30,6 +31,7 @@ class DALLEModule:
         self.config = config
         self.messages = messages
         self.users_handler = users_handler
+        self.client = None
 
     def initialize(self, proxy=None) -> None:
         """
@@ -53,11 +55,14 @@ class DALLEModule:
                 raise Exception("DALL-E module disabled in config file!")
 
             # Set Key
-            openai.api_key = self.config["dalle"]["open_ai_api_key"]
+            api_key = self.config["dalle"]["open_ai_api_key"]
 
+            http_client = None
             # Set proxy
             if proxy:
-                openai.proxy = proxy
+                http_client = httpx.Client(proxies=proxy)
+
+            self.client = OpenAI(api_key=api_key, http_client=http_client)
 
             # Done?
             logging.info("DALL-E module initialized")
@@ -90,10 +95,10 @@ class DALLEModule:
 
             # Generate image
             logging.info("Requesting image from DALL-E")
-            image_response = openai.Image.create(prompt=request_response.request,
+            image_response = self.client.images.generate(prompt=request_response.request,
                                                  n=1,
                                                  size=self.config["dalle"]["image_size"])
-            response_url = image_response["data"][0]["url"]
+            response_url = image_response.data[0].url
 
             # Check response
             if not response_url or len(response_url) < 1:
