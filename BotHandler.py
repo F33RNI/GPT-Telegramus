@@ -638,7 +638,7 @@ class BotHandler:
                 self._application.add_handler(CommandHandler(BOT_COMMAND_ADMIN_BROADCAST, self.bot_command_broadcast))
 
                 # Unknown command -> send help
-                self._application.add_handler(MessageHandler(filters.COMMAND, self.bot_command_help))
+                self._application.add_handler(MessageHandler(filters.COMMAND, self.bot_command_unknown))
 
                 # Add buttons handler
                 self._application.add_handler(CallbackQueryHandler(self.query_callback))
@@ -1633,6 +1633,17 @@ class BotHandler:
                                      self.config["telegram"]["queue_max"]),
                                  context,
                                  reply_to_message_id=request_response.reply_message_id)
+
+    async def bot_command_unknown(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """
+        unknown command
+        :param update:
+        :param context:
+        :return:
+        """
+        if update.message.chat.type.lower() != "private":
+            return
+        await self.bot_command_help(update, context)
 
     async def bot_command_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
