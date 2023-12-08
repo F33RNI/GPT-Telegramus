@@ -1641,7 +1641,7 @@ class BotHandler:
         :param context:
         :return:
         """
-        if update.message.chat.type.lower() != "private":
+        if update.effective_message.chat.type.lower() != "private":
             return
         await self.bot_command_help(update, context)
 
