@@ -44,6 +44,7 @@ from main import __version__
 # User commands
 BOT_COMMAND_START = "start"
 BOT_COMMAND_HELP = "help"
+BOT_COMMAND_CHAT = "chat"
 BOT_COMMAND_CHATGPT = "chatgpt"
 BOT_COMMAND_EDGEGPT = "bing"
 BOT_COMMAND_DALLE = "dalle"
@@ -611,6 +612,7 @@ class BotHandler:
                 # User commands
                 self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_START, self.bot_command_start))
                 self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_HELP, self.bot_command_help))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_CHAT, self.bot_message))
                 self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_CHATGPT, self.bot_command_chatgpt))
                 self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_EDGEGPT, self.bot_command_edgegpt))
                 self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_DALLE, self.bot_command_dalle))
