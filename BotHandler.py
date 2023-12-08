@@ -29,6 +29,7 @@ import telegram
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters, CallbackQueryHandler
 
+from CaptionCommandHandler import CaptionCommandHandler
 import LoggingHandler
 import ProxyAutomation
 import QueueHandler
@@ -577,18 +578,18 @@ class BotHandler:
                 self._application = builder.build()
 
                 # User commands
-                self._application.add_handler(CommandHandler(BOT_COMMAND_START, self.bot_command_start))
-                self._application.add_handler(CommandHandler(BOT_COMMAND_HELP, self.bot_command_help))
-                self._application.add_handler(CommandHandler(BOT_COMMAND_CHATGPT, self.bot_command_chatgpt))
-                self._application.add_handler(CommandHandler(BOT_COMMAND_EDGEGPT, self.bot_command_edgegpt))
-                self._application.add_handler(CommandHandler(BOT_COMMAND_DALLE, self.bot_command_dalle))
-                self._application.add_handler(CommandHandler(BOT_COMMAND_BARD, self.bot_command_bard))
-                self._application.add_handler(CommandHandler(BOT_COMMAND_BING_IMAGEGEN, self.bot_command_bing_imagegen))
-                self._application.add_handler(CommandHandler(BOT_COMMAND_MODULE, self.bot_command_module))
-                self._application.add_handler(CommandHandler(BOT_COMMAND_STYLE, self.bot_command_style))
-                self._application.add_handler(CommandHandler(BOT_COMMAND_CLEAR, self.bot_command_clear))
-                self._application.add_handler(CommandHandler(BOT_COMMAND_LANG, self.bot_command_lang))
-                self._application.add_handler(CommandHandler(BOT_COMMAND_CHAT_ID, self.bot_command_chatid))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_START, self.bot_command_start))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_HELP, self.bot_command_help))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_CHATGPT, self.bot_command_chatgpt))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_EDGEGPT, self.bot_command_edgegpt))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_DALLE, self.bot_command_dalle))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_BARD, self.bot_command_bard))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_BING_IMAGEGEN, self.bot_command_bing_imagegen))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_MODULE, self.bot_command_module))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_STYLE, self.bot_command_style))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_CLEAR, self.bot_command_clear))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_LANG, self.bot_command_lang))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_CHAT_ID, self.bot_command_chatid))
 
                 # Handle requests as messages
                 if self.config["telegram"]["reply_to_messages"]:
