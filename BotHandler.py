@@ -30,6 +30,7 @@ import telegram
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto, InputMediaAudio, \
     InputMediaDocument, InputMediaVideo
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters, CallbackQueryHandler
+import requests
 
 import LoggingHandler
 import ProxyAutomation
@@ -227,6 +228,25 @@ async def send_message_async(config: dict, messages: List[Dict],
     request_response.response_timestamp = time.time()
 
 
+async def parse_img(img_source: str):
+    """
+    Test if an image source is valid
+    :param img_source:
+    :return:
+    """
+    try:
+        res = requests.head(img_source, timeout=10, headers={
+                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) "
+                                          "AppleWebKit/537.36 (KHTML, like Gecko) "
+                                          "Chrome/91.4472.114 Safari/537.36"})
+        if res.headers.get("content-type") == "image/svg+xml":
+            return None
+    except Exception as e:
+        logging.warning("Invalid image from {}: {}, You can ignore this message".format(img_source, str(e)))
+        return None
+    return img_source
+
+
 async def _send_text_async_split(config: dict,
                                  messages: Dict,
                                  request_response: RequestResponseContainer.RequestResponseContainer,
@@ -241,6 +261,10 @@ async def _send_text_async_split(config: dict,
     """
     # Send all parts of message
     response_part_counter_init = request_response.response_part_counter
+    images = [img for img in
+              (await asyncio.gather(*[parse_img(img)
+              for img in request_response.response_images]))
+              if img is not None]
     while True:
         # Get current part of response (text)
         if request_response.response:
@@ -270,10 +294,10 @@ async def _send_text_async_split(config: dict,
             try:
                 # Send message as image
                 # Single photo
-                if end and len(request_response.response_images) == 1:
+                if end and len(images) == 1:
                     request_response.message_id = await send_photo(config["telegram"]["api_key"],
                                                                    request_response.user["user_id"],
-                                                                   request_response.response_images[0],
+                                                                   images[0],
                                                                    caption=response_part,
                                                                    reply_to_message_id=reply_to_id,
                                                                    markdown=True,
@@ -282,12 +306,9 @@ async def _send_text_async_split(config: dict,
 
                 # Multiple photos (send media group + markup as separate messages)
                 # Collect media group
-                if end and len(request_response.response_images) > 1:
+                if end and len(images) > 1:
                     # Build media_ground ignoring SVG images
-                    media_group = []
-                    for image_url in request_response.response_images:
-                        if not image_url.lower().endswith(".svg"):
-                            media_group.append(InputMediaPhoto(media=image_url))
+                    media_group = [InputMediaPhoto(media=image_url) for image_url in images]
 
                     # Send it
                     for image_url in (media_group[i:i + 9] for i in range(0, len(media_group), 9)):
@@ -310,7 +331,7 @@ async def _send_text_async_split(config: dict,
                                                                    edit_message_id=edit_id)
                     break
             except Exception as err:
-                logging.error("Error while sending images {} {}".format(request_response.response_images, str(err)))
+                logging.error("Error while sending images {} {}".format(images, str(err)))
 
             # Add cursor symbol?
             if not end and config["telegram"]["add_cursor_symbol"]:
