@@ -231,12 +231,14 @@ async def send_message_async(config: dict, messages: List[Dict],
     request_response.response_timestamp = time.time()
 
 
-async def parse_img(img: str):
-    res = requests.get(img, timeout=30)
-    img = Image.open(io.BytesIO(res.content))
+async def parse_img(img_source: str):
+    img = None
     try:
+        res = requests.get(img_source, timeout=30)
+        img = Image.open(io.BytesIO(res.content))
         img.verify()
-    except Exception:
+    except Exception as e:
+        logging.warning("Invalid image from {}: {}, You can ignore this message".format(img_source, str(e)))
         return None
 
     if img.format not in ["BMP",
