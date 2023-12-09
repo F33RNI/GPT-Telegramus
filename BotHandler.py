@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import io
 import asyncio
 import datetime
 import logging
@@ -25,9 +26,12 @@ import threading
 import time
 from typing import List, Dict
 
+import requests
 import telegram
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters, CallbackQueryHandler
+import md2tgmd
+from PIL import Image
 
 import LoggingHandler
 import ProxyAutomation
@@ -58,14 +62,6 @@ BOT_COMMAND_ADMIN_USERS = "users"
 BOT_COMMAND_ADMIN_BAN = "ban"
 BOT_COMMAND_ADMIN_UNBAN = "unban"
 BOT_COMMAND_ADMIN_BROADCAST = "broadcast"
-
-# List of markdown chars to escape with \\
-MARKDOWN_ESCAPE = ["_", "*", "[", "]", "(", ")", "~", ">", "#", "+", "-", "=", "|", "{", "}", ".", "!"]
-MARKDOWN_ESCAPE_MINIMUM = ["_", "[", "]", "(", ")", "~", ">", "#", "+", "-", "=", "|", "{", "}", ".", "!"]
-MARKDOWN_MODE_ESCAPE_NONE = 0
-MARKDOWN_MODE_ESCAPE_MINIMUM = 1
-MARKDOWN_MODE_ESCAPE_ALL = 2
-MARKDOWN_MODE_NO_MARKDOWN = 3
 
 # After how many seconds restart bot polling if error occurs
 RESTART_ON_ERROR_DELAY = 30
@@ -198,47 +194,7 @@ async def send_message_async(config: dict, messages: List[Dict],
             # Construct markup
             request_response.reply_markup = InlineKeyboardMarkup(build_menu(buttons, n_cols=2))
 
-            # Send message as image
-            if (request_response.request_type == RequestResponseContainer.REQUEST_TYPE_DALLE
-                or request_response.request_type == RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN) \
-                    and not request_response.error:
-                # Single photo
-                if type(request_response.response) == str:
-                    request_response.message_id = (await (telegram.Bot(config["telegram"]["api_key"]).sendPhoto(
-                        chat_id=request_response.user["user_id"],
-                        photo=request_response.response,
-                        reply_to_message_id=request_response
-                        .reply_message_id,
-                        reply_markup=request_response.reply_markup))) \
-                        .message_id
-
-                # Multiple photos (send media group + markup as seperate messages)
-                else:
-                    # Collect media group
-                    media_group = []
-                    for url in request_response.response:
-                        if not url.lower().endswith(".svg"):
-                            media_group.append(InputMediaPhoto(media=url))
-
-                    # Send it
-                    media_group_message_id = (await (telegram.Bot(config["telegram"]["api_key"]).sendMediaGroup(
-                        chat_id=request_response.user["user_id"],
-                        media=media_group,
-                        reply_to_message_id=request_response.reply_message_id)))[0].message_id
-
-                    # Send reply markup and get message ID
-                    request_response.message_id = await send_reply(config["telegram"]["api_key"],
-                                                                   request_response.user["user_id"],
-                                                                   messages[lang]["media_group_response"]
-                                                                   .format(request_response.request),
-                                                                   media_group_message_id,
-                                                                   markdown=False,
-                                                                   reply_markup=request_response.reply_markup,
-                                                                   edit_message_id=request_response.message_id)
-
-            # Send message as text
-            else:
-                await _send_text_async_split(config, request_response, end)
+            await _send_text_async_split(config, messages[lang], request_response, end)
 
         # First or any other message (text only)
         else:
@@ -260,7 +216,7 @@ async def send_message_async(config: dict, messages: List[Dict],
                                                            request_response.reply_message_id))
                     request_response.reply_markup = InlineKeyboardMarkup(build_menu([button_stop]))
 
-                await _send_text_async_split(config, request_response, end)
+                await _send_text_async_split(config, messages[lang], request_response, end)
 
                 # Save new data
                 request_response.response_len_last = len(request_response.response.strip())
@@ -274,16 +230,42 @@ async def send_message_async(config: dict, messages: List[Dict],
     request_response.response_timestamp = time.time()
 
 
+async def parse_img(img: str):
+    res = requests.get(img, timeout=30)
+    img = Image.open(io.BytesIO(res.content))
+    try:
+        img.verify()
+    except Exception:
+        return None
+
+    if img.format not in ["BMP",
+                      "GIF",
+                      "PNG",
+                      "WEBP",
+                      "JPEG",
+                      "JPEG2000"]:
+        with io.BytesIO() as converted:
+            img.save(converted, "JPEG")
+            return converted.getvalue()
+
+    return res.content
+
+
 async def _send_text_async_split(config: dict,
+                                 messages: Dict,
                                  request_response: RequestResponseContainer.RequestResponseContainer,
                                  end=False):
     """
     Sends text in multiple messages if needed (must be previously split)
     :param config:
+    :param messages:
     :param request_response:
     :param end:
     :return:
     """
+    request_response.response_images = [img for
+                                        img in (await asyncio.gather(*[parse_img(img) for img in request_response.response_images]))
+                                        if img is not None]
     # Send all parts of message
     response_part_counter_init = request_response.response_part_counter
     while True:
@@ -307,36 +289,74 @@ async def _send_text_async_split(config: dict,
         if response_part_counter_init == request_response.response_part_counter:
             edit_id = request_response.message_id
 
-        # Check if it is not empty
-        if len(response_part) > 0:
-            # Send with markup and exit from loop if it's the last part
-            if response_part_index_stop == len(request_response.response):
-                # Add cursor symbol?
-                if not end and config["telegram"]["add_cursor_symbol"]:
-                    response_part += config["telegram"]["cursor_symbol"]
+        # Send with markup and exit from loop if it's the last part
+        if response_part_index_stop == len(request_response.response):
+            try:
+                # Send message as image
+                # Single photo
+                if end and len(request_response.response_images) == 1:
+                    request_response.message_id = await send_photo(config["telegram"]["api_key"],
+                                                                   request_response.user["user_id"],
+                                                                   request_response.response_images[0],
+                                                                   response_part,
+                                                                   reply_to_id,
+                                                                   True,
+                                                                   request_response.reply_markup)
+                    break
 
-                request_response.message_id = await send_reply(config["telegram"]["api_key"],
-                                                               request_response.user["user_id"],
-                                                               response_part,
-                                                               reply_to_id,
-                                                               markdown=True,
-                                                               reply_markup=request_response.reply_markup,
-                                                               edit_message_id=edit_id)
-                break
-            # Send as new message without markup and increment counter
-            else:
-                request_response.message_id = await send_reply(config["telegram"]["api_key"],
-                                                               request_response.user["user_id"],
-                                                               response_part,
-                                                               reply_to_id,
-                                                               markdown=True,
-                                                               reply_markup=None,
-                                                               edit_message_id=edit_id)
-                request_response.response_part_counter += 1
+                # Multiple photos (send media group + markup as seperate messages)
+                # Collect media group
+                if end and len(request_response.response_images) > 1:
+                    media_group = [InputMediaPhoto(media=img) for img in request_response.response_images]
 
-        # Exit from loop if no response in current part
-        else:
+                    # Send it
+                    for imgs in (media_group[i:i + 9] for i in range(0, len(media_group), 9)):
+                        reply_to_id = await send_media_group(config["telegram"]["api_key"],
+                                                                        request_response.user["user_id"],
+                                                                        imgs,
+                                                                        response_part,
+                                                                        reply_to_id,
+                                                                        True)
+                        response_part = ""
+
+                    # Send reply markup and get message ID
+                    request_response.message_id = await send_reply(config["telegram"]["api_key"],
+                                                                   request_response.user["user_id"],
+                                                                   messages["media_group_response"]
+                                                                   .format(request_response.request),
+                                                                   reply_to_id,
+                                                                   markdown=False,
+                                                                   reply_markup=request_response.reply_markup,
+                                                                   edit_message_id=edit_id)
+                    break
+            except Exception as err:
+                logging.error("Error while sending images {} {}".format(
+                              request_response.response_images,
+                              str(err)))
+
+            # Add cursor symbol?
+            if not end and config["telegram"]["add_cursor_symbol"]:
+                response_part += config["telegram"]["cursor_symbol"]
+
+            request_response.message_id = await send_reply(config["telegram"]["api_key"],
+                                                           request_response.user["user_id"],
+                                                           response_part,
+                                                           reply_to_id,
+                                                           markdown=True,
+                                                           reply_markup=request_response.reply_markup,
+                                                           edit_message_id=edit_id)
             break
+
+        # Send as new message without markup and increment counter
+        else:
+            request_response.message_id = await send_reply(config["telegram"]["api_key"],
+                                                           request_response.user["user_id"],
+                                                           response_part,
+                                                           reply_to_id,
+                                                           markdown=True,
+                                                           reply_markup=None,
+                                                           edit_message_id=edit_id)
+            request_response.response_part_counter += 1
 
 
 async def send_reply(api_key: str, chat_id: int, message: str, reply_to_message_id: int | None,
@@ -352,68 +372,8 @@ async def send_reply(api_key: str, chat_id: int, message: str, reply_to_message_
     :param edit_message_id: Set message id to edit it instead of sending a new one
     :return: message_id if sent correctly, or None if not
     """
-    # Send as markdown
-    if markdown:
-        # MARKDOWN_MODE_ESCAPE_NONE
-        message_id = await _send_parse(api_key, chat_id, message, reply_to_message_id,
-                                       MARKDOWN_MODE_ESCAPE_NONE, reply_markup, edit_message_id)
-        if message_id is None or message_id < 0:
-            # MARKDOWN_MODE_ESCAPE_MINIMUM
-            message_id = await _send_parse(api_key, chat_id, message, reply_to_message_id,
-                                           MARKDOWN_MODE_ESCAPE_MINIMUM, reply_markup, edit_message_id)
-            if message_id is None or message_id < 0:
-                # MARKDOWN_MODE_ESCAPE_ALL
-                message_id = await _send_parse(api_key, chat_id, message, reply_to_message_id,
-                                               MARKDOWN_MODE_ESCAPE_ALL, reply_markup, edit_message_id)
-                if message_id is None or message_id < 0:
-                    # MARKDOWN_MODE_NO_MARKDOWN
-                    message_id = await _send_parse(api_key, chat_id, message, reply_to_message_id,
-                                                   MARKDOWN_MODE_NO_MARKDOWN, reply_markup, edit_message_id)
-                    if message_id is None or message_id < 0:
-                        raise Exception("Unable to send message in any markdown escape mode!")
-                    else:
-                        return message_id
-                else:
-                    return message_id
-            else:
-                return message_id
-        else:
-            return message_id
-
-    # Markdown parsing is disabled - send as plain message
-    else:
-        return await _send_parse(api_key, chat_id, message, reply_to_message_id,
-                                 MARKDOWN_MODE_NO_MARKDOWN, reply_markup, edit_message_id)
-
-
-async def _send_parse(api_key: str, chat_id: int, message: str, reply_to_message_id: int | None, escape_mode: int,
-                      reply_markup, edit_message_id):
-    """
-    Parses message and sends it as reply
-    :param api_key:
-    :param chat_id:
-    :param message:
-    :param reply_to_message_id:
-    :param escape_mode:
-    :param reply_markup:
-    :param edit_message_id:
-    :return: message_id if sent correctly, or None if not
-    """
     try:
-        # Escape some chars
-        if escape_mode == MARKDOWN_MODE_ESCAPE_MINIMUM:
-            for i in range(len(MARKDOWN_ESCAPE_MINIMUM)):
-                escape_char = MARKDOWN_ESCAPE_MINIMUM[i]
-                message = message.replace(escape_char, "\\" + escape_char)
-
-        # Escape all chars
-        elif escape_mode == MARKDOWN_MODE_ESCAPE_ALL:
-            for i in range(len(MARKDOWN_ESCAPE)):
-                escape_char = MARKDOWN_ESCAPE[i]
-                message = message.replace(escape_char, "\\" + escape_char)
-
-        # Create parse mode
-        parse_mode = None if escape_mode == MARKDOWN_MODE_NO_MARKDOWN else "MarkdownV2"
+        parse_mode, message = ("MarkdownV2", md2tgmd.escape(message)) if markdown else (None, message)
 
         # Send as new message
         if edit_message_id is None or edit_message_id < 0:
@@ -437,11 +397,75 @@ async def _send_parse(api_key: str, chat_id: int, message: str, reply_to_message
         return message_id
 
     except Exception as e:
-        if escape_mode < MARKDOWN_MODE_NO_MARKDOWN:
-            logging.warning("Error sending reply with escape_mode {0}: {1}\t You can ignore this message"
-                            .format(escape_mode, str(e)))
-        else:
-            logging.error("Error sending reply with escape_mode {}!".format(escape_mode), exc_info=e)
+        if markdown:
+            logging.warning("Error sending reply with markdown {0}: {1}\t You can ignore this message"
+                            .format(markdown, str(e)))
+            return await send_reply(api_key, chat_id, message, reply_to_message_id, False, reply_markup, edit_message_id)
+        logging.error("Error sending reply with markdown {}!".format(markdown), exc_info=e)
+        return None
+
+
+async def send_photo(api_key: str, chat_id: int, photo, caption: str,
+                    reply_to_message_id: int | None, markdown=False, reply_markup=None):
+    """
+    Sends photo to chat
+    :param api_key: Telegram bot API key
+    :param chat_id: Chat id to send to
+    :param photo: Photo to send
+    :param caption: Message to send
+    :param reply_to_message_id: Message ID to reply on
+    :param markdown: True to parse as markdown
+    :param reply_markup: Buttons
+    :return: message_id if sent correctly, or None if not
+    """
+    try:
+        parse_mode, caption = ("MarkdownV2", md2tgmd.escape(caption)) if markdown else (None, caption)
+        return (await (telegram.Bot(api_key).send_photo(
+            chat_id=chat_id,
+            photo=photo,
+            caption=caption,
+            parse_mode=parse_mode,
+            reply_to_message_id=reply_to_message_id,
+            reply_markup=reply_markup,
+            write_timeout=60))).message_id
+
+    except Exception as e:
+        if markdown:
+            logging.warning("Error sending photo with markdown {0}: {1}\t You can ignore this message"
+                            .format(markdown, str(e)))
+            return await send_photo(api_key, chat_id, photo, caption, reply_to_message_id, False, reply_markup)
+        logging.error("Error sending photo with markdown {}!".format(markdown), exc_info=e)
+        return None
+
+
+async def send_media_group(api_key: str, chat_id: int, media, caption: str,
+                           reply_to_message_id: int | None, markdown=False):
+    """
+    Sends photo to chat
+    :param api_key: Telegram bot API key
+    :param chat_id: Chat id to send to
+    :param photo: Photo to send
+    :param caption: Message to send
+    :param reply_to_message_id: Message ID to reply on
+    :param markdown: True to parse as markdown
+    :return: message_id if sent correctly, or None if not
+    """
+    try:
+        parse_mode, caption = ("MarkdownV2", md2tgmd.escape(caption)) if markdown else (None, caption)
+
+        return (await (telegram.Bot(api_key).sendMediaGroup(
+            chat_id=chat_id,
+            media=media,
+            caption=caption,
+            parse_mode=parse_mode,
+            reply_to_message_id=reply_to_message_id,
+            write_timeout=120)))[0].message_id
+    except Exception as e:
+        if markdown:
+            logging.warning("Error sending media group with markdown {0}: {1}\t You can ignore this message"
+                            .format(markdown, str(e)))
+            return await send_media_group(api_key, chat_id, media, caption, reply_to_message_id, False)
+        logging.error("Error sending media group with markdown {}!".format(markdown), exc_info=e)
         return None
 
 
