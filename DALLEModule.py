@@ -95,19 +95,39 @@ class DALLEModule:
 
             # Generate image
             logging.info("Requesting image from DALL-E")
-            image_response = self.client.images.generate(prompt=request_response.request,
+
+            request = request_response.request
+            params = {
+                "style": "vivid",
+                "quality": "standard",
+                "size": self.config["dalle"]["image_size"],
+            }
+            if request_response.request.startswith("?"):
+                space_index = request.index(" ")
+                param_str = request[1:space_index]
+                request = request[space_index + 1:]
+
+                for p in param_str.split(","):
+                    [name, value] = p.split("=")
+                    params[name] = value
+
+            image_response = self.client.images.generate(prompt=request,
                                                  n=1,
-                                                 size=self.config["dalle"]["image_size"])
-            response_url = image_response.data[0].url
+                                                 model="dall-e-3",
+                                                 size=params["size"],
+                                                 style=params["style"],
+                                                 quality=params["quality"],
+                                                 response_format="b64_json")
+            response_b64 = image_response.data[0].b64_json
 
             # Check response
-            if not response_url or len(response_url) < 1:
+            if not response_b64 or len(response_b64) < 1:
                 raise Exception("Wrong DALL-E response!")
 
             # OK?
             logging.info("Response successfully processed for user {0} ({1})"
                          .format(request_response.user["user_name"], request_response.user["user_id"]))
-            request_response.response = response_url
+            request_response.response_images = [("base64", response_b64)]
 
         # Exit requested
         except KeyboardInterrupt:
