@@ -17,7 +17,6 @@
 
 from __future__ import annotations
 
-import io
 import asyncio
 import datetime
 import logging
@@ -26,13 +25,11 @@ import threading
 import time
 from typing import List, Dict, Sequence
 
-import requests
+import md2tgmd
 import telegram
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto, InputMediaAudio, \
     InputMediaDocument, InputMediaVideo
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters, CallbackQueryHandler
-import md2tgmd
-from PIL import Image
 
 import LoggingHandler
 import ProxyAutomation
@@ -127,9 +124,7 @@ async def send_message_async(config: dict, messages: List[Dict],
 
         # Fix empty message
         if end:
-            if not request_response.response \
-                    or (type(request_response.response) == list and len(request_response.response) == 0) \
-                    or (type(request_response.response) == str and len(request_response.response.strip()) <= 0):
+            if not request_response.response and len(request_response.response_images) == 0:
                 request_response.response = messages[lang]["empty_message"]
 
         # Reset message parts if new response is smaller than previous one (EdgeGPT API bug)
@@ -140,7 +135,7 @@ async def send_message_async(config: dict, messages: List[Dict],
         request_response.response_raw_len_last = len(request_response.response)
 
         # Split large response into parts (by index)
-        if type(request_response.response) == str and len(request_response.response) > 0:
+        if request_response.response:
             while True:
                 index_start = request_response.response_part_positions[-1]
                 response_part_length = len(request_response.response[index_start:])
@@ -205,6 +200,7 @@ async def send_message_async(config: dict, messages: List[Dict],
             # It's time to edit message, and we have any text to send, and we have new text
             if time_current - request_response.response_send_timestamp_last \
                     >= config["telegram"]["edit_message_every_seconds_num"] \
+                    and request_response.response \
                     and len(request_response.response.strip()) > 0 \
                     and (request_response.response_len_last <= 0 or len(request_response.response.strip())
                          != request_response.response_len_last):
@@ -231,29 +227,6 @@ async def send_message_async(config: dict, messages: List[Dict],
     request_response.response_timestamp = time.time()
 
 
-async def parse_img(img_source: str):
-    img = None
-    try:
-        res = requests.get(img_source, timeout=30)
-        img = Image.open(io.BytesIO(res.content))
-        img.verify()
-    except Exception as e:
-        logging.warning("Invalid image from {}: {}, You can ignore this message".format(img_source, str(e)))
-        return None
-
-    if img.format not in ["BMP",
-                          "GIF",
-                          "PNG",
-                          "WEBP",
-                          "JPEG",
-                          "JPEG2000"]:
-        with io.BytesIO() as converted:
-            img.save(converted, "JPEG")
-            return converted.getvalue()
-
-    return res.content
-
-
 async def _send_text_async_split(config: dict,
                                  messages: Dict,
                                  request_response: RequestResponseContainer.RequestResponseContainer,
@@ -266,23 +239,21 @@ async def _send_text_async_split(config: dict,
     :param end:
     :return:
     """
-    request_response.response_images = [img 
-                                        for img in 
-                                        (await asyncio.gather(*[parse_img(img) 
-                                                                for img in request_response.response_images]))
-                                        if img is not None]
     # Send all parts of message
     response_part_counter_init = request_response.response_part_counter
     while True:
-        # Get current part of response
-        response_part_index_start \
-            = request_response.response_part_positions[request_response.response_part_counter]
-        response_part_index_stop = len(request_response.response)
-        if request_response.response_part_counter < len(request_response.response_part_positions) - 1:
-            response_part_index_stop \
-                = request_response.response_part_positions[request_response.response_part_counter + 1]
-        response_part \
-            = request_response.response[response_part_index_start:response_part_index_stop].strip()
+        # Get current part of response (text)
+        if request_response.response:
+            response_part_index_start \
+                = request_response.response_part_positions[request_response.response_part_counter]
+            response_part_index_stop = len(request_response.response)
+            if request_response.response_part_counter < len(request_response.response_part_positions) - 1:
+                response_part_index_stop \
+                    = request_response.response_part_positions[request_response.response_part_counter + 1]
+            response_part = request_response.response[response_part_index_start:response_part_index_stop].strip()
+        else:
+            response_part = None
+            response_part_index_stop = 0
 
         # Get message ID to reply to
         reply_to_id = request_response.reply_message_id
@@ -295,7 +266,7 @@ async def _send_text_async_split(config: dict,
             edit_id = request_response.message_id
 
         # Send with markup and exit from loop if it's the last part
-        if response_part_index_stop == len(request_response.response):
+        if not request_response.response or response_part_index_stop == len(request_response.response):
             try:
                 # Send message as image
                 # Single photo
@@ -303,25 +274,29 @@ async def _send_text_async_split(config: dict,
                     request_response.message_id = await send_photo(config["telegram"]["api_key"],
                                                                    request_response.user["user_id"],
                                                                    request_response.response_images[0],
-                                                                   response_part,
-                                                                   reply_to_id,
-                                                                   True,
-                                                                   request_response.reply_markup)
+                                                                   caption=response_part,
+                                                                   reply_to_message_id=reply_to_id,
+                                                                   markdown=True,
+                                                                   reply_markup=request_response.reply_markup)
                     break
 
-                # Multiple photos (send media group + markup as seperate messages)
+                # Multiple photos (send media group + markup as separate messages)
                 # Collect media group
                 if end and len(request_response.response_images) > 1:
-                    media_group = [InputMediaPhoto(media=img) for img in request_response.response_images]
+                    # Build media_ground ignoring SVG images
+                    media_group = []
+                    for image_url in request_response.response_images:
+                        if not image_url.lower().endswith(".svg"):
+                            media_group.append(InputMediaPhoto(media=image_url))
 
                     # Send it
-                    for imgs in (media_group[i:i + 9] for i in range(0, len(media_group), 9)):
+                    for image_url in (media_group[i:i + 9] for i in range(0, len(media_group), 9)):
                         reply_to_id = await send_media_group(config["telegram"]["api_key"],
-                                                             request_response.user["user_id"],
-                                                             imgs,
-                                                             response_part,
-                                                             reply_to_id,
-                                                             True)
+                                                             chat_id=request_response.user["user_id"],
+                                                             media=image_url,
+                                                             caption=response_part,
+                                                             reply_to_message_id=reply_to_id,
+                                                             markdown=True)
                         response_part = ""
 
                     # Send reply markup and get message ID
@@ -329,15 +304,13 @@ async def _send_text_async_split(config: dict,
                                                                    request_response.user["user_id"],
                                                                    messages["media_group_response"]
                                                                    .format(request_response.request),
-                                                                   reply_to_id,
+                                                                   reply_to_message_id=reply_to_id,
                                                                    markdown=False,
                                                                    reply_markup=request_response.reply_markup,
                                                                    edit_message_id=edit_id)
                     break
             except Exception as err:
-                logging.error("Error while sending images {} {}".format(
-                    request_response.response_images,
-                    str(err)))
+                logging.error("Error while sending images {} {}".format(request_response.response_images, str(err)))
 
             # Add cursor symbol?
             if not end and config["telegram"]["add_cursor_symbol"]:
@@ -411,7 +384,7 @@ async def send_reply(api_key: str, chat_id: int, message: str, reply_to_message_
         return None
 
 
-async def send_photo(api_key: str, chat_id: int, photo, caption: str,
+async def send_photo(api_key: str, chat_id: int, photo, caption: str | None,
                      reply_to_message_id: int | None, markdown=False, reply_markup=None):
     """
     Sends photo to chat
@@ -425,7 +398,10 @@ async def send_photo(api_key: str, chat_id: int, photo, caption: str,
     :return: message_id if sent correctly, or None if not
     """
     try:
-        parse_mode, caption = ("MarkdownV2", md2tgmd.escape(caption)) if markdown else (None, caption)
+        if caption:
+            parse_mode, caption = ("MarkdownV2", md2tgmd.escape(caption)) if markdown else (None, caption)
+        else:
+            parse_mode = None
         return (await (telegram.Bot(api_key).send_photo(
             chat_id=chat_id,
             photo=photo,

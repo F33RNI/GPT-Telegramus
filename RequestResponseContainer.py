@@ -43,7 +43,7 @@ class RequestResponseContainer:
                  request="",
                  response="",
                  response_len_last=0,
-                 response_images=[],
+                 response_images=None,
                  request_type=REQUEST_TYPE_CHATGPT,
                  request_timestamp="",
                  response_timestamp="",
@@ -77,7 +77,6 @@ class RequestResponseContainer:
         self.request = request
         self.response = response
         self.response_len_last = response_len_last
-        self.response_images = response_images
         self.request_type = request_type
         self.request_timestamp = request_timestamp
         self.response_timestamp = response_timestamp
@@ -85,6 +84,12 @@ class RequestResponseContainer:
         self.reply_markup = reply_markup
         self.pid = pid
         self.image_url = image_url
+
+        # Empty or response_images
+        if response_images is None:
+            self.response_images = []
+        else:
+            self.response_images = response_images
 
         self.processing_start_timestamp = 0.
         self.error = False
