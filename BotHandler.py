@@ -240,7 +240,7 @@ async def parse_img(img_source: str):
                                           "AppleWebKit/537.36 (KHTML, like Gecko) "
                                           "Chrome/91.4472.114 Safari/537.36"})
         if res.headers.get("content-type") == "image/svg+xml":
-            return None
+            raise Exception("SVG Image")
     except Exception as e:
         logging.warning("Invalid image from {}: {}, You can ignore this message".format(img_source, str(e)))
         return None
