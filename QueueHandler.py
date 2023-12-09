@@ -685,7 +685,7 @@ class QueueHandler:
                 request_str_to_format = self.config["data_collecting"]["request_format"].replace("\\n", "\n") \
                     .replace("\\t", "\t").replace("\\r", "\r")
 
-                # Log image
+                # Log image request
                 try:
                     if request_response.image_url:
                         logging.info("Downloading user image")
@@ -712,34 +712,45 @@ class QueueHandler:
 
             # Log response
             else:
-                response = "None"
-                try:
-                    # DALL-E or BingImageGen response without error
-                    if (request_response.request_type == RequestResponseContainer.REQUEST_TYPE_DALLE
-                        or request_response.request_type == RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN) \
-                            and not request_response.error:
-                        response_url = request_response.response if type(request_response.response) == str \
-                            else request_response.response[0]
-                        response = base64.b64encode(requests.get(response_url, timeout=120).content) \
-                            .decode("utf-8")
-
-                    # Text response (ChatGPT, EdgeGPT, Bard)
-                    else:
-                        response = request_response.response
-                except Exception as e:
-                    logging.warning("Can't parse response for data logging!", exc_info=e)
-                    response = str(response)
-
-                # Log response
+                # Get formatter
                 response_str_to_format = self.config["data_collecting"]["response_format"].replace("\\n", "\n") \
                     .replace("\\t", "\t").replace("\\r", "\r")
-                log_file.write(response_str_to_format.format(request_response.response_timestamp,
-                                                             request_response.id,
-                                                             request_response.user["user_name"],
-                                                             request_response.user["user_id"],
-                                                             RequestResponseContainer
-                                                             .REQUEST_NAMES[request_response.request_type],
-                                                             response))
+
+                # Text
+                if request_response.response and type(request_response.response) == str:
+                    log_file.write(response_str_to_format.format(request_response.response_timestamp,
+                                                                 request_response.id,
+                                                                 request_response.user["user_name"],
+                                                                 request_response.user["user_id"],
+                                                                 RequestResponseContainer
+                                                                 .REQUEST_NAMES[request_response.request_type],
+                                                                 request_response.response))
+
+                # Images
+                for image_url in request_response.response_images:
+                    try:
+                        response = base64.b64encode(requests.get(image_url, timeout=120).content).decode("utf-8")
+                        log_file.write(response_str_to_format.format(request_response.response_timestamp,
+                                                                     request_response.id,
+                                                                     request_response.user["user_name"],
+                                                                     request_response.user["user_id"],
+                                                                     RequestResponseContainer
+                                                                     .REQUEST_NAMES[request_response.request_type],
+                                                                     response))
+                    # Error logging image
+                    except Exception as e:
+                        logging.warning("Error logging image: {}".format(image_url), exc_info=e)
+
+                if request_response.response and type(request_response.response) == str:
+                    response_str_to_format = self.config["data_collecting"]["response_format"].replace("\\n", "\n") \
+                        .replace("\\t", "\t").replace("\\r", "\r")
+                    log_file.write(response_str_to_format.format(request_response.response_timestamp,
+                                                                 request_response.id,
+                                                                 request_response.user["user_name"],
+                                                                 request_response.user["user_id"],
+                                                                 RequestResponseContainer
+                                                                 .REQUEST_NAMES[request_response.request_type],
+                                                                 request_response.response))
 
             # Log confirmation
             logging.info("The {0} were written to the file: {1}".format("request" if log_request else "response",

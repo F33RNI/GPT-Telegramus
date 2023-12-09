@@ -39,9 +39,10 @@ Or message me if you would like to donate 💰
 ## 🤗 Contributors
 
 - 1️⃣ [Sprav04ka](https://github.com/Sprav04ka) - *Tofii'skovyi' language, Testing, [Super beautiful DIY jack o'lantern (for poster)](Banner.png), [Project Logo](Logo.png), Motivation*
-- 2️⃣ [Sergey Krashevich](https://github.com/skrashevich) - *Docker, GitHub Actions*
-- 3️⃣ [Wahit Fitriyanto](https://github.com/wahitftry) - *Indonesian language*
-- 4️⃣ [Alexander Fadeyev](https://github.com/alfsoft) - *EdgeGPT Fix*
+- 2️⃣ [Hanssen](https://github.com/handsome0hell) - *Markdown parsing, bard images, Chinese language, /chat command*
+- 3️⃣ [Sergey Krashevich](https://github.com/skrashevich) - *Docker, GitHub Actions*
+- 4️⃣ [Wahit Fitriyanto](https://github.com/wahitftry) - *Indonesian language*
+- 5️⃣ [Alexander Fadeyev](https://github.com/alfsoft) - *EdgeGPT Fix*
 
 ----------
 

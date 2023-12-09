@@ -132,7 +132,7 @@ class BingImageGenModule:
             # Use all generated images
             logging.info("Response successfully processed for user {0} ({1})"
                          .format(request_response.user["user_name"], request_response.user["user_id"]))
-            request_response.response = response_urls
+            request_response.response_images = response_urls
 
         # Exit requested
         except KeyboardInterrupt:

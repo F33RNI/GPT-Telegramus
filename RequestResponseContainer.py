@@ -43,6 +43,7 @@ class RequestResponseContainer:
                  request="",
                  response="",
                  response_len_last=0,
+                 response_images=None,
                  request_type=REQUEST_TYPE_CHATGPT,
                  request_timestamp="",
                  response_timestamp="",
@@ -59,6 +60,7 @@ class RequestResponseContainer:
         :param request: text request
         :param response: text response
         :param response_len_last: length of last response (for editing aka live replying)
+        :param response_images: images in the responses
         :param request_type: REQUEST_TYPE_CHATGPT / REQUEST_TYPE_DALLE / ...
         :param request_timestamp: timestamp of request (for data collecting)
         :param response_timestamp: timestamp of response (for data collecting)
@@ -82,6 +84,12 @@ class RequestResponseContainer:
         self.reply_markup = reply_markup
         self.pid = pid
         self.image_url = image_url
+
+        # Empty or response_images
+        if response_images is None:
+            self.response_images = []
+        else:
+            self.response_images = response_images
 
         self.processing_start_timestamp = 0.
         self.error = False
