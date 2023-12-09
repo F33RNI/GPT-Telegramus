@@ -123,6 +123,7 @@ Or message me if you would like to donate 💰
 - 🇷🇺 Русский
 - ‍☠️ Тофийсковый
 - 🇮🇩 Bahasa Indonesia
+- 🇨🇳 简体中文
 
 If you want to add a language, create a pull request 💜
 
