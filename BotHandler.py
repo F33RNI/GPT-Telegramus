@@ -44,6 +44,7 @@ from main import __version__
 # User commands
 BOT_COMMAND_START = "start"
 BOT_COMMAND_HELP = "help"
+BOT_COMMAND_CHAT = "chat"
 BOT_COMMAND_CHATGPT = "chatgpt"
 BOT_COMMAND_EDGEGPT = "bing"
 BOT_COMMAND_DALLE = "dalle"
@@ -611,6 +612,7 @@ class BotHandler:
                 # User commands
                 self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_START, self.bot_command_start))
                 self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_HELP, self.bot_command_help))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_CHAT, self.bot_message))
                 self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_CHATGPT, self.bot_command_chatgpt))
                 self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_EDGEGPT, self.bot_command_edgegpt))
                 self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_DALLE, self.bot_command_dalle))
@@ -636,7 +638,7 @@ class BotHandler:
                 self._application.add_handler(CommandHandler(BOT_COMMAND_ADMIN_BROADCAST, self.bot_command_broadcast))
 
                 # Unknown command -> send help
-                self._application.add_handler(MessageHandler(filters.COMMAND, self.bot_command_help))
+                self._application.add_handler(MessageHandler(filters.COMMAND, self.bot_command_unknown))
 
                 # Add buttons handler
                 self._application.add_handler(CallbackQueryHandler(self.query_callback))
@@ -1631,6 +1633,17 @@ class BotHandler:
                                      self.config["telegram"]["queue_max"]),
                                  context,
                                  reply_to_message_id=request_response.reply_message_id)
+
+    async def bot_command_unknown(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """
+        unknown command
+        :param update:
+        :param context:
+        :return:
+        """
+        if update.effective_message.chat.type.lower() != "private":
+            return
+        await self.bot_command_help(update, context)
 
     async def bot_command_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
