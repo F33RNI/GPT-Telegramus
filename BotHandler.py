@@ -371,7 +371,11 @@ async def _split_and_send_message_async(
     sent_len = request_response.response_sent_len
     sent_images_count = 0
     # Send all parts of message
-    while sent_len < len(response or "") or len(images) != 0:
+    while (
+        request_response.response_next_chunk_start_index < sent_len
+        or sent_len < len(response or "")
+        or len(images) != 0
+    ):
         message_start_index = sent_len
         message_to_send = None
         edit_id = None
@@ -383,20 +387,21 @@ async def _split_and_send_message_async(
             else request_response.reply_message_id
         )
 
+        # If the previous chunk is editable
+        if request_response.response_next_chunk_start_index < sent_len:
+            message_start_index = request_response.response_next_chunk_start_index
+            edit_id = request_response.message_id
 
         # Get current part of response if it's not finished
-        if sent_len < len(response or ""):
-            # If the previous chunk is editable
-            if request_response.response_next_chunk_start_index < sent_len:
-                message_start_index = request_response.response_next_chunk_start_index
-                edit_id = request_response.message_id
-
+        if message_start_index < len(response or ""):
             message_to_send = _split_message(response[message_start_index:], len_limit)
             sent_len = message_start_index + len(message_to_send)
 
             request_response.response_next_chunk_start_index = sent_len
             # Don't count the cursor in
-            request_response.response_sent_len = min(sent_len, len(request_response.response or ""))
+            request_response.response_sent_len = min(
+                sent_len, len(request_response.response or "")
+            )
 
             message_to_send = message_to_send.strip()
 
@@ -424,7 +429,9 @@ async def _split_and_send_message_async(
                 edit_message_id=edit_id,
             )
             # Don't count the cursor in
-            request_response.response_next_chunk_start_index = min(message_start_index, len(request_response.response))
+            request_response.response_next_chunk_start_index = min(
+                message_start_index, len(request_response.response)
+            )
             # ignore images
             break
 
@@ -449,8 +456,8 @@ async def _split_and_send_message_async(
             continue
 
         # Multiple photos (send media group + markup as separate messages)
-        media_group = [InputMediaPhoto(media=image_url) for image_url in images[0: 9]]
-        images = images[len(media_group):]
+        media_group = [InputMediaPhoto(media=image_url) for image_url in images[0:9]]
+        images = images[len(media_group) :]
         message_id, err_msg = await send_media_group(
             config["telegram"]["api_key"],
             chat_id=request_response.user["user_id"],
@@ -465,7 +472,9 @@ async def _split_and_send_message_async(
             response += err_msg
 
         if len(images) == 0:
-            response += messages["media_group_response"].format(request_response.request)
+            response += messages["media_group_response"].format(
+                request_response.request
+            )
 
 
 def _split_message(message: str, max_length: int):
@@ -479,9 +488,9 @@ def _split_message(message: str, max_length: int):
     if len(result) == len(message):
         return result
     if (i := result.rfind("\n")) != -1:
-        return result[:i + 1]
+        return result[: i + 1]
     if (i := result.rfind(" ")) != -1:
-        return result[:i + 1]
+        return result[: i + 1]
     return result
 
 
@@ -588,17 +597,20 @@ async def send_photo(
             )
         else:
             parse_mode = None
-        return ((
-            await telegram.Bot(api_key).send_photo(
-                chat_id=chat_id,
-                photo=photo,
-                caption=caption,
-                parse_mode=parse_mode,
-                reply_to_message_id=reply_to_message_id,
-                reply_markup=reply_markup,
-                write_timeout=60,
-            )
-        ).message_id, None)
+        return (
+            (
+                await telegram.Bot(api_key).send_photo(
+                    chat_id=chat_id,
+                    photo=photo,
+                    caption=caption,
+                    parse_mode=parse_mode,
+                    reply_to_message_id=reply_to_message_id,
+                    reply_markup=reply_markup,
+                    write_timeout=60,
+                )
+            ).message_id,
+            None,
+        )
 
     except Exception as e:
         logging.warning(
@@ -644,16 +656,19 @@ async def send_media_group(
             ("MarkdownV2", md2tgmd.escape(caption)) if markdown else (None, caption)
         )
 
-        return ((
-            await telegram.Bot(api_key).sendMediaGroup(
-                chat_id=chat_id,
-                media=media,
-                caption=caption,
-                parse_mode=parse_mode,
-                reply_to_message_id=reply_to_message_id,
-                write_timeout=120,
-            )
-        )[0].message_id, "")
+        return (
+            (
+                await telegram.Bot(api_key).sendMediaGroup(
+                    chat_id=chat_id,
+                    media=media,
+                    caption=caption,
+                    parse_mode=parse_mode,
+                    reply_to_message_id=reply_to_message_id,
+                    write_timeout=120,
+                )
+            )[0].message_id,
+            "",
+        )
     except Exception as e:
         logging.warning(
             "Error sending media group with markdown {0}: {1}\t You can ignore this message".format(
@@ -661,7 +676,10 @@ async def send_media_group(
             )
         )
         if not markdown:
-            return (None, "\n\n" + "\n".join([f"{url.media}" for url in media]) + "\n\n")
+            return (
+                None,
+                "\n\n" + "\n".join([f"{url.media}" for url in media]) + "\n\n",
+            )
         return await send_media_group(
             api_key, chat_id, media, caption, reply_to_message_id, False
         )
