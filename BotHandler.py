@@ -238,9 +238,9 @@ async def parse_img(img_source: str):
     """
     try:
         res = requests.head(img_source, timeout=10, headers={
-                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) "
-                                          "AppleWebKit/537.36 (KHTML, like Gecko) "
-                                          "Chrome/91.4472.114 Safari/537.36"})
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) "
+                          "AppleWebKit/537.36 (KHTML, like Gecko) "
+                          "Chrome/91.4472.114 Safari/537.36"})
         if res.headers.get("content-type") == "image/svg+xml":
             raise Exception("SVG Image")
     except Exception as e:
@@ -264,9 +264,7 @@ async def _send_text_async_split(config: dict,
     # Send all parts of message
     response_part_counter_init = request_response.response_part_counter
     images = [img for img in
-              (await asyncio.gather(*[parse_img(img)
-              for img in request_response.response_images]))
-              if img is not None]
+              (await asyncio.gather(*[parse_img(img) for img in request_response.response_images])) if img is not None]
     while True:
         # Get current part of response (text)
         if request_response.response:
@@ -444,10 +442,10 @@ async def send_photo(api_key: str, chat_id: int, photo, caption: str | None,
 
 
 async def send_media_group(api_key: str,
-                           chat_id: int, 
-                           media: Sequence[InputMediaAudio | InputMediaDocument | InputMediaPhoto | InputMediaVideo], 
+                           chat_id: int,
+                           media: Sequence[InputMediaAudio | InputMediaDocument | InputMediaPhoto | InputMediaVideo],
                            caption: str,
-                           reply_to_message_id: int | None, 
+                           reply_to_message_id: int | None,
                            markdown=False):
     """
     Sends photo to chat
@@ -596,15 +594,22 @@ class BotHandler:
         Starts bot (blocking)
         :return:
         """
-        # Start response_loop as thread
-        # self._response_loop_thread = threading.Thread(target=self._response_loop)
-        # self._response_loop_thread.start()
-        # logging.info("response_loop thread: {0}".format(self._response_loop_thread.name))
-
-        # Start telegram bot polling
-        logging.info("Starting telegram bot")
         while True:
             try:
+                # Close previous event loop
+                try:
+                    loop = asyncio.get_running_loop()
+                    if loop and loop.is_running():
+                        logging.info("Stopping current event loop before starting a new one")
+                        loop.stop()
+                except Exception as e:
+                    logging.warning("Error stopping current event loop: {}".format(str(e)))
+
+                # Create new event loop
+                logging.info("Creating new event loop")
+                self._event_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(self._event_loop)
+
                 # Build bot
                 builder = ApplicationBuilder().token(self.config["telegram"]["api_key"])
                 self._application = builder.build()
@@ -617,7 +622,8 @@ class BotHandler:
                 self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_EDGEGPT, self.bot_command_edgegpt))
                 self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_DALLE, self.bot_command_dalle))
                 self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_BARD, self.bot_command_bard))
-                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_BING_IMAGEGEN, self.bot_command_bing_imagegen))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_BING_IMAGEGEN,
+                                                                    self.bot_command_bing_imagegen))
                 self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_MODULE, self.bot_command_module))
                 self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_STYLE, self.bot_command_style))
                 self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_CLEAR, self.bot_command_clear))
@@ -643,14 +649,13 @@ class BotHandler:
                 # Add buttons handler
                 self._application.add_handler(CallbackQueryHandler(self.query_callback))
 
-                # Start bot
-                self._event_loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(self._event_loop)
-                self._event_loop.run_until_complete(self._application.run_polling())
+                # Start telegram bot polling
+                logging.info("Starting bot polling")
+                self._application.run_polling(close_loop=False, stop_signals=[])
 
             # Exit requested
-            except KeyboardInterrupt:
-                logging.warning("KeyboardInterrupt @ bot_start")
+            except (KeyboardInterrupt, SystemExit):
+                logging.warning("KeyboardInterrupt or SystemExit @ bot_start")
                 break
 
             # Bot error?
@@ -662,19 +667,22 @@ class BotHandler:
                 else:
                     logging.error("Telegram bot error!", exc_info=e)
 
-            # Wait before restarting if needed
-            if not self._restart_requested_flag:
+                # Restart bot
                 logging.info("Restarting bot polling after {0} seconds".format(RESTART_ON_ERROR_DELAY))
                 try:
                     time.sleep(RESTART_ON_ERROR_DELAY)
+
                 # Exit requested while waiting for restart
-                except KeyboardInterrupt:
-                    logging.warning("KeyboardInterrupt @ bot_start")
+                except (KeyboardInterrupt, SystemExit):
+                    logging.warning("KeyboardInterrupt or SystemExit while waiting @ bot_start")
                     break
 
-            # Restart bot
-            logging.info("Restarting bot polling")
-            self._restart_requested_flag = False
+            # Restart bot or exit from loop
+            if self._restart_requested_flag or self.queue_handler.prevent_shutdown_flag:
+                logging.info("Restarting bot polling")
+                self._restart_requested_flag = False
+            else:
+                break
 
         # If we're here, exit requested
         logging.warning("Telegram bot stopped")
@@ -1072,19 +1080,20 @@ class BotHandler:
         logging.info("Starting back ProxyAutomation")
         self.proxy_automation.start_automation_loop()
 
-        # Restart telegram bot
-        self._restart_requested_flag = True
-        logging.info("Stopping event loop to restart Telegram bot")
-        self._event_loop.stop()
-        time.sleep(1)
-        try:
-            logging.info("Closing event loop to restart Telegram bot")
-            self._event_loop.close()
-        except:
-            pass
+        def _restart_bot():
+            """
+            Restart telegram bot polling and sends "Restarting done" message
+            :return:
+            """
+            # Wait some time
+            time.sleep(1)
 
-        def send_message_after_restart():
-            # Sleep while restarting
+            # Restart telegram bot
+            self._restart_requested_flag = True
+            logging.info("Stopping event loop to restart Telegram bot")
+            self._event_loop.stop()
+
+            # Wait
             logging.info("Waiting for _restart_requested_flag")
             while self._restart_requested_flag:
                 time.sleep(1)
@@ -1098,7 +1107,8 @@ class BotHandler:
             except Exception as e:
                 logging.error("Error sending message!", exc_info=e)
 
-        threading.Thread(target=send_message_after_restart).start()
+        # Start thread that will restart bot polling
+        threading.Thread(target=_restart_bot, daemon=True).start()
 
     async def bot_command_queue(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
