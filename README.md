@@ -346,7 +346,6 @@ You can enable and configure data collection in config in `data_collecting` bloc
 - Add some free GPT-4 model
 - Add image input and generation for EdgeGPT (and ChatGPT?)
 - Add Bard's text-to-speech
-- Add list of commands
 - Add an API, so you can use GPT-Telegramus from outside the bot
 
 ----------

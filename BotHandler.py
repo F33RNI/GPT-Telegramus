@@ -28,7 +28,7 @@ from typing import List, Dict, Sequence
 import md2tgmd
 import telegram
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto, InputMediaAudio, \
-    InputMediaDocument, InputMediaVideo
+    InputMediaDocument, InputMediaVideo, BotCommand
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters, CallbackQueryHandler
 import requests
 
@@ -613,6 +613,18 @@ class BotHandler:
                 # Build bot
                 builder = ApplicationBuilder().token(self.config["telegram"]["api_key"])
                 self._application = builder.build()
+
+                # Set commands description
+                if self.config["telegram"]["commands_description_enabled"]:
+                    try:
+                        logging.info("Trying to set bot commands")
+                        bot_commands = []
+                        for command_description in self.config["telegram"]["commands_description"]:
+                            bot_commands.append(BotCommand(command_description["command"],
+                                                           command_description["description"]))
+                        self._event_loop.run_until_complete(self._application.bot.set_my_commands(bot_commands))
+                    except Exception as e:
+                        logging.error("Error setting bot commands description!", exc_info=e)
 
                 # User commands
                 self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_START, self.bot_command_start))

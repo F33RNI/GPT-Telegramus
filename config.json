@@ -169,7 +169,36 @@
         "reply_to_messages": true,
 
         "__comment09__": "HOW MANY SECONDS TO WAIT BETWEEN EACH MESSAGE WHEN BROADCASTING",
-        "broadcast_delay_per_user_seconds": 0.5
+        "broadcast_delay_per_user_seconds": 0.5,
+
+        "__comment10__": "BOT COMMANDS DESCRIPTION (WILL BE AUTOMATICALLY ADDED TO THE BOT)",
+        "commands_description_enabled": true,
+        "commands_description": [
+            {
+                "command": "start",
+                "description": "📄 Welcome message and bot version"
+            },
+            {
+                "command": "help",
+                "description": "❓ Show this message"
+            },
+            {
+                "command": "module",
+                "description": "↕ Change module to chat with"
+            },
+            {
+                "command": "clear",
+                "description": "🧹 Clear chat history"
+            },
+            {
+                "command": "lang",
+                "description": "🌎 Change the language"
+            },
+            {
+                "command": "chatid",
+                "description": "🆔 Show your chat_id"
+            }
+        ]
     },
 
     "__comment08__": "FILES AND DIRECTORIES SETTINGS",
