@@ -1563,16 +1563,12 @@ class BotHandler:
         # Extract text request
         if update.message.caption:
             request_message = update.message.caption.strip()
-        elif request_type >= 0:
-            if context.args:
-                request_message = str(" ".join(context.args)).strip()
-            else:
-                request_message = ""
+        elif context.args is not None:
+            request_message = str(" ".join(context.args)).strip()
+        elif update.message.text:
+            request_message = update.message.text.strip()
         else:
-            if update.message.text:
-                request_message = update.message.text.strip()
-            else:
-                request_message = ""
+            request_message = ""
 
         # Process request
         await self.bot_command_or_message_request_raw(request_type,
