@@ -305,6 +305,7 @@ Sometimes, searching for a proxy can take a long time. If you think that the fou
 - 🌎 `/lang` - Change the language
 - 🆔 `/chatid` - Show your chat_id
 - `/style` - Bing AI conversation style
+- `/chat <Text request>` - Request to the default module
 - `/chatgpt <Text request>` - Request to the ChatGPT module
 - `/dalle <Text request>` - Request to the DALL-E module
 - `/bing <Text request>` - Request to the Bing AI module
