@@ -180,7 +180,7 @@
             },
             {
                 "command": "help",
-                "description": "❓ Show this message"
+                "description": "❓ Show help message"
             },
             {
                 "command": "module",
