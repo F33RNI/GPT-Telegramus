@@ -94,10 +94,9 @@ class RequestResponseContainer:
         self.processing_start_timestamp = 0.
         self.error = False
 
-        # Used by BotHandler to split large message into smaller ones (list of indexes of text in response)
-        self.response_raw_len_last = 0
-        self.response_part_positions = [0]
-        self.response_part_counter = 0
+        # Used by BotHandler to split large message into smaller ones
+        self.response_next_chunk_start_index = 0
+        self.response_sent_len = 0
 
         # Unique ID for container to get it from queue (address)
         self.id = -1
