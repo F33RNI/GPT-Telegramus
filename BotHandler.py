@@ -327,7 +327,10 @@ async def parse_img(img_source: str):
                 "Chrome/91.4472.114 Safari/537.36"
             },
         )
-        if res.headers.get("content-type") == "image/svg+xml":
+        content_type = res.headers.get("content-type")
+        if not content_type.startswith("image"):
+            raise Exception("Not Image")
+        if content_type == "image/svg+xml":
             raise Exception("SVG Image")
     except Exception as e:
         logging.warning(
