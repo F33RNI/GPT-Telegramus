@@ -531,35 +531,43 @@ def _split_message(msg: str, after: int, max_length: int):
     ('```This A``` ``` This```', 22)
     >>> _split_message("```This A``` ``` This B```", 7, 24)
     ('```A``` ``` This B```', 19)
+    >>> _split_message("```This A```", 0, 5)
+    ('```Th', 5)
+    >>> _split_message("```This A", 0, 100)
+    ('```This A```', 9)
     """
     (_, _, begin_code_start_id, start_index) = _get_tg_code_block(msg, after)
     start_index = _regfind(msg, r"[^ \n]", start_index)
-    end_index = start_index + max_length - len(begin_code_start_id)
-    end_code_end_id = ""
+    end_index = min(start_index + max_length - len(begin_code_start_id), len(msg))
 
+    end_code_end_id = ""
     result = ""
-    if end_index < len(msg):
-        # Not finished
-        while True:
-            for whitespace in ["\n", " "]:
-                if msg[end_index] == whitespace:
-                    break
-                if (i := msg.rfind(whitespace, start_index, end_index)) != -1:
-                    end_index = i + 1
-                    break
-            (end_code_end_id, end_index, _, _) = _get_tg_code_block(msg, end_index)
-            result = msg[start_index:end_index].strip()
-            if (
-                len(begin_code_start_id) + len(result) + len(end_code_end_id)
-                <= max_length
-            ):
+    while True:
+        if end_index <= start_index:
+            # Can't even fit the code block ids
+            begin_code_start_id = ""
+            end_code_end_id = ""
+            start_index = _regfind(msg, r"[^ \n]", after)
+            end_index = start_index + max_length
+            result = msg[start_index: end_index].strip()
+            break
+
+        for whitespace in ["\n", " "]:
+            if end_index == len(msg) or msg[end_index] == whitespace:
                 break
-            # Too long after adding code ids
-            end_index -= 1
-        result = begin_code_start_id + result + end_code_end_id
-    else:
-        end_index = len(msg)
-        result = begin_code_start_id + msg[start_index:].strip()
+            if (i := msg.rfind(whitespace, start_index, end_index)) != -1:
+                end_index = i + 1
+                break
+        (end_code_end_id, end_index, _, _) = _get_tg_code_block(msg, end_index)
+        result = msg[start_index:end_index].strip()
+        if (
+            len(begin_code_start_id) + len(result) + len(end_code_end_id)
+            <= max_length
+        ):
+            break
+        # Too long after adding code ids
+        end_index -= 1
+    result = begin_code_start_id + result + end_code_end_id
 
     return (result, end_index - after)
 
@@ -574,9 +582,9 @@ def _get_tg_code_block(msg: str, at: int):
     :param before: before index
     :return: (prev readable code end id, prev readable end index, next readable code start id, next readable start index)
 
-    >>> msg = "Hi ```Hi``` Hi\\n```json Hi```\\n```json\\nHi``` ```T````T```"
+    >>> msg = "Hi ```Hi``` Hi\\n```json Hi```\\n```json\\nHi``` ```T````T``` ```A"
     >>> #      0         1           2           3           4         5
-    >>> #      012345678901234  56789012345678  90123456  789012345678901234
+    >>> #      012345678901234  56789012345678  90123456  78901234567890123456789
     >>> _get_tg_code_block(msg, 0)
     ('', 0, '', 0)
     >>> _get_tg_code_block(msg, 3)
@@ -605,6 +613,8 @@ def _get_tg_code_block(msg: str, at: int):
     ('```', 49, '```', 49)
     >>> _get_tg_code_block(msg, 52)
     ('```', 52, '', 55)
+    >>> _get_tg_code_block(msg, 56)
+    ('', 56, '```', 59)
     """
     # For easier matching the beginning of file and the end of file
     at += 1
