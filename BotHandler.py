@@ -155,8 +155,8 @@ async def send_message_async(
 
         # Reset message parts if new response is smaller than previous one (EdgeGPT API bug)
         # TODO: Fix API code instead
-        if response_len < request_response.response_sent_len:
-            request_response.response_sent_len = 0
+        if response_len < request_response.response_len_last:
+            request_response.response_next_chunk_start_index = 0
 
         await _send_prepared_message_async(config, messages, request_response, end)
 
@@ -217,12 +217,12 @@ def should_send_message(
         >= config["telegram"]["edit_message_every_seconds_num"]
         and response_len > 0
         and (
-            request_response.response_sent_len <= 0
+            request_response.response_len_last <= 0
             or response_len != request_response.response_len_last
         )
     ):
         # Save new data
-        request_response.response_sent_len = response_len
+        request_response.response_len_last = response_len
         request_response.response_send_timestamp_last = time_current
 
         return True
