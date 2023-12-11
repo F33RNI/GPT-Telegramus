@@ -23,7 +23,8 @@ import logging
 import multiprocessing
 import threading
 import time
-from typing import List, Dict, Sequence
+from typing import List, Dict, Sequence, Optional
+import re
 
 import md2tgmd
 import telegram
@@ -401,19 +402,22 @@ async def _split_and_send_message_async(
         message_type = None
         if should_contains_images:
             # Try to fit the message in caption
-            message_to_send = _split_message(
-                response[message_start_index:], caption_limit
+            message_to_send, consumed_len = _split_message(
+                response, message_start_index, caption_limit
             )
-            if message_start_index + len(message_to_send) == len(response):
+            if message_start_index + consumed_len == len(response):
                 if len(images) == 1:
                     message_type = 2
                 else:
                     message_type = 3
+                sent_len = message_start_index + consumed_len
         if message_type is None:
             # No images
-            message_to_send = _split_message(response[message_start_index:], msg_limit)
+            message_to_send, consumed_len = _split_message(
+                response, message_start_index, msg_limit
+            )
             if (
-                message_start_index + len(message_to_send) < len(response)
+                message_start_index + consumed_len < len(response)
                 or should_contains_images
             ):
                 # Not the last chunk
@@ -421,15 +425,13 @@ async def _split_and_send_message_async(
             else:
                 # Reached the last chunk
                 message_type = 1
+            sent_len = message_start_index + consumed_len
 
-        sent_len = message_start_index + len(message_to_send)
         request_response.response_next_chunk_start_index = sent_len
         # Don't count the cursor in
         request_response.response_sent_len = min(
             sent_len, len(request_response.response or "")
         )
-
-        message_to_send = message_to_send.strip()
 
         if message_type == 0:
             request_response.message_id = await send_reply(
@@ -497,21 +499,182 @@ async def _split_and_send_message_async(
             raise Exception(f"Unknown message type {message_type}")
 
 
-def _split_message(message: str, max_length: int):
+def _split_message(msg: str, after: int, max_length: int):
     """
     Split message, try to avoid break in a line / word
-    :param message:
+    Keep the code block in markdown
+    :param msg:
+    :param after:
     :param max_length:
-    :return:
+    :return: (message, consumed length)
+    >>> _split_message("This is content", 0, 100)
+    ('This is content', 15)
+    >>> _split_message("This is content", 0, 10)
+    ('This is', 8)
+    >>> _split_message("This A\\nThis B", 0, 12)
+    ('This A', 7)
+    >>> _split_message("```This is some code```", 0, 10)
+    ('```This```', 8)
+    >>> _split_message("```This is some code```", 10, 14)
+    ('```some```', 6)
+    >>> _split_message("```This is some code```", 10, 15)
+    ('```some code```', 13)
+    >>> _split_message("```json\\nThis is some code```", 13, 18)
+    ('```json\\nis some```', 8)
+    >>> _split_message("```json\\nThis is some code```", 0, 18)
+    ('```json\\nThis is```', 16)
+    >>> _split_message("```This A``` ``` This B```", 0, 12)
+    ('```This A```', 12)
+    >>> _split_message("```This A``` ``` This B```", 0, 23)
+    ('```This A``` ``````', 17)
+    >>> _split_message("```This A``` ``` This B```", 0, 24)
+    ('```This A``` ``` This```', 22)
+    >>> _split_message("```This A``` ``` This B```", 7, 24)
+    ('```A``` ``` This B```', 19)
     """
-    result = message[:max_length]
-    if len(result) == len(message):
-        return result
-    if (i := result.rfind("\n")) != -1:
-        return result[: i + 1]
-    if (i := result.rfind(" ")) != -1:
-        return result[: i + 1]
-    return result
+    (_, _, begin_code_start_id, start_index) = _get_tg_code_block(msg, after)
+    start_index = _regfind(msg, r"[^ \n]", start_index)
+    end_index = start_index + max_length - len(begin_code_start_id)
+    end_code_end_id = ""
+
+    result = ""
+    if end_index < len(msg):
+        # Not finished
+        while True:
+            for whitespace in ["\n", " "]:
+                if msg[end_index] == whitespace:
+                    break
+                if (i := msg.rfind(whitespace, start_index, end_index)) != -1:
+                    end_index = i + 1
+                    break
+            (end_code_end_id, end_index, _, _) = _get_tg_code_block(msg, end_index)
+            result = msg[start_index:end_index].strip()
+            if (
+                len(begin_code_start_id) + len(result) + len(end_code_end_id)
+                <= max_length
+            ):
+                break
+            # Too long after adding code ids
+            end_index -= 1
+        result = begin_code_start_id + result + end_code_end_id
+    else:
+        end_index = len(msg)
+        result = begin_code_start_id + msg[start_index:].strip()
+
+    return (result, end_index - after)
+
+
+def _get_tg_code_block(msg: str, at: int):
+    """
+    Get the code block id at a position of a message in Telegram
+    In Telegram, only three backticks after a whitespace are considered as the beginning of a code block
+    And only three backticks before a whitespace (or EOF) are considered as the end of a code block
+    There's no nested code blocks in Telegram
+    :param msg:
+    :param before: before index
+    :return: (prev readable code end id, prev readable end index, next readable code start id, next readable start index)
+
+    >>> msg = "Hi ```Hi``` Hi\\n```json Hi```\\n```json\\nHi``` ```T````T```"
+    >>> #      0         1           2           3           4         5
+    >>> #      012345678901234  56789012345678  90123456  789012345678901234
+    >>> _get_tg_code_block(msg, 0)
+    ('', 0, '', 0)
+    >>> _get_tg_code_block(msg, 3)
+    ('', 3, '```', 6)
+    >>> _get_tg_code_block(msg, 6)
+    ('```', 6, '```', 6)
+    >>> _get_tg_code_block(msg, 7)
+    ('```', 7, '```', 7)
+    >>> _get_tg_code_block(msg, 8)
+    ('```', 8, '', 11)
+    >>> _get_tg_code_block(msg, 10)
+    ('```', 8, '', 11)
+    >>> _get_tg_code_block(msg, 12)
+    ('', 12, '', 12)
+    >>> _get_tg_code_block(msg, 15)
+    ('', 15, '```', 18)
+    >>> _get_tg_code_block(msg, 19)
+    ('```', 19, '```', 19)
+    >>> _get_tg_code_block(msg, 29)
+    ('', 29, '```json\\n', 37)
+    >>> _get_tg_code_block(msg, 39)
+    ('```', 39, '', 42)
+    >>> _get_tg_code_block(msg, 43)
+    ('', 43, '```', 46)
+    >>> _get_tg_code_block(msg, 49)
+    ('```', 49, '```', 49)
+    >>> _get_tg_code_block(msg, 52)
+    ('```', 52, '', 55)
+    """
+    # For easier matching the beginning of file and the end of file
+    at += 1
+    msg = " " + msg + " "
+
+    skipped = 0
+    code_id = ""
+    while True:
+        # +4 because a `|``a is possible
+        start = _regfind(msg, r"[ \n]```[^`]", skipped, at + 4)
+        if start == -1:
+            # No more code blocks
+            break
+
+        language = re.compile(r"[ \n]").search(msg, start + 4)
+        # The language section should be ended with \n, if not, it's an inline code block
+        code_begin = start + 4 if language.group() == " " else language.end()
+        code_id = msg[start + 1 : code_begin]
+
+        # +4 because a|``` a is possible
+        end = _regfind(msg, r"[^`]```[ \n]", code_begin, at + 4)
+        if end == -1:
+            # Inside a code block
+            if code_begin <= at:
+                # In the code content
+                return ("" if code_id == "" else "```", at - 1, code_id, at - 1)
+            # In the code id
+            return ("", start, code_id, code_begin - 1)
+
+        skipped = end + 4
+
+    # Outside a code block
+    if skipped <= at:
+        # In the plain content
+        return ("", at - 1, "", at - 1)
+    return ("" if code_id == "" else "```", skipped - 4, "", skipped - 1)
+
+
+def _regfind(
+    msg: str, reg: str, start: Optional[int] = None, end: Optional[int] = None
+):
+    """
+    Behave like str.find but support regex
+    :param msg: The message
+    :param reg: Regex
+    :param start: Optional
+    "param end: Optional
+    :return: First matched index, -1 if none
+
+    >>> _regfind("a b", r"\\s")
+    1
+    >>> _regfind("ab", r"\\s")
+    -1
+    >>> _regfind("a bc ", r"\\s", 2)
+    4
+    >>> _regfind("abc d", r"\\s", 0, 2)
+    -1
+    """
+
+    res = None
+    if start is None:
+        res = re.compile(reg).search(msg)
+    elif end is None:
+        res = re.compile(reg).search(msg, start)
+    else:
+        res = re.compile(reg).search(msg, start, end)
+
+    if res:
+        return res.start()
+    return -1
 
 
 async def send_reply(
