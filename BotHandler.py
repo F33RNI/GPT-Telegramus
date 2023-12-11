@@ -535,7 +535,11 @@ def _split_message(msg: str, after: int, max_length: int):
     ('```Th', 5)
     >>> _split_message("```This A", 0, 100)
     ('```This A```', 9)
+    >>> _split_message("This", 5, 100)
+    ('', 0)
     """
+    if after >= len(msg):
+        return ("", 0)
     (_, _, begin_code_start_id, start_index) = _get_tg_code_block(msg, after)
     start_index = _regfind(msg, r"[^ \n]", start_index)
     end_index = min(start_index + max_length - len(begin_code_start_id), len(msg))
@@ -548,8 +552,8 @@ def _split_message(msg: str, after: int, max_length: int):
             begin_code_start_id = ""
             end_code_end_id = ""
             start_index = _regfind(msg, r"[^ \n]", after)
-            end_index = start_index + max_length
-            result = msg[start_index: end_index].strip()
+            end_index = min(start_index + max_length, len(msg))
+            result = msg[start_index:end_index].strip()
             break
 
         for whitespace in ["\n", " "]:
@@ -560,10 +564,7 @@ def _split_message(msg: str, after: int, max_length: int):
                 break
         (end_code_end_id, end_index, _, _) = _get_tg_code_block(msg, end_index)
         result = msg[start_index:end_index].strip()
-        if (
-            len(begin_code_start_id) + len(result) + len(end_code_end_id)
-            <= max_length
-        ):
+        if len(begin_code_start_id) + len(result) + len(end_code_end_id) <= max_length:
             break
         # Too long after adding code ids
         end_index -= 1
@@ -615,7 +616,11 @@ def _get_tg_code_block(msg: str, at: int):
     ('```', 52, '', 55)
     >>> _get_tg_code_block(msg, 56)
     ('', 56, '```', 59)
+    >>> _get_tg_code_block(msg, 70)
+    ('```', 60, '```', 60)
     """
+    if at >= len(msg):
+        at = len(msg)
     # For easier matching the beginning of file and the end of file
     at += 1
     msg = " " + msg + " "
