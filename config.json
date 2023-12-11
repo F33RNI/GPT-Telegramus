@@ -165,13 +165,16 @@
         "__comment07__": "IF RESPONSE IS LARGER THAN THIS NUMBER (IN CHARS), IT WILL BE SPLIT INTO MULTIPLE MESSAGES",
         "one_message_limit": 3000,
 
-        "__comment08__": "SET TO true FOR THE BOT TO REPLY TO PLAIN MESSAGES AS WELL AS DIRECT MODULE COMMANDS",
+        "__comment08__": "IF CAPTION IS LARGER THAN THIS NUMBER (IN CHARS), IT WILL BE SPLIT INTO MULTIPLE MESSAGES",
+        "one_caption_limit": 1000,
+
+        "__comment09__": "SET TO true FOR THE BOT TO REPLY TO PLAIN MESSAGES AS WELL AS DIRECT MODULE COMMANDS",
         "reply_to_messages": true,
 
-        "__comment09__": "HOW MANY SECONDS TO WAIT BETWEEN EACH MESSAGE WHEN BROADCASTING",
+        "__comment10__": "HOW MANY SECONDS TO WAIT BETWEEN EACH MESSAGE WHEN BROADCASTING",
         "broadcast_delay_per_user_seconds": 0.5,
 
-        "__comment10__": "BOT COMMANDS DESCRIPTION (WILL BE AUTOMATICALLY ADDED TO THE BOT)",
+        "__comment11__": "BOT COMMANDS DESCRIPTION (WILL BE AUTOMATICALLY ADDED TO THE BOT)",
         "commands_description_enabled": true,
         "commands_description": [
             {

@@ -352,10 +352,11 @@ async def _split_and_send_message_async(
     :param end:
     :return:
     """
-    len_limit = config["telegram"]["one_message_limit"]
-    response = request_response.response
+    msg_limit = config["telegram"]["one_message_limit"]
+    caption_limit = config["telegram"]["one_caption_limit"]
+    response = request_response.response or ""
     # Add cursor symbol?
-    if response and not end and config["telegram"]["add_cursor_symbol"]:
+    if not end and config["telegram"]["add_cursor_symbol"]:
         response += config["telegram"]["cursor_symbol"]
 
     # Verify images
@@ -373,9 +374,10 @@ async def _split_and_send_message_async(
     # Send all parts of message
     while (
         request_response.response_next_chunk_start_index < sent_len
-        or sent_len < len(response or "")
-        or len(images) != 0
+        or sent_len < len(response)
+        or (end and len(images) != 0)
     ):
+        should_contains_images = end and len(images) != 0
         message_start_index = sent_len
         message_to_send = None
         edit_id = None
@@ -392,21 +394,44 @@ async def _split_and_send_message_async(
             message_start_index = request_response.response_next_chunk_start_index
             edit_id = request_response.message_id
 
-        # Get current part of response if it's not finished
-        if message_start_index < len(response or ""):
-            message_to_send = _split_message(response[message_start_index:], len_limit)
-            sent_len = message_start_index + len(message_to_send)
-
-            request_response.response_next_chunk_start_index = sent_len
-            # Don't count the cursor in
-            request_response.response_sent_len = min(
-                sent_len, len(request_response.response or "")
+        # 0: plain text
+        # 1: text with markup but no image
+        # 2: text with markup and one image
+        # 3: text with markup and multiple images
+        message_type = None
+        if should_contains_images:
+            # Try to fit the message in caption
+            message_to_send = _split_message(
+                response[message_start_index:], caption_limit
             )
+            if message_start_index + len(message_to_send) == len(response):
+                if len(images) == 1:
+                    message_type = 2
+                else:
+                    message_type = 3
+        if message_type is None:
+            # No images
+            message_to_send = _split_message(response[message_start_index:], msg_limit)
+            if (
+                message_start_index + len(message_to_send) < len(response)
+                or should_contains_images
+            ):
+                # Not the last chunk
+                message_type = 0
+            else:
+                # Reached the last chunk
+                message_type = 1
 
-            message_to_send = message_to_send.strip()
+        sent_len = message_start_index + len(message_to_send)
+        request_response.response_next_chunk_start_index = sent_len
+        # Don't count the cursor in
+        request_response.response_sent_len = min(
+            sent_len, len(request_response.response or "")
+        )
 
-        # It's not the last chunk, send message without markup
-        if sent_len < len(response or ""):
+        message_to_send = message_to_send.strip()
+
+        if message_type == 0:
             request_response.message_id = await send_reply(
                 config["telegram"]["api_key"],
                 request_response.user["user_id"],
@@ -415,11 +440,7 @@ async def _split_and_send_message_async(
                 reply_markup=None,
                 edit_message_id=edit_id,
             )
-            continue
-
-        # Reached the last chunk, send message with markup
-        # Send message as text if there's no image or there will be more message
-        if not end or len(images) == 0:
+        elif message_type == 1:
             request_response.message_id = await send_reply(
                 config["telegram"]["api_key"],
                 request_response.user["user_id"],
@@ -428,16 +449,14 @@ async def _split_and_send_message_async(
                 reply_markup=request_response.reply_markup,
                 edit_message_id=edit_id,
             )
-            # Don't count the cursor in
-            request_response.response_next_chunk_start_index = min(
-                message_start_index, len(request_response.response)
-            )
-            # ignore images
-            break
-
-        # No more message, send all images with the last chunk
-        # Single photo
-        if len(images) == 1:
+            if not end:
+                # This message is editable, don't count the cursor in
+                request_response.response_next_chunk_start_index = min(
+                    message_start_index, len(request_response.response)
+                )
+                # This message has ended, break the loop
+                break
+        elif message_type == 2:
             message_id, err_msg = await send_photo(
                 config["telegram"]["api_key"],
                 request_response.user["user_id"],
@@ -449,32 +468,33 @@ async def _split_and_send_message_async(
             images = []
             if message_id:
                 request_response.message_id = message_id
-                break
-
-            # send new message
-            response += err_msg
-            continue
-
-        # Multiple photos (send media group + markup as separate messages)
-        media_group = [InputMediaPhoto(media=image_url) for image_url in images[0:9]]
-        images = images[len(media_group) :]
-        message_id, err_msg = await send_media_group(
-            config["telegram"]["api_key"],
-            chat_id=request_response.user["user_id"],
-            media=media_group,
-            caption=message_to_send,
-            reply_to_message_id=reply_to_id,
-        )
-        if message_id:
-            request_response.message_id = message_id
-            sent_images_count += len(media_group)
-        else:
-            response += err_msg
-
-        if len(images) == 0:
-            response += messages["media_group_response"].format(
-                request_response.request
+            else:
+                # send new message
+                response += err_msg
+        elif message_type == 3:
+            media_group = [
+                InputMediaPhoto(media=image_url) for image_url in images[0:9]
+            ]
+            images = images[len(media_group) :]
+            message_id, err_msg = await send_media_group(
+                config["telegram"]["api_key"],
+                chat_id=request_response.user["user_id"],
+                media=media_group,
+                caption=message_to_send,
+                reply_to_message_id=reply_to_id,
             )
+            if message_id:
+                request_response.message_id = message_id
+                sent_images_count += len(media_group)
+            else:
+                response += err_msg
+
+            if len(images) == 0:
+                response += messages["media_group_response"].format(
+                    request_response.request
+                )
+        else:
+            raise Exception(f"Unknown message type {message_type}")
 
 
 def _split_message(message: str, max_length: int):
