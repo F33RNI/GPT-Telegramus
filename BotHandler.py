@@ -520,9 +520,9 @@ def _split_message(msg: str, after: int, max_length: int):
     >>> _split_message("```This is some code```", 0, 10)
     ('```This```', 8)
     >>> _split_message("```This is some code```", 10, 14)
-    ('```some```', 6)
+    ('``` some```', 6)
     >>> _split_message("```This is some code```", 10, 15)
-    ('```some code```', 13)
+    ('``` some```', 6)
     >>> _split_message("```json\\nThis is some code```", 13, 18)
     ('```json\\nis some```', 8)
     >>> _split_message("```json\\nThis is some code```", 0, 18)
@@ -534,7 +534,7 @@ def _split_message(msg: str, after: int, max_length: int):
     >>> _split_message("```This A``` ``` This B```", 0, 24)
     ('```This A``` ``` This```', 22)
     >>> _split_message("```This A``` ``` This B```", 7, 24)
-    ('```A``` ``` This B```', 19)
+    ('``` A``` ``` This B```', 19)
     >>> _split_message("```This A```", 0, 5)
     ('```Th', 5)
     >>> _split_message("```This A", 0, 100)
@@ -545,7 +545,8 @@ def _split_message(msg: str, after: int, max_length: int):
     if after >= len(msg):
         return ("", 0)
     (_, _, begin_code_start_id, start_index) = _get_tg_code_block(msg, after)
-    start_index = _regfind(msg, r"[^ \n]", start_index)
+    if begin_code_start_id == "":
+        start_index = _regfind(msg, r"[^\s]", start_index)
     end_index = min(start_index + max_length - len(begin_code_start_id), len(msg))
 
     end_code_end_id = ""
@@ -555,7 +556,7 @@ def _split_message(msg: str, after: int, max_length: int):
             # Can't even fit the code block ids
             begin_code_start_id = ""
             end_code_end_id = ""
-            start_index = _regfind(msg, r"[^ \n]", after)
+            start_index = _regfind(msg, r"[^\s]", after)
             end_index = min(start_index + max_length, len(msg))
             result = msg[start_index:end_index].strip()
             break
@@ -567,7 +568,10 @@ def _split_message(msg: str, after: int, max_length: int):
                 end_index = i + 1
                 break
         (end_code_end_id, end_index, _, _) = _get_tg_code_block(msg, end_index)
-        result = msg[start_index:end_index].strip()
+        if begin_code_start_id == "":
+            result = msg[start_index:end_index].strip()
+        else:
+            result = msg[start_index:end_index].rstrip()
         if len(begin_code_start_id) + len(result) + len(end_code_end_id) <= max_length:
             break
         # Too long after adding code ids
