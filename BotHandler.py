@@ -326,6 +326,7 @@ async def parse_img(img_source: str):
                 "AppleWebKit/537.36 (KHTML, like Gecko) "
                 "Chrome/91.4472.114 Safari/537.36"
             },
+            allow_redirects=True,
         )
         content_type = res.headers.get("content-type")
         if not content_type.startswith("image"):
