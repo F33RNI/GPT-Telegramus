@@ -1407,6 +1407,8 @@ class BotHandler:
         except Exception as e:
             logging.error("Query callback error!", exc_info=e)
 
+        await context.bot.answer_callback_query(update.callback_query.id)
+
     async def bot_command_broadcast(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
