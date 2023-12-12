@@ -264,6 +264,10 @@ def _request_processor(config: dict,
         return
 
     try:
+        request_.response = "⌛️"
+        BotHandler.async_helper(BotHandler.send_message_async(config, messages, request_, end=False))
+        request_.response = ""
+
         # Set active state
         request_.processing_state = RequestResponseContainer.PROCESSING_STATE_ACTIVE
 

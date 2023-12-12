@@ -153,11 +153,6 @@ async def send_message_async(
             if response_len == 0 and len(request_response.response_images) == 0:
                 request_response.response = messages["empty_message"]
 
-        # Reset message parts if new response is smaller than previous one (EdgeGPT API bug)
-        # TODO: Fix API code instead
-        if response_len < request_response.response_len_last:
-            request_response.response_next_chunk_start_index = 0
-
         await _send_prepared_message_async(config, messages, request_response, end)
 
     # Error?
@@ -216,13 +211,9 @@ def should_send_message(
         time_current - request_response.response_send_timestamp_last
         >= config["telegram"]["edit_message_every_seconds_num"]
         and response_len > 0
-        and (
-            request_response.response_len_last <= 0
-            or response_len != request_response.response_len_last
-        )
+        and response_len != request_response.response_sent_len
     ):
         # Save new data
-        request_response.response_len_last = response_len
         request_response.response_send_timestamp_last = time_current
 
         return True
@@ -361,7 +352,12 @@ async def _split_and_send_message_async(
     caption_limit = config["telegram"]["one_caption_limit"]
     response = request_response.response or ""
     # Add cursor symbol?
-    if not end and config["telegram"]["add_cursor_symbol"]:
+    if (
+        request_response.processing_state
+        != RequestResponseContainer.PROCESSING_STATE_INITIALIZING
+        and not end
+        and config["telegram"]["add_cursor_symbol"]
+    ):
         response += config["telegram"]["cursor_symbol"]
 
     # Verify images
@@ -382,7 +378,6 @@ async def _split_and_send_message_async(
         or sent_len < len(response)
         or (end and len(images) != 0)
     ):
-        should_contains_images = end and len(images) != 0
         message_start_index = sent_len
         message_to_send = None
         edit_id = None
@@ -394,10 +389,17 @@ async def _split_and_send_message_async(
             else request_response.reply_message_id
         )
 
-        # If the previous chunk is editable
-        if request_response.response_next_chunk_start_index < sent_len:
+        if sent_len > len(response):
+            # Reset message parts if new response is smaller than previous one (For loading message)
+            # EdgeGPT also have this kind of loading message
+            message_start_index = 0
+            edit_id = request_response.message_id
+        elif request_response.response_next_chunk_start_index < sent_len:
+            # If the previous chunk is editable
             message_start_index = request_response.response_next_chunk_start_index
             edit_id = request_response.message_id
+
+        should_contains_images = end and len(images) != 0 and edit_id is None
 
         # 0: plain text
         # 1: text with markup but no image
@@ -720,14 +722,20 @@ async def send_reply(
     :param edit_message_id: Set message id to edit it instead of sending a new one
     :return: message_id if sent correctly, or None if not
     """
+    if (edit_message_id or -1) < 0:
+        edit_message_id = None
     try:
         parse_mode, message = (
             ("MarkdownV2", md2tgmd.escape(message)) if markdown else (None, message)
         )
 
-        # Send as new message
-        if edit_message_id is None or edit_message_id < 0:
-            message_id = (
+        if edit_message_id is None:
+            if message == "":
+                # Nothing to do
+                return None
+
+            # Send as new message
+            return (
                 await telegram.Bot(api_key).sendMessage(
                     chat_id=chat_id,
                     text=message,
@@ -738,9 +746,9 @@ async def send_reply(
                 )
             ).message_id
 
-        # Edit current message
-        else:
-            message_id = (
+        if message != "":
+            # Edit current message
+            return (
                 await telegram.Bot(api_key).editMessageText(
                     chat_id=chat_id,
                     text=message,
@@ -751,9 +759,12 @@ async def send_reply(
                 )
             ).message_id
 
-        # Seems OK
-        return message_id
-
+        # Nothing inside this message, delete it
+        await telegram.Bot(api_key).delete_message(
+            chat_id=chat_id,
+            message_id=edit_message_id,
+        )
+        return None
     except Exception as e:
         if markdown:
             logging.warning(
@@ -773,7 +784,7 @@ async def send_reply(
         logging.error(
             "Error sending reply with markdown {}!".format(markdown), exc_info=e
         )
-        return None
+        return edit_message_id
 
 
 async def send_photo(

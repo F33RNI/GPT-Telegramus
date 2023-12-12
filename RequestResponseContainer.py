@@ -42,7 +42,6 @@ class RequestResponseContainer:
                  message_id=-1,
                  request="",
                  response="",
-                 response_len_last=0,
                  response_images=None,
                  request_type=REQUEST_TYPE_CHATGPT,
                  request_timestamp="",
@@ -59,7 +58,6 @@ class RequestResponseContainer:
         :param message_id: current message id (for editing aka live replying)
         :param request: text request
         :param response: text response
-        :param response_len_last: length of last response (for editing aka live replying)
         :param response_images: images in the responses
         :param request_type: REQUEST_TYPE_CHATGPT / REQUEST_TYPE_DALLE / ...
         :param request_timestamp: timestamp of request (for data collecting)
@@ -76,7 +74,6 @@ class RequestResponseContainer:
         self.message_id = message_id
         self.request = request
         self.response = response
-        self.response_len_last = response_len_last
         self.request_type = request_type
         self.request_timestamp = request_timestamp
         self.response_timestamp = response_timestamp
