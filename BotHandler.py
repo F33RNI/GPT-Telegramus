@@ -519,28 +519,28 @@ def _split_message(msg: str, after: int, max_length: int):
     ('This is', 8)
     >>> _split_message("This A\\nThis B", 0, 12)
     ('This A', 7)
-    >>> _split_message("```This is some code```", 0, 10)
-    ('```This```', 8)
-    >>> _split_message("```This is some code```", 10, 14)
-    ('``` some```', 6)
-    >>> _split_message("```This is some code```", 10, 15)
-    ('``` some```', 6)
+    >>> _split_message("``` This is some code```", 0, 12)
+    ('```\\n This```', 9)
+    >>> _split_message("``` This is some code```", 9, 13)
+    ('```\\nis```', 3)
+    >>> _split_message("``` This is some code```", 9, 14)
+    ('```\\nis some```', 8)
     >>> _split_message("```json\\nThis is some code```", 13, 18)
     ('```json\\nis some```', 8)
     >>> _split_message("```json\\nThis is some code```", 0, 18)
     ('```json\\nThis is```', 16)
-    >>> _split_message("```This A``` ``` This B```", 0, 12)
-    ('```This A```', 12)
-    >>> _split_message("```This A``` ``` This B```", 0, 23)
-    ('```This A``` ``````', 17)
-    >>> _split_message("```This A``` ``` This B```", 0, 24)
-    ('```This A``` ``` This```', 22)
-    >>> _split_message("```This A``` ``` This B```", 7, 24)
-    ('``` A``` ``` This B```', 19)
-    >>> _split_message("```This A```", 0, 5)
-    ('```Th', 5)
-    >>> _split_message("```This A", 0, 100)
-    ('```This A```', 9)
+    >>> _split_message("``` This A``` ``` This B```", 0, 14)
+    ('```\\n This A```', 13)
+    >>> _split_message("``` This A``` ``` This B```", 0, 25)
+    ('```\\n This A``` ``````', 18)
+    >>> _split_message("``` This A``` ``` This B```", 0, 26)
+    ('```\\n This A``` ``` This```', 23)
+    >>> _split_message("``` This A``` ``` This B```", 8, 24)
+    ('```\\n A``` ``` This B```', 19)
+    >>> _split_message("``` This A```", 0, 5)
+    ('``` T', 5)
+    >>> _split_message("``` This A", 0, 100)
+    ('```\\n This A```', 10)
     >>> _split_message("This", 5, 100)
     ('', 0)
     """
@@ -586,16 +586,16 @@ def _split_message(msg: str, after: int, max_length: int):
 def _get_tg_code_block(msg: str, at: int):
     """
     Get the code block id at a position of a message in Telegram
-    In Telegram, only three backticks after a whitespace are considered as the beginning of a code block
-    And only three backticks before a whitespace (or EOF) are considered as the end of a code block
+    Three backticks after a non-backtick are considered as the beginning of a code block
+    And three backticks before a non-backtick are considered as the end of a code block
     There's no nested code blocks in Telegram
     :param msg:
     :param before: before index
     :return: (prev readable code end id, prev readable end index, next readable code start id, next readable start index)
 
-    >>> msg = "Hi ```Hi``` Hi\\n```json Hi```\\n```json\\nHi``` ```T````T``` ```A"
-    >>> #      0         1           2           3           4         5
-    >>> #      012345678901234  56789012345678  90123456  78901234567890123456789
+    >>> msg = "Hi ```Hi``` Hi\\n```json Hi```\\n```json\\nHi``` ```T````T``` ```A```\\n``` A```\\n```A"
+    >>> #      0         1           2           3           4         5         6           7
+    >>> #      012345678901234  56789012345678  90123456  789012345678901234567890123  456789012  3456
     >>> _get_tg_code_block(msg, 0)
     ('', 0, '', 0)
     >>> _get_tg_code_block(msg, 3)
@@ -611,9 +611,9 @@ def _get_tg_code_block(msg: str, at: int):
     >>> _get_tg_code_block(msg, 12)
     ('', 12, '', 12)
     >>> _get_tg_code_block(msg, 15)
-    ('', 15, '```', 18)
+    ('', 15, '```json\\n', 22)
     >>> _get_tg_code_block(msg, 19)
-    ('```', 19, '```', 19)
+    ('', 15, '```json\\n', 22)
     >>> _get_tg_code_block(msg, 29)
     ('', 29, '```json\\n', 37)
     >>> _get_tg_code_block(msg, 39)
@@ -626,8 +626,12 @@ def _get_tg_code_block(msg: str, at: int):
     ('```', 52, '', 55)
     >>> _get_tg_code_block(msg, 56)
     ('', 56, '```', 59)
-    >>> _get_tg_code_block(msg, 70)
-    ('```', 60, '```', 60)
+    >>> _get_tg_code_block(msg, 60)
+    ('```', 60, '', 63)
+    >>> _get_tg_code_block(msg, 65)
+    ('', 64, '```\\n', 67)
+    >>> _get_tg_code_block(msg, 999)
+    ('```', 77, '```A\\n', 77)
     """
     if at >= len(msg):
         at = len(msg)
@@ -639,18 +643,29 @@ def _get_tg_code_block(msg: str, at: int):
     code_id = ""
     while True:
         # +4 because a `|``a is possible
-        start = _regfind(msg, r"[ \n]```[^`]", skipped, at + 4)
+        start = _regfind(msg, r"[^`]```[^`]", skipped, at + 4)
         if start == -1:
             # No more code blocks
             break
 
-        language = re.compile(r"[ \n]").search(msg, start + 4)
-        # The language section should be ended with \n, if not, it's an inline code block
-        code_begin = start + 4 if language.group() == " " else language.end()
-        code_id = msg[start + 1 : code_begin]
+        language = re.compile(r"[^`]*?[ \n]").match(msg, start + 4)
+        code_begin = 0
+        if language is None:
+            # Single word block
+            code_begin = start + 4
+            code_id = "```"
+        # Multiple words code block
+        elif language.group(0).endswith("\n"):
+            code_begin = language.end()
+            code_id = msg[start + 1 : code_begin]
+        else:
+            # If the language section is ended by a space,
+            # the space is content
+            code_begin = language.end() - 1
+            code_id = msg[start + 1 : code_begin] + "\n"
 
         # +4 because a|``` a is possible
-        end = _regfind(msg, r"[^`]```[ \n]", code_begin, at + 4)
+        end = _regfind(msg, r"[^`]```[^`]", start + 4, at + 4)
         if end == -1:
             # Inside a code block
             if code_begin <= at:
