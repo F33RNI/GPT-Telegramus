@@ -725,12 +725,12 @@ async def send_reply(
     if (edit_message_id or -1) < 0:
         edit_message_id = None
     try:
-        parse_mode, message = (
+        parse_mode, parsed_message = (
             ("MarkdownV2", md2tgmd.escape(message)) if markdown else (None, message)
         )
 
         if edit_message_id is None:
-            if message == "":
+            if parsed_message == "":
                 # Nothing to do
                 return None
 
@@ -738,7 +738,7 @@ async def send_reply(
             return (
                 await telegram.Bot(api_key).sendMessage(
                     chat_id=chat_id,
-                    text=message,
+                    text=parsed_message,
                     reply_to_message_id=reply_to_message_id,
                     parse_mode=parse_mode,
                     reply_markup=reply_markup,
@@ -746,12 +746,12 @@ async def send_reply(
                 )
             ).message_id
 
-        if message != "":
+        if parsed_message != "":
             # Edit current message
             return (
                 await telegram.Bot(api_key).editMessageText(
                     chat_id=chat_id,
-                    text=message,
+                    text=parsed_message,
                     message_id=edit_message_id,
                     parse_mode=parse_mode,
                     reply_markup=reply_markup,
@@ -809,7 +809,7 @@ async def send_photo(
     """
     try:
         if caption:
-            parse_mode, caption = (
+            parse_mode, parsed_caption = (
                 ("MarkdownV2", md2tgmd.escape(caption)) if markdown else (None, caption)
             )
         else:
@@ -819,7 +819,7 @@ async def send_photo(
                 await telegram.Bot(api_key).send_photo(
                     chat_id=chat_id,
                     photo=photo,
-                    caption=caption,
+                    caption=parsed_caption,
                     parse_mode=parse_mode,
                     reply_to_message_id=reply_to_message_id,
                     reply_markup=reply_markup,
@@ -869,7 +869,7 @@ async def send_media_group(
     :return: message_id if sent correctly, or None if not
     """
     try:
-        parse_mode, caption = (
+        parse_mode, parsed_caption = (
             ("MarkdownV2", md2tgmd.escape(caption)) if markdown else (None, caption)
         )
 
@@ -878,7 +878,7 @@ async def send_media_group(
                 await telegram.Bot(api_key).sendMediaGroup(
                     chat_id=chat_id,
                     media=media,
-                    caption=caption,
+                    caption=parsed_caption,
                     parse_mode=parse_mode,
                     reply_to_message_id=reply_to_message_id,
                     write_timeout=120,
