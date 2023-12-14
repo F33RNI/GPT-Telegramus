@@ -27,6 +27,7 @@ import BotHandler
 import ChatGPTModule
 import DALLEModule
 import EdgeGPTModule
+import GoogleAIModule
 import LoggingHandler
 import ProxyAutomation
 import QueueHandler
@@ -99,6 +100,7 @@ def main():
     bard_module = BardModule.BardModule(config, messages, user_handler)
     edgegpt_module = EdgeGPTModule.EdgeGPTModule(config, messages, user_handler)
     bing_image_gen_module = BingImageGenModule.BingImageGenModule(config, messages, user_handler)
+    gemini_module = GoogleAIModule.GoogleAIModule(config, "gemini", messages, user_handler)
 
     # Initialize QueueHandler class
     queue_handler = QueueHandler.QueueHandler(config, messages, logging_handler.queue, user_handler, proxy_automation,
@@ -106,12 +108,13 @@ def main():
                                               dalle_module,
                                               bard_module,
                                               edgegpt_module,
-                                              bing_image_gen_module)
+                                              bing_image_gen_module,
+                                              gemini_module)
 
     # Initialize Telegram bot class
     bot_handler = BotHandler.BotHandler(config, args.config, messages, user_handler, queue_handler, proxy_automation,
                                         logging_handler.queue,
-                                        chatgpt_module, bard_module, edgegpt_module)
+                                        chatgpt_module, bard_module, edgegpt_module, gemini_module)
 
     # Start proxy automation
     proxy_automation.start_automation_loop()
