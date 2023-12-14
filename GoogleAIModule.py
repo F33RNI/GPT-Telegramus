@@ -145,28 +145,34 @@ class GoogleAIModule:
                 )
             self._last_request_time.value = time.time()
 
-            # Try to load conversation
-            has_image, conversation = _load_conversation(
-                conversations_dir, conversation_id
-            ) or [False, []]
-            # Generate new random conversation ID
-            if conversation_id is None:
-                conversation_id = str(uuid.uuid4())
-
-            request = [request_response.request]
+            response = None
             # Try to download image
             if request_response.image_url:
-                has_image = True
                 logging.info("Downloading user image")
                 image = requests.get(request_response.image_url, timeout=120)
-                request = [{"mime_type": "image/jpeg", "data": image.content}, request_response.request]
 
-            conversation.append({"role": "user", "parts": request})
+                logging.info("Asking Gemini...")
+                response = self._model.generate_content(
+                    [
+                        {"mime_type": "image/jpeg", "data": image.content},
+                        request_response.request,
+                    ],
+                    stream=True,
+                )
+            else:
+                # Try to load conversation
+                conversation = (
+                    _load_conversation(conversations_dir, conversation_id) or []
+                )
+                # Generate new random conversation ID
+                if conversation_id is None:
+                    conversation_id = str(uuid.uuid4())
 
-            logging.info("Asking Gemini...")
-            response = (
-                self._vision_model if has_image else self._model
-            ).generate_content(conversation, stream=True)
+                conversation.append({"role": "user", "parts": request_response.request})
+
+                logging.info("Asking Gemini...")
+                response = self._model.generate_content(conversation, stream=True)
+
             for chunk in response:
                 if self.cancel_requested.value:
                     break
@@ -177,19 +183,19 @@ class GoogleAIModule:
                     )
                 )
 
-            if not self.cancel_requested.value:
+            if self.cancel_requested.value:
+                logging.info("Gemini module canceled")
+            elif not request_response.image_url:
                 conversation.append({"role": "model", "parts": response.text})
 
                 if not _save_conversation(
-                    conversations_dir, conversation_id, [has_image, conversation]
+                    conversations_dir, conversation_id, conversation
                 ):
                     conversation_id = None
                 request_response.user[
                     f"{self.config_key}_conversation_id"
                 ] = conversation_id
                 self.users_handler.save_user(request_response.user)
-            else:
-                logging.info("Gemini module canceled")
 
         # Error
         except Exception as e:
