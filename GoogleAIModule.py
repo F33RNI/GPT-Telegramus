@@ -152,7 +152,7 @@ class GoogleAIModule:
                 image = requests.get(request_response.image_url, timeout=120)
 
                 logging.info("Asking Gemini...")
-                response = self._model.generate_content(
+                response = self._vision_model.generate_content(
                     [
                         {"mime_type": "image/jpeg", "data": image.content},
                         request_response.request,
@@ -201,8 +201,9 @@ class GoogleAIModule:
         except Exception as e:
             self._enabled = False
             raise e
+        finally:
+            self.processing_flag.value = False
 
-        self.processing_flag.value = False
         # Finish message
         BotHandler.async_helper(
             BotHandler.send_message_async(
@@ -217,8 +218,6 @@ class GoogleAIModule:
         :param user:
         :return: True if cleared successfully
         """
-        if not self._enabled:
-            return
         conversation_id = UsersHandler.get_key_or_none(
             user, f"{self.config_key}_conversation_id"
         )
