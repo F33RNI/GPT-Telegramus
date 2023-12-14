@@ -159,9 +159,7 @@ class GoogleAIModule:
                 has_image = True
                 logging.info("Downloading user image")
                 image = requests.get(request_response.image_url, timeout=120)
-                content_type = image.headers.get("content-type")
-                if content_type is not None:
-                    request = [{"mime_type": content_type, "data": image.content}]
+                request = [{"mime_type": "image/jpeg", "data": image.content}, request_response.request]
 
             conversation.append({"role": "user", "parts": request})
 
@@ -226,7 +224,7 @@ class GoogleAIModule:
 
         # Delete from user
         user[f"{self.config_key}_conversation_id"] = None
-        self.user_handler.save_user(user)
+        self.users_handler.save_user(user)
 
 
 def _load_conversation(conversations_dir, conversation_id):
@@ -267,7 +265,6 @@ def _save_conversation(conversations_dir, conversation_id, conversation) -> bool
     :param conversation:
     :return: True if no error
     """
-    print(conversation)
     logging.info("Saving conversation {0}".format(conversation_id))
     try:
         if conversation_id is None:
