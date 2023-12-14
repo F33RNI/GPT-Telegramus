@@ -61,11 +61,13 @@ Or message me if you would like to donate 💰
 - **Bing chat** (EdgeGPT by Microsoft): https://bing.com/chat
 - **DALL-E** (DALLE by OpenAI): https://openai.com/dall-e-2/
 - **Bard** (Bard by Google): https://bard.google.com/
+- **Gemini** (Gemini by Google): https://makersuite.google.com/app/prompts/new_freeform
 - **acheong08/ChatGPT** (API): https://github.com/acheong08/ChatGPT
 - **acheong08/EdgeGPT** (API): https://github.com/acheong08/EdgeGPT
 - **jacobgelling/EdgeGPT** (API): https://github.com/jacobgelling/EdgeGPT
 - **dsdanielpark/Bard-API** (API): https://github.com/dsdanielpark/Bard-API
 - **acheong08/BingImageCreator** (API): https://github.com/acheong08/BingImageCreator
+- **google/generative-ai-python** (API): https://github.com/google/generative-ai-python
 - **python-telegram-bot** (Telegram bot API): https://github.com/python-telegram-bot/python-telegram-bot
 
 ----------
@@ -108,6 +110,11 @@ Or message me if you would like to donate 💰
   - Chat history support
   - Web-browsing support (probably)
   - Now supports requests with images (you can send an image with text to it) **NEW**
+- **Gemini**
+  - Google's AI using the Gemini Pro model
+  - Chat history support
+  - Requests with images (you can send an image with text to it)
+  - Requests with images will not be recorded in the chat history since Google hasn't support this
 
 ----------
 
@@ -323,6 +330,7 @@ Sometimes, searching for a proxy can take a long time. If you think that the fou
 - `/bing <Text request>` - Request to the Bing AI module
 - `/bingigen <Text request>` - Request to the Bing Image Generator
 - `/bard <Text request>` - Request to the Bard module
+- `/gemini <Text request>` - Request to the Gemini module
 
 
 ### Admin commands:
@@ -345,7 +353,7 @@ GPT-Telegramus saves chat history for some modules locally (`"conversations_dir"
 
 GPT-Telegramus has a built-in data collecting function (request and response)
 
-- **For ChatGPT, EdgeGPT (aka Bing AI) and Bard** response is saved as plain text and Base64-encoded images
+- **For ChatGPT, EdgeGPT (aka Bing AI), Bard and Gemini** response is saved as plain text and Base64-encoded images
 - **For DALL-E and Bing Image generator** response is saved as Base64-encoded image (in the same text file)
 
 You can enable and configure data collection in config in `data_collecting` block
