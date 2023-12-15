@@ -1,3 +1,4 @@
+from datetime import datetime
 import time
 import uuid
 import json
@@ -5,17 +6,22 @@ import os
 import multiprocessing
 import ctypes
 import logging
+from typing import List, Dict, Optional
 import requests
-from typing import List, Dict
+import google.generativeai as genai
 from google.ai.generativelanguage import (
+    Tool,
+    FunctionDeclaration,
     Part,
+    FunctionCall,
+    FunctionResponse,
     Content,
 )
-import google.generativeai as genai
 
-from google.generativeai.client import (  # pylint: disable=no-name-in-module
-    _ClientManager,
-)
+# pylint: disable=no-name-in-module
+from google.generativeai.client import _ClientManager
+
+# pylint: enable=no-name-in-module
 
 import BotHandler
 import UsersHandler
@@ -116,10 +122,6 @@ class GoogleAIModule:
         :return:
         """
         lang = UsersHandler.get_key_or_none(request_response.user, "lang", 0)
-        conversations_dir = self.config["files"]["conversations_dir"]
-        conversation_id = UsersHandler.get_key_or_none(
-            request_response.user, f"{self.config_key}_conversation_id"
-        )
 
         # Check if we are initialized
         if not self._enabled:
@@ -157,77 +159,25 @@ class GoogleAIModule:
                 )
             self._last_request_time.value = time.time()
 
-            response = None
-            conversation = []
-            # Try to download image
             if request_response.image_url:
-                logging.info("Downloading user image")
-                image = requests.get(request_response.image_url, timeout=120)
-
-                logging.info("Asking Gemini...")
-                response = self._vision_model.generate_content(
-                    [
-                        Part(
-                            inline_data={
-                                "mime_type": "image/jpeg",
-                                "data": image.content,
-                            }
-                        ),
-                        Part(text=request_response.request),
-                    ],
-                    stream=True,
+                self._respond(
+                    request_response, self._ask_vision_model(request_response)
                 )
             else:
-                # Try to load conversation
-                conversation = (
-                    _load_conversation(conversations_dir, conversation_id) or []
-                )
-                # Generate new random conversation ID
-                if conversation_id is None:
-                    conversation_id = str(uuid.uuid4())
-
-                conversation.append(
-                    Content.to_json(
-                        Content(
-                            role="user", parts=[Part(text=request_response.request)]
-                        )
+                function_call = None
+                response: Optional[genai.types.GenerateContentResponse] = None
+                while function_call or not response:
+                    request_response.response = ""
+                    response, conversation = self._ask_model(
+                        request_response, function_call
                     )
-                )
-
-                logging.info("Asking Gemini...")
-                response = self._model.generate_content(
-                    [Content.from_json(content) for content in conversation],
-                    stream=True,
-                )
-
-            for chunk in response:
-                if self.cancel_requested.value:
-                    break
-                if len(chunk.parts) < 1 or "text" not in chunk.parts[0]:
-                    continue
-
-                request_response.response += chunk.parts[0].text
-                BotHandler.async_helper(
-                    BotHandler.send_message_async(
-                        self.config, self.messages, request_response, end=False
+                    self._respond(request_response, response)
+                    self._save_response(response, conversation, request_response.user)
+                    function_call = (
+                        response.parts[0].function_call
+                        if "function_call" in response.parts[0]
+                        else None
                     )
-                )
-
-            if self.cancel_requested.value:
-                logging.info("Gemini module canceled")
-            elif not request_response.image_url:
-                conversation.append(
-                    Content.to_json(Content(role="model", parts=response.parts))
-                )
-
-                if not _save_conversation(
-                    conversations_dir, conversation_id, conversation
-                ):
-                    conversation_id = None
-                request_response.user[
-                    f"{self.config_key}_conversation_id"
-                ] = conversation_id
-                self.users_handler.save_user(request_response.user)
 
         # Error
         except Exception as e:
@@ -242,6 +192,120 @@ class GoogleAIModule:
                 self.config, self.messages, request_response, end=True
             )
         )
+
+    def _ask_vision_model(
+        self,
+        request_response: RequestResponseContainer,
+    ):
+        logging.info("Downloading user image")
+        image = requests.get(request_response.image_url, timeout=120)
+
+        logging.info("Asking Gemini...")
+        return self._vision_model.generate_content(
+            [
+                Part(
+                    inline_data={
+                        "mime_type": "image/jpeg",
+                        "data": image.content,
+                    }
+                ),
+                Part(text=request_response.request),
+            ],
+            stream=True,
+        )
+
+    def _ask_model(
+        self,
+        request_response: RequestResponseContainer,
+        function_call: Optional[FunctionCall] = None,
+    ):
+        content = None
+        if function_call:
+            function_name = function_call.name
+            content = Content(
+                role="function",
+                parts=[
+                    Part(
+                        function_response=FunctionResponse(
+                            name=function_name,
+                            response=_invoke_tool(function_name),
+                        )
+                    )
+                ],
+            )
+        else:
+            content = Content(role="user", parts=[Part(text=request_response.request)])
+
+        conversation_id_key = f"{self.config_key}_conversation_id"
+        conversation_id = request_response.user.get(conversation_id_key, None)
+        # Try to load conversation
+        conversation = (
+            _load_conversation(
+                self.config["files"]["conversations_dir"],
+                conversation_id,
+            )
+            or []
+        )
+        # Generate new random conversation ID
+        if conversation_id is None:
+            request_response.user[conversation_id_key] = str(uuid.uuid4())
+
+        conversation.append(Content.to_json(content))
+
+        logging.info("Asking Gemini...")
+        response = self._model.generate_content(
+            [Content.from_json(content) for content in conversation],
+            tools=_build_tools(),
+            stream=True,
+        )
+        return (response, conversation)
+
+    def _respond(
+        self,
+        request_response: RequestResponseContainer,
+        response: genai.types.GenerateContentResponse,
+    ):
+        for chunk in response:
+            if self.cancel_requested.value:
+                break
+
+            if len(chunk.parts) < 1:
+                continue
+
+            part = chunk.parts[0]
+            if "text" in part:
+                request_response.response += part.text
+            elif "function_call" in part:
+                request_response.response = (
+                    f"Gemini is calling {part.function_call.name}"
+                )
+            else:
+                continue
+
+            BotHandler.async_helper(
+                BotHandler.send_message_async(
+                    self.config, self.messages, request_response, end=False
+                )
+            )
+
+    def _save_response(
+        self,
+        response: genai.types.GenerateContentResponse,
+        conversation: [str],
+        user: Dict,
+    ):
+        conversation.append(
+            Content.to_json(Content(role="model", parts=response.parts))
+        )
+
+        conversation_id_key = f"{self.config_key}_conversation_id"
+        if not _save_conversation(
+            self.config["files"]["conversations_dir"],
+            user[conversation_id_key],
+            conversation,
+        ):
+            user[conversation_id_key] = None
+        self.users_handler.save_user(user)
 
     def clear_conversation_for_user(self, user: dict) -> None:
         """
@@ -346,3 +410,42 @@ def _delete_conversation(conversations_dir, conversation_id) -> bool:
         )
 
     return False
+
+
+class AITool:
+    def __init__(
+        self,
+        name,
+        description,
+        handler,
+    ):
+        self.name = name
+        self.description = description
+        self.handler = handler
+
+
+TOOLS = [
+    AITool(
+        name="get_datetime",
+        description="get the current date time in ISO format",
+        handler=lambda: {"datetime": datetime.today().isoformat()},
+    ),
+]
+
+
+def _build_tools():
+    return [
+        Tool(
+            function_declarations=[
+                FunctionDeclaration(name=tool.name, description=tool.description)
+                for tool in TOOLS
+            ]
+        )
+    ]
+
+
+def _invoke_tool(name):
+    tool = next((t for t in TOOLS if t.name == name), None)
+    if not tool:
+        return {"error": "Function not found"}
+    return tool.handler()
