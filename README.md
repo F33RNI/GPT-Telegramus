@@ -1,6 +1,6 @@
 # 🤖 GPT-Telegramus
 
-| <img src="Logo.png" alt="GPT-Telegramus logo"/> | <h3>The best Telegram bot for ChatGPT, EdgeGPT (aka Bing AI), DALL-E, Bing Image generator, Bard and Gemini with stream writing, requests with images (for Bard only), multiple languages, admin control, automatic proxy searcher, data logging and more!</h3> |
+| <img src="Logo.png" alt="GPT-Telegramus logo"/> | <h3>The best Telegram bot for ChatGPT, EdgeGPT (aka Bing AI), DALL-E, Bing Image generator, Bard and Gemini with stream writing, requests with images (for Bard and Gemini only), multiple languages, admin control, automatic proxy searcher, data logging and more!</h3> |
 |-------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
 
 <div style="width:100%;text-align:center;">
@@ -80,7 +80,7 @@ Or message me if you would like to donate 💰
 4. Activate venv `source venv/bin/activate` / `venv\Scripts\activate.bat`
 5. Check python version using `python --version` command. It should be 3.10.X
 6. Install requirements `pip install -r requirements.txt --upgrade`
-7. Access the modules you want to use (Generate an API key / access token for ChatGPT / DALL-E, save cookies for EdgeGPT / Bard)
+7. Access the modules you want to use (Generate an API key / access token for ChatGPT / DALL-E / Gemini, save cookies for EdgeGPT / Bard)
 8. Start ChatGPTProxy for ChatGPT (see **🔗 Chat-GPT Base URL (proxy)** section)
 9. Carefully change all the settings (in the `config.json` file) to suit your needs. If you have questions regarding any setting, open an issue, I will add a more detailed description
 10. Create bot at https://t.me/BotFather
