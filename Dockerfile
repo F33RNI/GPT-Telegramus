@@ -22,7 +22,7 @@ RUN --mount=type=cache,target=/root/.cache/pip pip3 install pyinstaller
 
 # Install built dependencies
 COPY --link --from=build /wheels /wheels
-RUN --mount=type=cache,target=/root/.cache/pip pip3 install /wheels/*
+RUN --mount=type=cache,target=/root/.cache/pip pip3 install --no-index /wheels/*
 
 ADD . .
 RUN pyinstaller --clean --onefile --name main --collect-all tiktoken_ext.openai_public \
