@@ -147,13 +147,19 @@
         "__comment01__": "API_KEY FROM https://makersuite.google.com/app/apikey",
         "api_key": "",
 
-        "__comment02__": "MINIMUM INTERVAL (IN SECONDS) BETWEEN EACH GEMINI REQUEST",
-        "cooldown_seconds": 20,
+        "__comment02__": "AI CONFIG, SEE https://ai.google.dev/api/python/google/generativeai/GenerationConfig for more",
+        "temperature": 0.9,
+        "top_p": 1,
+        "top_k": 1,
+        "max_output_tokens": 2048,
 
-        "__comment03__": "RESPONSE TIMEOUT (IN SECONDS)",
+        "__comment03__": "MINIMUM INTERVAL (IN SECONDS) BETWEEN EACH GEMINI REQUEST",
+        "cooldown_seconds": 1,
+
+        "__comment04__": "RESPONSE TIMEOUT (IN SECONDS)",
         "timeout_seconds": 120,
 
-        "__comment04__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
+        "__comment05__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
         "user_cooldown_seconds": 0
     },
 

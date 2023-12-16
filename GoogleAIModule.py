@@ -4,10 +4,13 @@ import json
 import os
 import multiprocessing
 import ctypes
-import asyncio
 import logging
 import requests
 from typing import List, Dict
+from google.ai.generativelanguage import (
+    Part,
+    Content,
+)
 import google.generativeai as genai
 
 from google.generativeai.client import (  # pylint: disable=no-name-in-module
@@ -39,6 +42,7 @@ class GoogleAIModule:
 
         self._enabled = False
         self._model = None
+        self._vision_model = None
 
     def initialize(self) -> None:
         """
@@ -65,10 +69,12 @@ class GoogleAIModule:
 
             # Set up the model
             generation_config = {
-                "temperature": 0.9,
-                "top_p": 1,
-                "top_k": 1,
-                "max_output_tokens": 2048,
+                "temperature": self.config[self.config_key].get("temperature", 0.9),
+                "top_p": self.config[self.config_key].get("top_p", 1),
+                "top_k": self.config[self.config_key].get("top_k", 1),
+                "max_output_tokens": self.config[self.config_key].get(
+                    "max_output_tokens", 2048
+                ),
             }
             safety_settings = []
             self._model = genai.GenerativeModel(
@@ -84,12 +90,10 @@ class GoogleAIModule:
 
             client_manager = _ClientManager()
             client_manager.configure(api_key=self.config[self.config_key]["api_key"])
-            self._model._client = client_manager.get_default_client(
-                "generative"
-            )  # pylint: disable=protected-access
-            self._vision_model._client = client_manager.get_default_client(
-                "generative"
-            )  # pylint: disable=protected-access
+            # pylint: disable=protected-access
+            self._model._client = client_manager.get_default_client("generative")
+            self._vision_model._client = client_manager.get_default_client("generative")
+            # pylint: enable=protected-access
             logging.info("Google AI module initialized")
 
         # Error
@@ -146,6 +150,7 @@ class GoogleAIModule:
             self._last_request_time.value = time.time()
 
             response = None
+            conversation = []
             # Try to download image
             if request_response.image_url:
                 logging.info("Downloading user image")
@@ -154,8 +159,13 @@ class GoogleAIModule:
                 logging.info("Asking Gemini...")
                 response = self._vision_model.generate_content(
                     [
-                        {"mime_type": "image/jpeg", "data": image.content},
-                        request_response.request,
+                        Part(
+                            inline_data={
+                                "mime_type": "image/jpeg",
+                                "data": image.content,
+                            }
+                        ),
+                        Part(text=request_response.request),
                     ],
                     stream=True,
                 )
@@ -168,15 +178,27 @@ class GoogleAIModule:
                 if conversation_id is None:
                     conversation_id = str(uuid.uuid4())
 
-                conversation.append({"role": "user", "parts": request_response.request})
+                conversation.append(
+                    Content.to_json(
+                        Content(
+                            role="user", parts=[Part(text=request_response.request)]
+                        )
+                    )
+                )
 
                 logging.info("Asking Gemini...")
-                response = self._model.generate_content(conversation, stream=True)
+                response = self._model.generate_content(
+                    [Content.from_json(content) for content in conversation],
+                    stream=True,
+                )
 
             for chunk in response:
                 if self.cancel_requested.value:
                     break
-                request_response.response += chunk.text
+                if len(chunk.parts) < 1 or "text" not in chunk.parts[0]:
+                    continue
+
+                request_response.response += chunk.parts[0].text
                 BotHandler.async_helper(
                     BotHandler.send_message_async(
                         self.config, self.messages, request_response, end=False
@@ -186,7 +208,9 @@ class GoogleAIModule:
             if self.cancel_requested.value:
                 logging.info("Gemini module canceled")
             elif not request_response.image_url:
-                conversation.append({"role": "model", "parts": response.text})
+                conversation.append(
+                    Content.to_json(Content(role="model", parts=response.parts))
+                )
 
                 if not _save_conversation(
                     conversations_dir, conversation_id, conversation
