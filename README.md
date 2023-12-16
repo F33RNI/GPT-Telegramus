@@ -230,7 +230,7 @@ If you want to add a language, create a pull request 💜
     ```shell
     docker run -d --name gpt-telegramus --restart on-failure telegramus
     ```
-   or if you want to use custom a config
+   or if you want to use a custom config
    ```shell
    docker run -d -e TELEGRAMUS_CONFIG_FILE="/app/config/config.json" -v <YOUR_CONFIG_FOLDER>:/app/config --name gpt-telegramus --restart on-failure telegramus
    ```
