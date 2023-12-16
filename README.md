@@ -220,7 +220,7 @@ If you want to add a language, create a pull request 💜
 
 **Note:** You can specify settings and messages files and chats folder location. (default location is in project folder):
 ```shell
-docker run -d -e TELEGRAMUS_SETTINGS_FILE="PATH_TO_config.json" --name gpt-telegramus --restart on-failure telegramus
+docker run -d -e TELEGRAMUS_CONFIG_FILE="/app/config/config.json" -v <YOUR_CONFIG_FOLDER>:/app/config/config.json --name gpt-telegramus --restart on-failure telegramus
 ```
 
 ----------
