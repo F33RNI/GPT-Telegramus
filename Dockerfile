@@ -15,6 +15,8 @@ RUN --mount=type=cache,target=/root/.cache/pip pip3 wheel --wheel-dir=/wheels -r
 
 # Second stage: compile our application
 FROM python:3.10 AS compile
+RUN mkdir -p /lib
+RUN mkdir -p /lib64
 WORKDIR /app
 RUN --mount=type=cache,target=/root/.cache/pip pip3 install pyinstaller
 
