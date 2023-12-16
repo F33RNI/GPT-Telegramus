@@ -5,20 +5,8 @@
 # https://github.com/moby/buildkit
 
 # First stage: install dependencies
-FROM python:3.9 AS build
-ENV DEBIAN_FRONTEND=noninteractive
+FROM python:3.10 AS build
 WORKDIR /app
-
-# Install Python and pip
-RUN <<eot
-    apt update
-    apt install -y --no-install-recommends python3 gcc libc-dev linux-headers wget
-    python3 -m ensurepip
-    wget "https://static.rust-lang.org/rustup/dist/$(uname -m)-unknown-linux-gnu/rustup-init" -O /tmp/rustup-init
-    chmod +x /tmp/rustup-init
-    /tmp/rustup-init -y
-eot
-ENV PATH=/root/.cargo/bin:$PATH
 # Add just requirements.txt file (for caching purposes)
 ADD requirements.txt requirements.txt
 
@@ -36,34 +24,12 @@ WORKDIR /app
 # Add just requirements.txt file (for caching purposes)
 ADD requirements.txt .
 
+RUN --mount=type=cache,target=/root/.cache/pip pip3 install pyinstaller
 RUN --mount=type=cache,target=/root/.cache/pip pip3 install --no-index -r requirements.txt
 ADD . .
-RUN --mount=type=cache,target=/root/.cache/pip <<EOT
-    apt install upx
-    pip3 install pyinstaller
-EOT
 RUN pyinstaller --clean --onefile --name main --collect-all tiktoken_ext.openai_public \
     --collect-all blobfile --collect-all tls_client \
     main.py
-
-# Optional target: build classic python-based container
-FROM python:3.9 as classic
-ENV DEBIAN_FRONTEND=noninteractive
-WORKDIR /app
-ADD . .
-
-COPY --link --from=build /app /app
-COPY --link --from=build /wheels /wheels
-
-# install deps
-RUN apt update && apt install -y --no-install-recommends gcc build-base libc-dev linux-headers rustc cargo
-# Install wheels
-RUN --mount=type=cache,target=/root/.cache/pip pip3 install --upgrade --no-index --find-links=/wheels -r requirements.txt
-
-ENV TELEGRAMUS_CONFIG_FILE "config.json"
-
-# Run main script
-CMD ["python3", "main.py"]
 
 # Build distoless (main) variant
 FROM gcr.io/distroless/static
