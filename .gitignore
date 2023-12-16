@@ -12,3 +12,5 @@ data/
 Banner.psd
 Banner.tif
 UsersRecover.py
+venv
+__pycache__
