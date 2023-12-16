@@ -87,6 +87,9 @@ venv/
 # VS Code
 .vscode/
 
+# GitHub
+.github/
+
 # Documents
 README.md
 Screenshots/

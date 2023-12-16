@@ -13,8 +13,10 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          - linux/amd64
-          - linux/arm64
+          - os: linux
+            arch: amd64
+          - os: linux
+            arch: arm64
 
     runs-on: ubuntu-latest
 
@@ -46,7 +48,7 @@ jobs:
         with:
           context: .
           labels: ${{ steps.meta.outputs.labels }}
-          platforms: ${{ matrix.platform }}
+          platforms: ${{ matrix.platform.os }}/${{ matrix.platform.arch }}
           outputs: type=image,name=ghcr.io/${{ steps.lowercaseRepo.outputs.lowercase }},push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -58,7 +60,7 @@ jobs:
       - name: Upload digest
         uses: actions/upload-artifact@v4
         with:
-          name: digests
+          name: digests-${{ matrix.platform.os }}-${{ matrix.platform.arch }}
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
@@ -75,7 +77,6 @@ jobs:
       - name: Download digests
         uses: actions/download-artifact@v4
         with:
-          name: digests
           path: /tmp/digests
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -102,7 +103,7 @@ jobs:
         working-directory: /tmp/digests
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf 'ghcr.io/${{ steps.lowercaseRepo.outputs.lowercase }}@sha256:%s ' *)
+            $(find -maxdepth 2 -mindepth 2 -type f -printf "ghcr.io/${{ steps.lowercaseRepo.outputs.lowercase }}@sha256:%f ")
       - name: Inspect image
         run: |
           docker buildx imagetools inspect ghcr.io/${{ steps.lowercaseRepo.outputs.lowercase }}:${{ steps.meta.outputs.version }}

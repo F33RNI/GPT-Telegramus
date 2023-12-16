@@ -13,8 +13,10 @@ jobs:
     strategy:
       matrix:
         platform:
-          - linux/amd64
-          - linux/arm64
+          - os: linux
+            arch: amd64
+          - os: linux
+            arch: arm64
 
     runs-on: ubuntu-latest
 
@@ -30,7 +32,7 @@ jobs:
         context: .
         push: false
         load: true
-        tags: telegramus-test-${{ matrix.platform }}
-        platforms: ${{ matrix.platform }}
+        tags: telegramus-test-${{ matrix.platform.os }}-${{ matrix.platform.arch}}
+        platforms: ${{ matrix.platform.os }}/${{ matrix.platform.arch}}
     - run: |
-        docker run --rm "telegramus-test-${{ matrix.platform }}" /app/telegramus --version
+        docker run --rm "telegramus-test-${{ matrix.platform.os }}-${{ matrix.platform.arch}}" /app/telegramus --version
