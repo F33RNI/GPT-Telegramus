@@ -29,6 +29,7 @@ RUN --mount=type=bind,from=build,source=/wheels,target=/wheels pip install --no-
 WORKDIR /src
 RUN --mount=type=bind,source=. \
     pyinstaller --specpath /app --distpath /app/dist --workpath /app/work \
+    --collect-all tls_client --collect-all tiktoken_ext.openai_public \
     --onefile --name main main.py
 
 # Build application image
