@@ -28,6 +28,7 @@ from google.generativeai.client import _ClientManager
 
 from readability import Document
 from markdownify import markdownify
+from googlesearch import search as googlesearch
 
 import BotHandler
 import UsersHandler
@@ -452,7 +453,7 @@ def _get_webpage_by_url(args):
 
         header = requests.head(url, timeout=20, allow_redirects=True)
         content_type = header.headers.get("content-type")
-        if content_type != "text/html":
+        if not content_type.startswith("text/html"):
             return {"error": f"Unsupported content type {content_type}"}
 
         res = requests.get(url, timeout=20, allow_redirects=True)
@@ -460,6 +461,19 @@ def _get_webpage_by_url(args):
         return {"webpage": markdownify(document.summary())}
     except Exception:
         return {"error": "Can not read the url"}
+
+
+def _search_on_google(args):
+    try:
+        return {
+            "results": [
+                {"url": res.url, "title": res.title, "description": res.description}
+                for res in googlesearch(args["keyword"], advanced=True)
+            ]
+        }
+
+    except Exception:
+        return {"error": "Failed to search the keyword, try again"}
 
 
 TOOLS = [
@@ -470,10 +484,22 @@ TOOLS = [
         handler=lambda _: {"datetime": datetime.today().isoformat()},
     ),
     AITool(
-        name="get_webpage_by_url",
-        msg="getting a webpage from {0}",
+        name="search_on_google",
+        msg="searching `{0}` on Google",
+        msg_args=["keyword"],
+        description="Search the given keyword on Google",
+        handler=_search_on_google,
+        parameters=Schema(
+            type_=SchemaType.OBJECT,
+            properties={"keyword": Schema(type_=SchemaType.STRING)},
+            required=["keyword"],
+        ),
+    ),
+    AITool(
+        name="summary_webpage_by_url",
+        msg="getting summary of {0}",
         msg_args=["url"],
-        description="Get a webpage by url",
+        description="Get summary of a webpage by url",
         handler=_get_webpage_by_url,
         parameters=Schema(
             type_=SchemaType.OBJECT,
