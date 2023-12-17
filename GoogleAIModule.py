@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 import time
 import uuid
 import json
@@ -16,12 +17,17 @@ from google.ai.generativelanguage import (
     FunctionCall,
     FunctionResponse,
     Content,
+    Schema,
+    Type as SchemaType,
 )
 
 # pylint: disable=no-name-in-module
 from google.generativeai.client import _ClientManager
 
 # pylint: enable=no-name-in-module
+
+from readability import Document
+from markdownify import markdownify
 
 import BotHandler
 import UsersHandler
@@ -166,16 +172,19 @@ class GoogleAIModule:
             else:
                 function_call = None
                 response: Optional[genai.types.GenerateContentResponse] = None
-                while function_call or not response:
-                    request_response.response = ""
+                while (
+                    function_call or not response
+                ) and not self.cancel_requested.value:
                     response, conversation = self._ask_model(
                         request_response, function_call
                     )
                     self._respond(request_response, response)
+                    if self.cancel_requested.value:
+                        break
                     self._save_response(response, conversation, request_response.user)
                     function_call = (
-                        response.parts[0].function_call
-                        if "function_call" in response.parts[0]
+                        response.candidates[0].content.parts[0].function_call
+                        if "function_call" in response.candidates[0].content.parts[0]
                         else None
                     )
 
@@ -221,14 +230,13 @@ class GoogleAIModule:
     ):
         content = None
         if function_call:
-            function_name = function_call.name
             content = Content(
                 role="function",
                 parts=[
                     Part(
                         function_response=FunctionResponse(
-                            name=function_name,
-                            response=_invoke_tool(function_name),
+                            name=function_call.name,
+                            response=_invoke_tool(function_call),
                         )
                     )
                 ],
@@ -269,22 +277,28 @@ class GoogleAIModule:
             if self.cancel_requested.value:
                 break
 
-            if len(chunk.parts) < 1:
+            if len(chunk.candidates[0].content.parts) < 1:
                 continue
 
-            part = chunk.parts[0]
+            single_message = False
+            part = chunk.candidates[0].content.parts[0]
             if "text" in part:
                 request_response.response += part.text
             elif "function_call" in part:
-                request_response.response = (
-                    f"Gemini is calling {part.function_call.name}"
+                request_response.response += (
+                    f"Gemini is {_get_tool_msg(part.function_call)}"
                 )
+                single_message = True
             else:
                 continue
 
             BotHandler.async_helper(
                 BotHandler.send_message_async(
-                    self.config, self.messages, request_response, end=False
+                    self.config,
+                    self.messages,
+                    request_response,
+                    end=single_message,
+                    plain_text=single_message,
                 )
             )
 
@@ -294,9 +308,7 @@ class GoogleAIModule:
         conversation: [str],
         user: Dict,
     ):
-        conversation.append(
-            Content.to_json(Content(role="model", parts=response.parts))
-        )
+        conversation.append(Content.to_json(response.candidates[0].content))
 
         conversation_id_key = f"{self.config_key}_conversation_id"
         if not _save_conversation(
@@ -418,17 +430,56 @@ class AITool:
         name,
         description,
         handler,
+        msg: Optional[str] = None,
+        msg_args: Optional[List[str]] = None,
+        parameters: Optional[Schema] = None,
     ):
         self.name = name
         self.description = description
+        self.parameters = parameters
         self.handler = handler
+        self.msg = msg
+        self.msg_args = msg_args or []
+
+
+def _get_webpage_by_url(args):
+    try:
+        url = args["url"]
+        if not (schema := re.search(r"(.*)://", url)):
+            url = "https://" + url
+        elif (schema := schema.group(1)) not in ["https", "http"]:
+            return {"error": f"Invalid url schema {schema}"}
+
+        header = requests.head(url, timeout=20, allow_redirects=True)
+        content_type = header.headers.get("content-type")
+        if content_type != "text/html":
+            return {"error": f"Unsupported content type {content_type}"}
+
+        res = requests.get(url, timeout=20, allow_redirects=True)
+        document = Document(res.content)
+        return {"webpage": markdownify(document.summary())}
+    except Exception:
+        return {"error": "Can not read the url"}
 
 
 TOOLS = [
     AITool(
         name="get_datetime",
-        description="get the current date time in ISO format",
-        handler=lambda: {"datetime": datetime.today().isoformat()},
+        msg="getting the current datetime",
+        description="Get the current date time in ISO format",
+        handler=lambda _: {"datetime": datetime.today().isoformat()},
+    ),
+    AITool(
+        name="get_webpage_by_url",
+        msg="getting a webpage from {0}",
+        msg_args=["url"],
+        description="Get a webpage by url",
+        handler=_get_webpage_by_url,
+        parameters=Schema(
+            type_=SchemaType.OBJECT,
+            properties={"url": Schema(type_=SchemaType.STRING)},
+            required=["url"],
+        ),
     ),
 ]
 
@@ -437,15 +488,28 @@ def _build_tools():
     return [
         Tool(
             function_declarations=[
-                FunctionDeclaration(name=tool.name, description=tool.description)
+                FunctionDeclaration(
+                    name=tool.name,
+                    description=tool.description,
+                    parameters=tool.parameters,
+                )
                 for tool in TOOLS
             ]
         )
     ]
 
 
-def _invoke_tool(name):
-    tool = next((t for t in TOOLS if t.name == name), None)
+def _invoke_tool(function_call: FunctionCall):
+    tool = next((t for t in TOOLS if t.name == function_call.name), None)
     if not tool:
         return {"error": "Function not found"}
-    return tool.handler()
+    return tool.handler(function_call.args)
+
+
+def _get_tool_msg(function_call: FunctionCall):
+    tool = next((t for t in TOOLS if t.name == function_call.name), None)
+    if not tool:
+        return "trying to use an unknown tool"
+
+    args = FunctionCall.to_dict(function_call).get("args", {})
+    return tool.msg.format(*[args.get(arg, "_") for arg in tool.msg_args])
