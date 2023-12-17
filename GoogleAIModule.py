@@ -1,5 +1,6 @@
 from datetime import datetime
 import re
+import asyncio
 import time
 import uuid
 import json
@@ -443,7 +444,7 @@ class AITool:
         self.msg_args = msg_args or []
 
 
-def _get_webpage_by_url(args):
+async def _get_webpage_by_url(args):
     try:
         url = args["url"]
         if not (schema := re.search(r"(.*)://", url)):
@@ -451,25 +452,41 @@ def _get_webpage_by_url(args):
         elif (schema := schema.group(1)) not in ["https", "http"]:
             return {"error": f"Invalid url schema {schema}"}
 
-        header = requests.head(url, timeout=20, allow_redirects=True)
+        loop = asyncio.get_event_loop()
+        header = await loop.run_in_executor(
+            None, lambda: requests.head(url, timeout=20, allow_redirects=True)
+        )
         content_type = header.headers.get("content-type")
         if not content_type.startswith("text/html"):
             return {"error": f"Unsupported content type {content_type}"}
 
-        res = requests.get(url, timeout=20, allow_redirects=True)
+        res = await loop.run_in_executor(
+            None, lambda: requests.get(url, timeout=20, allow_redirects=True)
+        )
         document = Document(res.content)
         return {"webpage": markdownify(document.summary())}
     except Exception:
         return {"error": "Can not read the url"}
 
 
-def _search_on_google(args):
+async def _complete_google_result(res):
+    return {
+        "url": res.url,
+        "title": res.title,
+        "description": res.description,
+        "content": await _get_webpage_by_url({"url": res.url}),
+    }
+
+
+async def _search_on_google(args):
     try:
         return {
-            "results": [
-                {"url": res.url, "title": res.title, "description": res.description}
-                for res in googlesearch(args["keyword"], advanced=True)
-            ]
+            "results": await asyncio.gather(
+                *[
+                    _complete_google_result(res)
+                    for res in googlesearch(args["keyword"], advanced=True, num_results=3)
+                ]
+            )
         }
 
     except Exception:
@@ -529,7 +546,7 @@ def _invoke_tool(function_call: FunctionCall):
     tool = next((t for t in TOOLS if t.name == function_call.name), None)
     if not tool:
         return {"error": "Function not found"}
-    return tool.handler(function_call.args)
+    return asyncio.run(tool.handler(function_call.args))
 
 
 def _get_tool_msg(function_call: FunctionCall):

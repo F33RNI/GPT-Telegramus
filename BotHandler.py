@@ -155,7 +155,9 @@ async def send_message_async(
             if response_len == 0 and len(request_response.response_images) == 0:
                 request_response.response = messages["empty_message"]
 
-        await _send_prepared_message_async(config, messages, request_response, end, plain_text)
+        await _send_prepared_message_async(
+            config, messages, request_response, end, plain_text
+        )
 
     # Error?
     except Exception as e:
@@ -316,15 +318,19 @@ async def parse_img(img_source: str):
     :return:
     """
     try:
-        res = requests.head(
-            img_source,
-            timeout=10,
-            headers={
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/91.4472.114 Safari/537.36"
-            },
-            allow_redirects=True,
+        loop = asyncio.get_event_loop()
+        res = await loop.run_in_executor(
+            None,
+            lambda: requests.head(
+                img_source,
+                timeout=10,
+                headers={
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/91.4472.114 Safari/537.36"
+                },
+                allow_redirects=True,
+            ),
         )
         content_type = res.headers.get("content-type")
         if not content_type.startswith("image"):
