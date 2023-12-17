@@ -203,9 +203,22 @@ If you want to add a language, create a pull request 💜
 
 ## 🐋 Running in Docker
 
-----------
-
 **WARNING: not tested**
+
+### From GitHub Package
+
+1. Clone repo or download [`config.json`](./config.json) and [`messages.json`](./messages.json)
+2. Edit the `config.json`, set options in the `files` section to the path in the container (`/app/config/<FILE_NAME>`)
+3. Run the container
+   ```shell
+   docker run -d -e TELEGRAMUS_CONFIG_FILE="/app/config/config.json" -v <YOUR_CONFIG_FOLDER>:/app/config --name gpt-telegramus --restart on-failure ghcr.io/f33rni/gpt-telegramus:latest
+   ```
+   If you want to try the preview version
+   ```shell
+   docker run -d -e TELEGRAMUS_CONFIG_FILE="/app/config/config.json" -v <YOUR_CONFIG_FOLDER>:/app/config --name gpt-telegramus --restart on-failure ghcr.io/f33rni/gpt-telegramus:edge
+   ```
+
+### Build Manually
 
 1. Install Docker
 2. Clone repo
@@ -217,11 +230,10 @@ If you want to add a language, create a pull request 💜
     ```shell
     docker run -d --name gpt-telegramus --restart on-failure telegramus
     ```
-
-**Note:** You can specify settings and messages files and chats folder location. (default location is in project folder):
-```shell
-docker run -d -e TELEGRAMUS_SETTINGS_FILE="PATH_TO_config.json" --name gpt-telegramus --restart on-failure telegramus
-```
+   or if you want to use a custom config
+   ```shell
+   docker run -d -e TELEGRAMUS_CONFIG_FILE="/app/config/config.json" -v <YOUR_CONFIG_FOLDER>:/app/config --name gpt-telegramus --restart on-failure telegramus
+   ```
 
 ----------
 
