@@ -1982,24 +1982,14 @@ class BotHandler:
         # Create buttons for module selection
         if request_type < 0:
             buttons = []
-            if self.config["modules"]["chatgpt"]:
-                buttons.append(
-                    InlineKeyboardButton(
-                        self.messages[lang]["modules"][0], callback_data="0_clear_0"
+            for i, name in [(0, "chatgpt"), (2, "edgegpt"), (3, "bard"), (5, "gemini")]:
+                if self.config["modules"][name]:
+                    buttons.append(
+                        InlineKeyboardButton(
+                            self.messages[lang]["modules"][i],
+                            callback_data=f"{i}_clear_0",
+                        )
                     )
-                )
-            if self.config["modules"]["edgegpt"]:
-                buttons.append(
-                    InlineKeyboardButton(
-                        self.messages[lang]["modules"][2], callback_data="2_clear_0"
-                    )
-                )
-            if self.config["modules"]["bard"]:
-                buttons.append(
-                    InlineKeyboardButton(
-                        self.messages[lang]["modules"][3], callback_data="3_clear_0"
-                    )
-                )
 
             # If at least one module is available
             if len(buttons) > 0:
