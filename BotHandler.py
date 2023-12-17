@@ -1262,7 +1262,7 @@ class BotHandler:
                 reply_message_id = int(data_splitted[2])
 
                 # Get user
-                user = self.users_handler.get_user_by_id(telegram_chat_id)
+                user = await self._user_check_get(update, context)
 
                 # Exit if banned
                 if user["banned"]:
@@ -1682,21 +1682,29 @@ class BotHandler:
                 + " "
             )
 
+            user_id = user_info["user_id"]
+            is_private = (
+                (user_info["user_type"] == "private")
+                if "user_type" in user_info
+                else (user_id > 0)
+            )
             # User ID, name, total requests
-            message += "{0} ({1}) - {2}\n".format(
-                user_info["user_id"],
+            message += (
+                "{0} ([{1}](tg://user?id={0})) - {2}\n"
+                if is_private
+                else "{0} ({1}) - {2}\n"
+            ).format(
+                user_id,
                 user_info["user_name"],
                 user_info["requests_total"],
             )
 
-        # Parse as monospace
         message = (
             self.messages[lang]["users_admin"]
             .format(message)
             .replace("\\t", "\t")
             .replace("\\n", "\n")
         )
-        message = "```\n" + message + "\n```"
 
         # Send list of users as markdown
         await send_reply(
@@ -2668,23 +2676,22 @@ class BotHandler:
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> dict:
         """
-        Gets (or creates) user based on update.effective_chat.id and update.message.from_user.full_name
+        Gets (or creates) user based on update.effective_chat.id
         and checks if they are banned or not
         :param update:
         :param context:
         :return: user as dictionary
         """
         # Get user (or create a new one)
-        telegram_user_name = (
-            update.message.from_user.full_name if update.message is not None else None
-        )
         telegram_chat_id = update.effective_chat.id
         user = self.users_handler.get_user_by_id(telegram_chat_id)
 
         # Update user name
-        if telegram_user_name is not None:
-            user["user_name"] = str(telegram_user_name)
-            self.users_handler.save_user(user)
+        if update.effective_chat.effective_name is not None:
+            user["user_name"] = str(update.effective_chat.effective_name)
+
+        user["user_type"] = update.effective_chat.type
+        self.users_handler.save_user(user)
 
         # Send banned info
         if user["banned"]:
