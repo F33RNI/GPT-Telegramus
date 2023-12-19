@@ -85,10 +85,6 @@ class DALLEModule:
             return
 
         try:
-            # Increment requests_total for statistics
-            request_response.user["requests_total"] += 1
-            self.users_handler.save_user(request_response.user)
-
             # Set Key
             openai.api_key = self.config["dalle"]["open_ai_api_key"]
 

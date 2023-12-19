@@ -117,10 +117,6 @@ class BingImageGenModule:
             return
 
         try:
-            # Increment requests_total for statistics
-            request_response.user["requests_total"] += 1
-            self.users_handler.save_user(request_response.user)
-
             # Generate images
             logging.info("Requesting images from Bing ImageGen")
             response_urls = self._image_generator.get_images(request_response.request)

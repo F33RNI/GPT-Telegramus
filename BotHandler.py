@@ -66,6 +66,7 @@ BOT_COMMAND_EDGEGPT = "bing"
 BOT_COMMAND_DALLE = "dalle"
 BOT_COMMAND_BARD = "bard"
 BOT_COMMAND_BING_IMAGEGEN = "bingigen"
+BOT_COMMAND_GEMINI = "gemini"
 BOT_COMMAND_MODULE = "module"
 BOT_COMMAND_STYLE = "style"
 BOT_COMMAND_CLEAR = "clear"
@@ -962,6 +963,7 @@ def clear_conversation_process(
     chatgpt_module,
     bard_module,
     edgegpt_module,
+    gemini_module,
 ) -> None:
     """
     Clears conversation with user (must be called in new process)
@@ -976,6 +978,7 @@ def clear_conversation_process(
     :param chatgpt_module:
     :param bard_module:
     :param edgegpt_module:
+    :param gemini_module:
     :return:
     """
     # Setup logging for current process
@@ -1014,6 +1017,14 @@ def clear_conversation_process(
             else:
                 raise Exception("The module is busy. Please try again later!")
 
+        # Clear Gemini
+        elif request_type == RequestResponseContainer.REQUEST_TYPE_GEMINI:
+            requested_module = messages[lang]["modules"][5]
+            if not gemini_module.processing_flag.value:
+                gemini_module.clear_conversation_for_user(user)
+            else:
+                raise Exception("The module is busy. Please try again later!")
+
         # Wrong module
         else:
             raise Exception("Wrong module type: {}".format(request_type))
@@ -1039,6 +1050,7 @@ class BotHandler:
         chatgpt_module,
         bard_module,
         edgegpt_module,
+        gemini_module,
     ):
         self.config = config
         self.config_file = config_file
@@ -1051,6 +1063,7 @@ class BotHandler:
         self.chatgpt_module = chatgpt_module
         self.bard_module = bard_module
         self.edgegpt_module = edgegpt_module
+        self.gemini_module = gemini_module
 
         self._application = None
         self._event_loop = None
@@ -1135,6 +1148,9 @@ class BotHandler:
                     CaptionCommandHandler(
                         BOT_COMMAND_BING_IMAGEGEN, self.bot_command_bing_imagegen
                     )
+                )
+                self._application.add_handler(
+                    CaptionCommandHandler(BOT_COMMAND_GEMINI, self.bot_command_gemini)
                 )
                 self._application.add_handler(
                     CaptionCommandHandler(BOT_COMMAND_MODULE, self.bot_command_module)
@@ -1262,7 +1278,7 @@ class BotHandler:
                 reply_message_id = int(data_splitted[2])
 
                 # Get user
-                user = self.users_handler.get_user_by_id(telegram_chat_id)
+                user = await self._user_check_get(update, context)
 
                 # Exit if banned
                 if user["banned"]:
@@ -1682,21 +1698,29 @@ class BotHandler:
                 + " "
             )
 
+            user_id = user_info["user_id"]
+            is_private = (
+                (user_info["user_type"] == "private")
+                if "user_type" in user_info
+                else (user_id > 0)
+            )
             # User ID, name, total requests
-            message += "{0} ({1}) - {2}\n".format(
-                user_info["user_id"],
+            message += (
+                "{0} ([{1}](tg://user?id={0})) - {2}\n"
+                if is_private
+                else "{0} ({1}) - {2}\n"
+            ).format(
+                user_id,
                 user_info["user_name"],
                 user_info["requests_total"],
             )
 
-        # Parse as monospace
         message = (
             self.messages[lang]["users_admin"]
             .format(message)
             .replace("\\t", "\t")
             .replace("\\n", "\n")
         )
-        message = "```\n" + message + "\n```"
 
         # Send list of users as markdown
         await send_reply(
@@ -1958,24 +1982,14 @@ class BotHandler:
         # Create buttons for module selection
         if request_type < 0:
             buttons = []
-            if self.config["modules"]["chatgpt"]:
-                buttons.append(
-                    InlineKeyboardButton(
-                        self.messages[lang]["modules"][0], callback_data="0_clear_0"
+            for i, name in [(0, "chatgpt"), (2, "edgegpt"), (3, "bard"), (5, "gemini")]:
+                if self.config["modules"][name]:
+                    buttons.append(
+                        InlineKeyboardButton(
+                            self.messages[lang]["modules"][i],
+                            callback_data=f"{i}_clear_0",
+                        )
                     )
-                )
-            if self.config["modules"]["edgegpt"]:
-                buttons.append(
-                    InlineKeyboardButton(
-                        self.messages[lang]["modules"][2], callback_data="2_clear_0"
-                    )
-                )
-            if self.config["modules"]["bard"]:
-                buttons.append(
-                    InlineKeyboardButton(
-                        self.messages[lang]["modules"][3], callback_data="3_clear_0"
-                    )
-                )
 
             # If at least one module is available
             if len(buttons) > 0:
@@ -2007,6 +2021,7 @@ class BotHandler:
                     self.chatgpt_module,
                     self.bard_module,
                     self.edgegpt_module,
+                    self.gemini_module,
                 ),
             )
 
@@ -2213,36 +2228,16 @@ class BotHandler:
         # Suggest module
         else:
             buttons = []
-            if self.config["modules"]["chatgpt"]:
-                buttons.append(
-                    InlineKeyboardButton(
-                        self.messages[lang]["modules"][0], callback_data="0_module_0"
+            for i, name in enumerate(
+                ["chatgpt", "dalle", "edgegpt", "bard", "bing_imagegen", "gemini"]
+            ):
+                if self.config["modules"][name]:
+                    buttons.append(
+                        InlineKeyboardButton(
+                            self.messages[lang]["modules"][i],
+                            callback_data=f"{i}_module_0",
+                        )
                     )
-                )
-            if self.config["modules"]["dalle"]:
-                buttons.append(
-                    InlineKeyboardButton(
-                        self.messages[lang]["modules"][1], callback_data="1_module_0"
-                    )
-                )
-            if self.config["modules"]["edgegpt"]:
-                buttons.append(
-                    InlineKeyboardButton(
-                        self.messages[lang]["modules"][2], callback_data="2_module_0"
-                    )
-                )
-            if self.config["modules"]["bard"]:
-                buttons.append(
-                    InlineKeyboardButton(
-                        self.messages[lang]["modules"][3], callback_data="3_module_0"
-                    )
-                )
-            if self.config["modules"]["bing_imagegen"]:
-                buttons.append(
-                    InlineKeyboardButton(
-                        self.messages[lang]["modules"][4], callback_data="4_module_0"
-                    )
-                )
 
             # Extract current module
             current_module = self.messages[lang]["modules"][user["module"]]
@@ -2371,6 +2366,13 @@ class BotHandler:
     ):
         await self.bot_command_or_message_request(
             RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN, update, context
+        )
+
+    async def bot_command_gemini(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ):
+        await self.bot_command_or_message_request(
+            RequestResponseContainer.REQUEST_TYPE_GEMINI, update, context
         )
 
     async def bot_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -2668,23 +2670,22 @@ class BotHandler:
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> dict:
         """
-        Gets (or creates) user based on update.effective_chat.id and update.message.from_user.full_name
+        Gets (or creates) user based on update.effective_chat.id
         and checks if they are banned or not
         :param update:
         :param context:
         :return: user as dictionary
         """
         # Get user (or create a new one)
-        telegram_user_name = (
-            update.message.from_user.full_name if update.message is not None else None
-        )
         telegram_chat_id = update.effective_chat.id
         user = self.users_handler.get_user_by_id(telegram_chat_id)
 
         # Update user name
-        if telegram_user_name is not None:
-            user["user_name"] = str(telegram_user_name)
-            self.users_handler.save_user(user)
+        if update.effective_chat.effective_name is not None:
+            user["user_name"] = str(update.effective_chat.effective_name)
+
+        user["user_type"] = update.effective_chat.type
+        self.users_handler.save_user(user)
 
         # Send banned info
         if user["banned"]:
