@@ -1,6 +1,6 @@
 # 🤖 GPT-Telegramus
 
-| <img src="Logo.png" alt="GPT-Telegramus logo"/> | <h3>The best Telegram bot for ChatGPT, EdgeGPT (aka Bing AI), DALL-E, Bing Image generator and Bard with stream writing, requests with images (for Bard only), multiple languages, admin control, automatic proxy searcher, data logging and more!</h3> |
+| <img src="Logo.png" alt="GPT-Telegramus logo"/> | <h3>The best Telegram bot for ChatGPT, EdgeGPT (aka Bing AI), DALL-E, Bing Image generator, Bard and Gemini with stream writing, requests with images (for Bard and Gemini only), multiple languages, admin control, automatic proxy searcher, data logging and more!</h3> |
 |-------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
 
 <div style="width:100%;text-align:center;">
@@ -39,7 +39,7 @@ Or message me if you would like to donate 💰
 ## 🤗 Contributors
 
 - 1️⃣ [Sprav04ka](https://github.com/Sprav04ka) - *Tofii'skovyi' language, Testing, [Super beautiful DIY jack o'lantern (for poster)](Banner.png), [Project Logo](Logo.png), Motivation*
-- 2️⃣ [Hanssen](https://github.com/handsome0hell) - *Markdown parsing, bard images, Chinese language, /chat command, caption fix*
+- 2️⃣ [Hanssen](https://github.com/handsome0hell) - *Markdown parsing, bard images, Chinese language, /chat command, caption fix, loading emoji, dynamic splitting, code block splitting, Gemini module, Docker fix, GitHub actions fix* **and much much more**
 - 3️⃣ [Sergey Krashevich](https://github.com/skrashevich) - *Docker, GitHub Actions*
 - 4️⃣ [Wahit Fitriyanto](https://github.com/wahitftry) - *Indonesian language*
 - 5️⃣ [Alexander Fadeyev](https://github.com/alfsoft) - *EdgeGPT Fix*
@@ -61,11 +61,13 @@ Or message me if you would like to donate 💰
 - **Bing chat** (EdgeGPT by Microsoft): https://bing.com/chat
 - **DALL-E** (DALLE by OpenAI): https://openai.com/dall-e-2/
 - **Bard** (Bard by Google): https://bard.google.com/
+- **Gemini** (Gemini by Google): https://makersuite.google.com/app/prompts/new_freeform
 - **acheong08/ChatGPT** (API): https://github.com/acheong08/ChatGPT
 - **acheong08/EdgeGPT** (API): https://github.com/acheong08/EdgeGPT
 - **jacobgelling/EdgeGPT** (API): https://github.com/jacobgelling/EdgeGPT
 - **dsdanielpark/Bard-API** (API): https://github.com/dsdanielpark/Bard-API
 - **acheong08/BingImageCreator** (API): https://github.com/acheong08/BingImageCreator
+- **google/generative-ai-python** (API): https://github.com/google/generative-ai-python
 - **python-telegram-bot** (Telegram bot API): https://github.com/python-telegram-bot/python-telegram-bot
 
 ----------
@@ -78,7 +80,7 @@ Or message me if you would like to donate 💰
 4. Activate venv `source venv/bin/activate` / `venv\Scripts\activate.bat`
 5. Check python version using `python --version` command. It should be 3.10.X
 6. Install requirements `pip install -r requirements.txt --upgrade`
-7. Access the modules you want to use (Generate an API key / access token for ChatGPT / DALL-E, save cookies for EdgeGPT / Bard)
+7. Access the modules you want to use (Generate an API key / access token for ChatGPT / DALL-E / Gemini, save cookies for EdgeGPT / Bard)
 8. Start ChatGPTProxy for ChatGPT (see **🔗 Chat-GPT Base URL (proxy)** section)
 9. Carefully change all the settings (in the `config.json` file) to suit your needs. If you have questions regarding any setting, open an issue, I will add a more detailed description
 10. Create bot at https://t.me/BotFather
@@ -108,6 +110,11 @@ Or message me if you would like to donate 💰
   - Chat history support
   - Web-browsing support (probably)
   - Now supports requests with images (you can send an image with text to it) **NEW**
+- **Gemini**
+  - Google's AI using the Gemini Pro model
+  - Chat history support
+  - Requests with images (you can send an image with text to it)
+  - Requests with images will not be recorded in the chat history since Google hasn't support this
 
 ----------
 
@@ -203,9 +210,22 @@ If you want to add a language, create a pull request 💜
 
 ## 🐋 Running in Docker
 
-----------
-
 **WARNING: not tested**
+
+### From GitHub Package
+
+1. Clone repo or download [`config.json`](./config.json) and [`messages.json`](./messages.json)
+2. Edit the `config.json`, set options in the `files` section to the path in the container (`/app/config/<FILE_NAME>`)
+3. Run the container
+   ```shell
+   docker run -d -e TELEGRAMUS_CONFIG_FILE="/app/config/config.json" -v <YOUR_CONFIG_FOLDER>:/app/config --name gpt-telegramus --restart on-failure ghcr.io/f33rni/gpt-telegramus:latest
+   ```
+   If you want to try the preview version
+   ```shell
+   docker run -d -e TELEGRAMUS_CONFIG_FILE="/app/config/config.json" -v <YOUR_CONFIG_FOLDER>:/app/config --name gpt-telegramus --restart on-failure ghcr.io/f33rni/gpt-telegramus:edge
+   ```
+
+### Build Manually
 
 1. Install Docker
 2. Clone repo
@@ -217,11 +237,10 @@ If you want to add a language, create a pull request 💜
     ```shell
     docker run -d --name gpt-telegramus --restart on-failure telegramus
     ```
-
-**Note:** You can specify settings and messages files and chats folder location. (default location is in project folder):
-```shell
-docker run -d -e TELEGRAMUS_SETTINGS_FILE="PATH_TO_config.json" --name gpt-telegramus --restart on-failure telegramus
-```
+   or if you want to use a custom config
+   ```shell
+   docker run -d -e TELEGRAMUS_CONFIG_FILE="/app/config/config.json" -v <YOUR_CONFIG_FOLDER>:/app/config --name gpt-telegramus --restart on-failure telegramus
+   ```
 
 ----------
 
@@ -311,6 +330,7 @@ Sometimes, searching for a proxy can take a long time. If you think that the fou
 - `/bing <Text request>` - Request to the Bing AI module
 - `/bingigen <Text request>` - Request to the Bing Image Generator
 - `/bard <Text request>` - Request to the Bard module
+- `/gemini <Text request>` - Request to the Gemini module
 
 
 ### Admin commands:
@@ -333,7 +353,7 @@ GPT-Telegramus saves chat history for some modules locally (`"conversations_dir"
 
 GPT-Telegramus has a built-in data collecting function (request and response)
 
-- **For ChatGPT, EdgeGPT (aka Bing AI) and Bard** response is saved as plain text and Base64-encoded images
+- **For ChatGPT, EdgeGPT (aka Bing AI), Bard and Gemini** response is saved as plain text and Base64-encoded images
 - **For DALL-E and Bing Image generator** response is saved as Base64-encoded image (in the same text file)
 
 You can enable and configure data collection in config in `data_collecting` block

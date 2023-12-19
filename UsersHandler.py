@@ -116,8 +116,9 @@ class UsersHandler:
         user = {
             "user_id": user_id,
             "user_name": DEFAULT_USER_NAME,
+            "user_type": "",
             "admin": True if user_id in self.config["telegram"]["admin_ids"] else False,
-            "banned": self.config["telegram"]["ban_by_default"],
+            "banned": False if user_id in self.config["telegram"]["admin_ids"] else self.config["telegram"]["ban_by_default"],
             "ban_reason": self.messages[0]["ban_reason_default"].replace("\\n", "\n"),
             "module": self.config["modules"]["default_module"],
             "requests_total": 0,

@@ -20,6 +20,7 @@ REQUEST_TYPE_DALLE = 1
 REQUEST_TYPE_EDGEGPT = 2
 REQUEST_TYPE_BARD = 3
 REQUEST_TYPE_BING_IMAGEGEN = 4
+REQUEST_TYPE_GEMINI = 5
 
 PROCESSING_STATE_IN_QUEUE = 0
 PROCESSING_STATE_INITIALIZING = 1
@@ -30,7 +31,7 @@ PROCESSING_STATE_CANCEL = 5
 PROCESSING_STATE_CANCELING = 6
 PROCESSING_STATE_ABORT = 7
 
-REQUEST_NAMES = ["ChatGPT", "DALL-E", "EdgeGPT", "Bard", "Bing ImageGen"]
+REQUEST_NAMES = ["ChatGPT", "DALL-E", "EdgeGPT", "Bard", "Bing ImageGen", "Gemini"]
 PROCESSING_STATE_NAMES = ["Waiting", "Starting", "Active", "Done", "Timed out", "Canceling", "Canceling"]
 
 
@@ -42,7 +43,6 @@ class RequestResponseContainer:
                  message_id=-1,
                  request="",
                  response="",
-                 response_len_last=0,
                  response_images=None,
                  request_type=REQUEST_TYPE_CHATGPT,
                  request_timestamp="",
@@ -59,7 +59,6 @@ class RequestResponseContainer:
         :param message_id: current message id (for editing aka live replying)
         :param request: text request
         :param response: text response
-        :param response_len_last: length of last response (for editing aka live replying)
         :param response_images: images in the responses
         :param request_type: REQUEST_TYPE_CHATGPT / REQUEST_TYPE_DALLE / ...
         :param request_timestamp: timestamp of request (for data collecting)
@@ -76,7 +75,6 @@ class RequestResponseContainer:
         self.message_id = message_id
         self.request = request
         self.response = response
-        self.response_len_last = response_len_last
         self.request_type = request_type
         self.request_timestamp = request_timestamp
         self.response_timestamp = response_timestamp
@@ -94,10 +92,9 @@ class RequestResponseContainer:
         self.processing_start_timestamp = 0.
         self.error = False
 
-        # Used by BotHandler to split large message into smaller ones (list of indexes of text in response)
-        self.response_raw_len_last = 0
-        self.response_part_positions = [0]
-        self.response_part_counter = 0
+        # Used by BotHandler to split large message into smaller ones
+        self.response_next_chunk_start_index = 0
+        self.response_sent_len = 0
 
         # Unique ID for container to get it from queue (address)
         self.id = -1
