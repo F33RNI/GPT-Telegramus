@@ -92,7 +92,7 @@ jobs:
         with:
           flavor: latest=auto
           tags: |
-            type=edge
+            type=edge,branch=next
             type=ref,event=branch
             type=ref,event=tag
             type=semver,pattern={{version}}
