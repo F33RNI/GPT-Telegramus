@@ -6,6 +6,7 @@
         "dalle": true,
         "bard": true,
         "bing_imagegen": true,
+        "gemini": true,
 
         "__comment04__": "Default (initial) module for handling user messages (see RequestResponseContainer.py)",
         "default_module": 0
@@ -141,7 +142,28 @@
         "user_cooldown_seconds": 0
     },
 
-    "__comment07__": "TELEGRAM SETTINGS",
+    "__comment07__": "GEMINI SETTINGS",
+    "gemini": {
+        "__comment01__": "API_KEY FROM https://makersuite.google.com/app/apikey",
+        "api_key": "",
+
+        "__comment02__": "AI CONFIG, SEE https://ai.google.dev/api/python/google/generativeai/GenerationConfig for more",
+        "temperature": 0.9,
+        "top_p": 1,
+        "top_k": 1,
+        "max_output_tokens": 2048,
+
+        "__comment03__": "MINIMUM INTERVAL (IN SECONDS) BETWEEN EACH GEMINI REQUEST",
+        "cooldown_seconds": 1,
+
+        "__comment04__": "RESPONSE TIMEOUT (IN SECONDS)",
+        "timeout_seconds": 120,
+
+        "__comment05__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
+        "user_cooldown_seconds": 0
+    },
+
+    "__comment08__": "TELEGRAM SETTINGS",
     "telegram": {
         "__comment01__": "PROVIDE YOUR BOT API KEY FROM https://t.me/BotFather",
         "api_key": "",
@@ -204,7 +226,7 @@
         ]
     },
 
-    "__comment08__": "FILES AND DIRECTORIES SETTINGS",
+    "__comment09__": "FILES AND DIRECTORIES SETTINGS",
     "files": {
         "users_database": "users.json",
         "conversations_dir": "conversations",
@@ -212,7 +234,7 @@
         "data_collecting_dir": "data"
     },
 
-    "__comment09__": "SETTINGS TO SAVE REQUESTS AND RESPONSE TO FILES",
+    "__comment10__": "SETTINGS TO SAVE REQUESTS AND RESPONSE TO FILES",
     "data_collecting": {
         "__comment01__": "SET true TO AUTOMATICALLY SAVE USER REQUESTS AND RESPONSES TO FILES INTO data_collecting_dir",
         "__comment02__": "NOTE: YOU SHOULD NOTIFY USERS IF IT IS ENABLED!",
@@ -235,7 +257,7 @@
         "timestamp_format": "%Y-%m-%d %H:%M:%S"
     },
 
-    "__comment10__": "AUTOMATIC PROXY SEARCHER SETTINGS",
+    "__comment11__": "AUTOMATIC PROXY SEARCHER SETTINGS",
     "proxy_automation": {
         "__comment01__": "SET TO true TO ENABLE AUTOMATIC PROXY SEARCH. SET proxy TO auto IN MODULE TO USE THIS PROXY",
         "enabled": false,

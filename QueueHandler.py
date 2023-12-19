@@ -246,7 +246,7 @@ def _request_processor(config: dict,
                        lock: multiprocessing.Lock,
                        request_id: int,
                        proxy: str,
-                       chatgpt_module, dalle_module, bard_module, edgegpt_module, bing_image_gen_module) -> None:
+                       chatgpt_module, dalle_module, bard_module, edgegpt_module, bing_image_gen_module, gemini_module) -> None:
     """
     Processes request to any module
     This method should be called from multiprocessing as process
@@ -379,6 +379,22 @@ def _request_processor(config: dict,
                 bing_image_gen_module.initialize(proxy_)
                 bing_image_gen_module.process_request(request_)
 
+        # Gemini
+        elif request_.request_type == RequestResponseContainer.REQUEST_TYPE_GEMINI:
+            gemini_user_last_request_timestamp \
+                = UsersHandler.get_key_or_none(request_.user, "timestamp_gemini", 0)
+            time_passed_seconds = int(time.time()) - gemini_user_last_request_timestamp
+            if time_passed_seconds < config["gemini"]["user_cooldown_seconds"]:
+                request_.error = True
+                logging.warning("User {0} sends Gemini requests too quickly!".format(request_.user["user_id"]))
+                _user_module_cooldown(config, messages, request_,
+                                      config["gemini"]["user_cooldown_seconds"] - time_passed_seconds)
+            else:
+                request_.user["timestamp_gemini"] = int(time.time())
+                users_handler.save_user(request_.user)
+                gemini_module.initialize()
+                gemini_module.process_request(request_)
+
         # Wrong API type
         else:
             raise Exception("Wrong request type: {0}".format(request_.request_type))
@@ -404,7 +420,7 @@ class QueueHandler:
                  logging_queue: multiprocessing.Queue,
                  users_handler: UsersHandler,
                  proxy_automation: ProxyAutomation.ProxyAutomation,
-                 chatgpt_module, dalle_module, bard_module, edgegpt_module, bing_image_gen_module):
+                 chatgpt_module, dalle_module, bard_module, edgegpt_module, bing_image_gen_module, gemini_module):
         self.config = config
         self.messages = messages
         self.logging_queue = logging_queue
@@ -417,6 +433,7 @@ class QueueHandler:
         self.dalle_module = dalle_module
         self.bard_module = bard_module
         self.edgegpt_module = edgegpt_module
+        self.gemini_module = gemini_module
 
         # Requests queue
         self.request_response_queue = multiprocessing.Queue(maxsize=-1)
@@ -516,7 +533,8 @@ class QueueHandler:
                                                                             self.dalle_module,
                                                                             self.bard_module,
                                                                             self.edgegpt_module,
-                                                                            self.bing_image_gen_module,))
+                                                                            self.bing_image_gen_module,
+                                                                            self.gemini_module))
 
                             # Start process
                             request_process.start()
@@ -541,6 +559,8 @@ class QueueHandler:
                             timeout_seconds = self.config["bard"]["timeout_seconds"]
                         elif request_.request_type == RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN:
                             timeout_seconds = self.config["bing_imagegen"]["timeout_seconds"]
+                        elif request_.request_type == RequestResponseContainer.REQUEST_TYPE_GEMINI:
+                            timeout_seconds = self.config["gemini"]["timeout_seconds"]
 
                         # Check timeout
                         if time.time() - request_.processing_start_timestamp > timeout_seconds:
@@ -574,6 +594,11 @@ class QueueHandler:
                         if request_.request_type == RequestResponseContainer.REQUEST_TYPE_EDGEGPT:
                             logging.info("Canceling EdgeGPT module")
                             self.edgegpt_module.cancel_requested.value = True
+
+                        # Request EdgeGPT module exit
+                        if request_.request_type == RequestResponseContainer.REQUEST_TYPE_GEMINI:
+                            logging.info("Canceling Gemini module")
+                            self.gemini_module.cancel_requested.value = True
 
                         # Set canceling flag
                         request_.processing_state = RequestResponseContainer.PROCESSING_STATE_CANCELING

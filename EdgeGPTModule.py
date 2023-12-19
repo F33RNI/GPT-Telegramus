@@ -147,10 +147,6 @@ class EdgeGPTModule:
             else:
                 conversation_style_ = ConversationStyle.creative
 
-            # Increment requests_total for statistics
-            request_response.user["requests_total"] += 1
-            self.users_handler.save_user(request_response.user)
-
             async def async_ask_stream_():
                 async for data in self._chatbot.ask_stream(prompt=request_response.request,
                                                            conversation_style=conversation_style_,
