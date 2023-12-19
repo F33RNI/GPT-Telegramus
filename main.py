@@ -35,7 +35,7 @@ import UsersHandler
 from JSONReaderWriter import load_json
 
 # GPT-Telegramus version
-__version__ = "3.8.0"
+__version__ = "4.0.0"
 
 # Logging level
 LOGGING_LEVEL = logging.INFO
