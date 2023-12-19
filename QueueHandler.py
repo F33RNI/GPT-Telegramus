@@ -392,7 +392,10 @@ def _request_processor(config: dict,
             else:
                 request_.user["timestamp_gemini"] = int(time.time())
                 users_handler.save_user(request_.user)
-                gemini_module.initialize()
+                proxy_ = None
+                if proxy and config["gemini"]["proxy"] == "auto":
+                    proxy_ = proxy
+                gemini_module.initialize(proxy_)
                 gemini_module.process_request(request_)
 
         # Wrong API type

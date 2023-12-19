@@ -44,7 +44,7 @@ class GoogleAIModule:
         self._model = None
         self._vision_model = None
 
-    def initialize(self) -> None:
+    def initialize(self, proxy=None) -> None:
         """
         Initializes Google AI module using the generative language API: https://ai.google.dev/api
         This method must be called from another process
@@ -58,8 +58,16 @@ class GoogleAIModule:
         self.cancel_requested.value = False
 
         try:
+            # Use manual proxy
+            if not proxy and self.config[self.config_key]["proxy"] and self.config[self.config_key]["proxy"] != "auto":
+                proxy = self.config[self.config_key]["proxy"]
+
             # Log
-            logging.info("Initializing Google AI module with proxy")
+            logging.info(f"Initializing Google AI module with proxy {proxy}")
+
+            # Set proxy
+            if proxy:
+                os.environ["http_proxy"] = proxy
 
             # Set enabled status
             self._enabled = self.config["modules"][self.config_key]

@@ -156,10 +156,14 @@
         "__comment03__": "MINIMUM INTERVAL (IN SECONDS) BETWEEN EACH GEMINI REQUEST",
         "cooldown_seconds": 1,
 
-        "__comment04__": "RESPONSE TIMEOUT (IN SECONDS)",
+        "__comment04__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+        "__comment05__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
+        "proxy": "",
+
+        "__comment06__": "RESPONSE TIMEOUT (IN SECONDS)",
         "timeout_seconds": 120,
 
-        "__comment05__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
+        "__comment07__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
         "user_cooldown_seconds": 0
     },
 
