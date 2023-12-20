@@ -39,7 +39,7 @@ Or message me if you would like to donate 💰
 ## 🤗 Contributors
 
 - 1️⃣ [Sprav04ka](https://github.com/Sprav04ka) - *Tofii'skovyi' language, Testing, [Super beautiful DIY jack o'lantern (for poster)](Banner.png), [Project Logo](Logo.png), Motivation*
-- 2️⃣ [Hanssen](https://github.com/handsome0hell) - *Markdown parsing, bard images, Chinese language, /chat command, caption fix, loading emoji, dynamic splitting, code block splitting, Gemini module, Docker fix, GitHub actions fix* **and much much more**
+- 2️⃣ [Hanssen](https://github.com/handsome0hell) - *Markdown parsing, bard images, /chat command, caption fix, loading emoji, dynamic splitting, code block splitting, Gemini module, Docker fix, GitHub actions fix* **and much much more**
 - 3️⃣ [Sergey Krashevich](https://github.com/skrashevich) - *Docker, GitHub Actions*
 - 4️⃣ [Wahit Fitriyanto](https://github.com/wahitftry) - *Indonesian language*
 - 5️⃣ [Alexander Fadeyev](https://github.com/alfsoft) - *EdgeGPT Fix*
