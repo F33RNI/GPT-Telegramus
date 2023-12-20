@@ -22,8 +22,6 @@ import multiprocessing
 import os.path
 import time
 import uuid
-from revChatGPT.V1 import Chatbot as V1Chatbot
-from revChatGPT.V3 import Chatbot as V3Chatbot
 from typing import List, Dict
 
 import BotHandler
@@ -40,7 +38,7 @@ class ChatGPTModule:
         # All variables here must be multiprocessing
         self.cancel_requested = multiprocessing.Value(ctypes.c_bool, False)
         self.processing_flag = multiprocessing.Value(ctypes.c_bool, False)
-        self._last_request_time = multiprocessing.Value(ctypes.c_double, 0.)
+        self._last_request_time = multiprocessing.Value(ctypes.c_double, 0.0)
 
     def initialize(self, proxy=None) -> None:
         """
@@ -81,11 +79,15 @@ class ChatGPTModule:
                 if self.config["chatgpt"]["base_url"]:
                     os.environ["CHATGPT_BASE_URL"] = self.config["chatgpt"]["base_url"]
 
-                self._chatbot = V1Chatbot(config=self._get_chatbot_config(proxy))
+                from revChatGPT.V1 import Chatbot
+
+                self._chatbot = Chatbot(config=self._get_chatbot_config(proxy))
 
             # API type 3
             elif self.config["chatgpt"]["api_type"] == 3:
                 logging.info("Initializing ChatGPT module with API type 3")
+                from revChatGPT.V3 import Chatbot
+
                 engine = str(self.config["chatgpt"]["engine"])
 
                 # Check proxy
@@ -94,12 +96,9 @@ class ChatGPTModule:
 
                 # Initialize chatbot
                 if len(engine) > 0:
-                    self._chatbot = V3Chatbot(str(self.config["chatgpt"]["api_key"]),
-                                            proxy=proxy,
-                                            engine=engine)
+                    self._chatbot = Chatbot(str(self.config["chatgpt"]["api_key"]), proxy=proxy, engine=engine)
                 else:
-                    self._chatbot = V3Chatbot(str(self.config["chatgpt"]["api_key"]),
-                                            proxy=proxy)
+                    self._chatbot = Chatbot(str(self.config["chatgpt"]["api_key"]), proxy=proxy)
 
             # Wrong API type
             else:
@@ -126,8 +125,9 @@ class ChatGPTModule:
         # Check if we are initialized
         if not self._enabled or self._chatbot is None:
             logging.error("ChatGPT module not initialized!")
-            request_response.response = self.messages[lang]["response_error"].replace("\\n", "\n") \
-                .format("ChatGPT module not initialized!")
+            request_response.response = (
+                self.messages[lang]["response_error"].replace("\\n", "\n").format("ChatGPT module not initialized!")
+            )
             request_response.error = True
             self.processing_flag.value = False
             return
@@ -143,8 +143,11 @@ class ChatGPTModule:
 
             # Cooldown to prevent 429 Too Many Requests
             if time.time() - self._last_request_time.value <= self.config["chatgpt"]["cooldown_seconds"]:
-                logging.warning("Too frequent requests. Waiting {0} seconds...".format(
-                    int(self.config["chatgpt"]["cooldown_seconds"] - (time.time() - self._last_request_time.value))))
+                logging.warning(
+                    "Too frequent requests. Waiting {0} seconds...".format(
+                        int(self.config["chatgpt"]["cooldown_seconds"] - (time.time() - self._last_request_time.value))
+                    )
+                )
                 while time.time() - self._last_request_time.value <= self.config["chatgpt"]["cooldown_seconds"]:
                     time.sleep(0.1)
                     # Exit requested?
@@ -165,9 +168,11 @@ class ChatGPTModule:
 
                 # Ask
                 logging.info("Asking ChatGPT (API type 1)...")
-                for data in self._chatbot.ask(request_response.request,
-                                              conversation_id=conversation_id,
-                                              parent_id=parent_id if parent_id is not None else ""):
+                for data in self._chatbot.ask(
+                    request_response.request,
+                    conversation_id=conversation_id,
+                    parent_id=parent_id if parent_id is not None else "",
+                ):
                     # Get last response
                     request_response.response = str(data["message"])
 
@@ -236,8 +241,9 @@ class ChatGPTModule:
                     try:
                         del self._chatbot.conversation[conversation_id]
                     except Exception as e:
-                        logging.warning("Error deleting key {0} from chatbot.conversation".format(conversation_id),
-                                        exc_info=e)
+                        logging.warning(
+                            "Error deleting key {0} from chatbot.conversation".format(conversation_id), exc_info=e
+                        )
 
             # Wrong API type
             else:
@@ -249,15 +255,22 @@ class ChatGPTModule:
 
             # Check response
             if request_response.response:
-                logging.info("Response successfully processed for user {0} ({1})"
-                             .format(request_response.user["user_name"], request_response.user["user_id"]))
+                logging.info(
+                    "Response successfully processed for user {0} ({1})".format(
+                        request_response.user["user_name"], request_response.user["user_id"]
+                    )
+                )
 
             # No response
             else:
-                logging.warning("Empty response for user {0} ({1})!"
-                                .format(request_response.user["user_name"], request_response.user["user_id"]))
-                request_response.response = self.messages[lang]["response_error"].replace("\\n", "\n") \
-                    .format("Empty response!")
+                logging.warning(
+                    "Empty response for user {0} ({1})!".format(
+                        request_response.user["user_name"], request_response.user["user_id"]
+                    )
+                )
+                request_response.response = (
+                    self.messages[lang]["response_error"].replace("\\n", "\n").format("Empty response!")
+                )
                 request_response.error = True
 
             # Clear processing flag
@@ -422,12 +435,12 @@ class ChatGPTModule:
                 return deleted
 
             except Exception as e:
-                logging.error("Error removing conversation file for conversation {0}".format(conversation_id),
-                              exc_info=e)
+                logging.error(
+                    "Error removing conversation file for conversation {0}".format(conversation_id), exc_info=e
+                )
 
         except Exception as e:
-            logging.warning("Error loading conversation {0}".format(conversation_id),
-                            exc_info=e)
+            logging.warning("Error loading conversation {0}".format(conversation_id), exc_info=e)
         return False
 
     def _get_chatbot_config(self, proxy: str) -> dict:
@@ -440,8 +453,7 @@ class ChatGPTModule:
         config = {}
 
         # Use email/password
-        if len(self.config["chatgpt"]["email"]) > 0 \
-                and len(self.config["chatgpt"]["password"]) > 0:
+        if len(self.config["chatgpt"]["email"]) > 0 and len(self.config["chatgpt"]["password"]) > 0:
             config["email"] = self.config["chatgpt"]["email"]
             config["password"] = self.config["chatgpt"]["password"]
 
