@@ -22,8 +22,6 @@ import multiprocessing
 import os.path
 import time
 import uuid
-from revChatGPT.V1 import Chatbot as V1Chatbot
-from revChatGPT.V3 import Chatbot as V3Chatbot
 from typing import List, Dict
 
 import BotHandler
@@ -81,11 +79,13 @@ class ChatGPTModule:
                 if self.config["chatgpt"]["base_url"]:
                     os.environ["CHATGPT_BASE_URL"] = self.config["chatgpt"]["base_url"]
 
-                self._chatbot = V1Chatbot(config=self._get_chatbot_config(proxy))
+                from revChatGPT.V1 import Chatbot
+                self._chatbot = Chatbot(config=self._get_chatbot_config(proxy))
 
             # API type 3
             elif self.config["chatgpt"]["api_type"] == 3:
                 logging.info("Initializing ChatGPT module with API type 3")
+                from revChatGPT.V3 import Chatbot
                 engine = str(self.config["chatgpt"]["engine"])
 
                 # Check proxy
@@ -94,11 +94,11 @@ class ChatGPTModule:
 
                 # Initialize chatbot
                 if len(engine) > 0:
-                    self._chatbot = V3Chatbot(str(self.config["chatgpt"]["api_key"]),
+                    self._chatbot = Chatbot(str(self.config["chatgpt"]["api_key"]),
                                             proxy=proxy,
                                             engine=engine)
                 else:
-                    self._chatbot = V3Chatbot(str(self.config["chatgpt"]["api_key"]),
+                    self._chatbot = Chatbot(str(self.config["chatgpt"]["api_key"]),
                                             proxy=proxy)
 
             # Wrong API type
