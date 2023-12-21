@@ -57,6 +57,8 @@ import UsersHandler
 from JSONReaderWriter import load_json
 from main import __version__
 
+import base64
+
 # User commands
 BOT_COMMAND_START = "start"
 BOT_COMMAND_HELP = "help"
@@ -303,36 +305,43 @@ def build_markup(
     return InlineKeyboardMarkup(build_menu(buttons, n_cols=2))
 
 
-async def parse_img(img_source: str):
+async def parse_img(img_source: str | (str, str)):
     """
     Test if an image source is valid
     :param img_source:
     :return:
     """
-    try:
-        res = requests.head(
-            img_source,
-            timeout=10,
-            headers={
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/91.4472.114 Safari/537.36"
-            },
-            allow_redirects=True,
-        )
-        content_type = res.headers.get("content-type")
-        if not content_type.startswith("image"):
-            raise Exception("Not Image")
-        if content_type == "image/svg+xml":
-            raise Exception("SVG Image")
-    except Exception as e:
-        logging.warning(
-            "Invalid image from {}: {}, You can ignore this message".format(
-                img_source, str(e)
+    if isinstance(img_source, str):
+        try:
+            res = requests.head(
+                img_source,
+                timeout=10,
+                headers={
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/91.4472.114 Safari/537.36"
+                },
+                allow_redirects=True,
             )
-        )
-        return None
-    return img_source
+            content_type = res.headers.get("content-type")
+            if not content_type.startswith("image"):
+                raise Exception("Not Image")
+            if content_type == "image/svg+xml":
+                raise Exception("SVG Image")
+        except Exception as e:
+            logging.warning(
+                "Invalid image from {}: {}, You can ignore this message".format(
+                    img_source, str(e)
+                )
+            )
+            return None
+        return img_source
+
+    img_type, img = img_source
+    if img_type == "base64":
+        return base64.b64decode(img)
+
+    raise Exception("Unknown image type {}".format(img_type))
 
 
 async def _split_and_send_message_async(

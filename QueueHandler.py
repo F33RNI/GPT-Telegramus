@@ -761,7 +761,15 @@ class QueueHandler:
                 # Images
                 for image_url in request_response.response_images:
                     try:
-                        response = base64.b64encode(requests.get(image_url, timeout=120).content).decode("utf-8")
+                        response = None
+                        if isinstance(image_url, str):
+                            response = base64.b64encode(requests.get(image_url, timeout=120).content).decode("utf-8")
+                        else:
+                            img_type, img = image_url
+                            if img_type == "base64":
+                                response = img
+                            else:
+                                raise Exception(f"Unknown image type: {img_type}")
                         log_file.write(response_str_to_format.format(request_response.response_timestamp,
                                                                      request_response.id,
                                                                      request_response.user["user_name"],
