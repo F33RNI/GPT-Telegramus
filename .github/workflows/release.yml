@@ -1,0 +1,32 @@
+name: Build binary files for release
+
+on:
+  release:
+    types:
+      - 'created'
+      - 'edited'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - 'windows-latest'
+          - 'ubuntu-latest'
+          - 'macos-latest'
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+    - run: pip install -r requirements.txt pyinstaller
+    - run: pyinstaller --hidden-import tiktoken_ext.openai_public --onefile --name telegramus-${{ matrix.os }} main.py
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dist/*
