@@ -4,43 +4,34 @@
 # Use buildkit syntax labs
 # https://github.com/moby/buildkit
 
-# First stage: install dependencies
 FROM python:3.10-slim AS build
-RUN apt-get update
-RUN apt-get install -y git build-essential
+RUN --mount=type=cache,target=/root/.cache/pip \
+    apt-get update && \
+    apt-get install -y git binutils build-essential && \
+    pip install pyinstaller
 
-WORKDIR /app
-# Build and save wheels
+# Install dependencies
 RUN --mount=type=cache,target=/root/.cache/pip \
     --mount=type=bind,source=requirements.txt,target=requirements.txt \
-    pip wheel --wheel-dir=/wheels -r requirements.txt
-
-# Second stage: compile our application
-FROM python:3.10-slim AS compile
-RUN mkdir -p /lib
-RUN mkdir -p /lib64
-RUN apt-get update
-RUN apt-get install -y binutils
-RUN --mount=type=cache,target=/root/.cache/pip pip install pyinstaller
-
-# Install built dependencies
-RUN --mount=type=bind,from=build,source=/wheels,target=/wheels pip install --no-index /wheels/*
+    pip install -r requirements.txt
 
 WORKDIR /src
 RUN --mount=type=bind,source=. \
     pyinstaller --specpath /app --distpath /app/dist --workpath /app/work \
-    --collect-all tls_client --collect-all tiktoken_ext.openai_public \
-    --onefile --name main main.py
+    --hidden-import tiktoken_ext.openai_public \
+    --onefile --name telegramus main.py
 
 # Build application image
 FROM alpine
-ENV TELEGRAMUS_CONFIG_FILE "config.json"
+ENV TELEGRAMUS_CONFIG_FILE "/app/config.json"
+ENV PATH /app:$PATH
 
-COPY --link --from=compile /lib /lib
-COPY --link --from=compile /lib64 /lib64
-COPY --link --from=compile /app/dist/main /app/telegramus
+COPY --link --from=python:3.10-slim /li[b] /lib
+COPY --link --from=python:3.10-slim /lib6[4] /lib64
+COPY --link --from=build /app/dist/telegramus /app/telegramus
 
 WORKDIR /app
-ADD config.json messages.json /app/
+COPY config.json messages.json /app/
+
 # Run main script
-CMD ["/app/telegramus"]
+CMD ["telegramus"]
