@@ -35,7 +35,7 @@ import UsersHandler
 from JSONReaderWriter import load_json
 
 # GPT-Telegramus version
-__version__ = "4.0.1"
+__version__ = "4.1.0"
 
 # Logging level
 LOGGING_LEVEL = logging.INFO
@@ -61,12 +61,12 @@ def main():
     Main entry
     :return:
     """
-    # Parse arguments
-    args = parse_args()
-
     # Multiprocessing fix for Windows
     if sys.platform.startswith("win"):
         multiprocessing.freeze_support()
+        
+    # Parse arguments
+    args = parse_args()
 
     # Initialize logging and start listener as process
     logging_handler = LoggingHandler.LoggingHandler()
