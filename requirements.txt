@@ -1,6 +1,6 @@
 revChatGPT==6.8.6
 git+https://github.com/F33RNI/EdgeGPT@main#egg=EdgeGPT
-git+https://github.com/dsdanielpark/Bard-API@main
+bardapi==0.1.38
 git+https://github.com/handsome0hell/md2tgmd.git@main
 python-telegram-bot==20.3
 openai>=0.26.4
