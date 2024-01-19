@@ -43,6 +43,7 @@ Or message me if you would like to donate 💰
 - 3️⃣ [Sergey Krashevich](https://github.com/skrashevich) - *Docker, GitHub Actions*
 - 4️⃣ [Wahit Fitriyanto](https://github.com/wahitftry) - *Indonesian language*
 - 5️⃣ [Alexander Fadeyev](https://github.com/alfsoft) - *EdgeGPT Fix*
+- 6️⃣ AnthroAsja - *Author of the Belarusian translation*
 
 ----------
 
