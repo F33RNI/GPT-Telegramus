@@ -1,7 +1,7 @@
 # 🤖 GPT-Telegramus
 
-| <img src="Logo.png" alt="GPT-Telegramus logo"/> | <h3>The best Telegram bot for ChatGPT, EdgeGPT (aka Bing AI), DALL-E, Bing Image generator, Bard and Gemini with stream writing, requests with images (for Bard and Gemini only), multiple languages, admin control, automatic proxy searcher, data logging and more!</h3> |
-|-------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| ![GPT-Telegramus logo](Logo.png) | <h3>The best Telegram bot for ChatGPT, EdgeGPT (aka Bing AI), DALL-E, Bing Image generator, Bard and Gemini with stream writing, requests with images (for Bard and Gemini only), multiple languages, admin control, automatic proxy searcher, data logging and more!</h3> |
+| -------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 
 <div style="width:100%;text-align:center;">
     <p align="center">
@@ -17,9 +17,7 @@
     </p>
 </div>
 
-
-
-![]( Banner.png)
+![Banner]( Banner.png)
 
 ----------
 
@@ -43,6 +41,8 @@ Or message me if you would like to donate 💰
 - 3️⃣ [Sergey Krashevich](https://github.com/skrashevich) - *Docker, GitHub Actions*
 - 4️⃣ [Wahit Fitriyanto](https://github.com/wahitftry) - *Indonesian language*
 - 5️⃣ [Alexander Fadeyev](https://github.com/alfsoft) - *EdgeGPT Fix*
+- 6️⃣ AnthroAsja - *Author of the Belarusian translation*
+- 7️⃣ Anonymous Samurai - *Author of the Ukrainian translation*
 
 ----------
 
@@ -57,18 +57,18 @@ Or message me if you would like to donate 💰
 
 ## 📙 Project based on
 
-- **ChatGPT** (ChatGPT by OpenAI): https://chat.openai.com/chat
-- **Bing chat** (EdgeGPT by Microsoft): https://bing.com/chat
-- **DALL-E** (DALLE by OpenAI): https://openai.com/dall-e-2/
-- **Bard** (Bard by Google): https://bard.google.com/
-- **Gemini** (Gemini by Google): https://makersuite.google.com/app/prompts/new_freeform
-- **acheong08/ChatGPT** (API): https://github.com/acheong08/ChatGPT
-- **acheong08/EdgeGPT** (API): https://github.com/acheong08/EdgeGPT
-- **jacobgelling/EdgeGPT** (API): https://github.com/jacobgelling/EdgeGPT
-- **dsdanielpark/Bard-API** (API): https://github.com/dsdanielpark/Bard-API
-- **acheong08/BingImageCreator** (API): https://github.com/acheong08/BingImageCreator
-- **google/generative-ai-python** (API): https://github.com/google/generative-ai-python
-- **python-telegram-bot** (Telegram bot API): https://github.com/python-telegram-bot/python-telegram-bot
+- **ChatGPT** (ChatGPT by OpenAI): <https://chat.openai.com/chat>
+- **Bing chat** (EdgeGPT by Microsoft): <https://bing.com/chat>
+- **DALL-E** (DALLE by OpenAI): <https://openai.com/dall-e-2/>
+- **Bard** (Bard by Google): <https://bard.google.com/>
+- **Gemini** (Gemini by Google): <https://makersuite.google.com/app/prompts/new_freeform>
+- **acheong08/ChatGPT** (API): <https://github.com/acheong08/ChatGPT>
+- **acheong08/EdgeGPT** (API): <https://github.com/acheong08/EdgeGPT>
+- **jacobgelling/EdgeGPT** (API): <https://github.com/jacobgelling/EdgeGPT>
+- **dsdanielpark/Bard-API** (API): <https://github.com/dsdanielpark/Bard-API>
+- **acheong08/BingImageCreator** (API): <https://github.com/acheong08/BingImageCreator>
+- **google/generative-ai-python** (API): <https://github.com/google/generative-ai-python>
+- **python-telegram-bot** (Telegram bot API): <https://github.com/python-telegram-bot/python-telegram-bot>
 
 ----------
 
@@ -83,7 +83,7 @@ Or message me if you would like to donate 💰
 7. Access the modules you want to use (Generate an API key / access token for ChatGPT / DALL-E / Gemini, save cookies for EdgeGPT / Bard)
 8. Start ChatGPTProxy for ChatGPT (see **🔗 Chat-GPT Base URL (proxy)** section)
 9. Carefully change all the settings (in the `config.json` file) to suit your needs. If you have questions regarding any setting, open an issue, I will add a more detailed description
-10. Create bot at https://t.me/BotFather
+10. Create bot at <https://t.me/BotFather>
 11. Type Bot's token into `api_key` in `telegram` in `config.json` file
 12. Run main script `python main.py`
 
@@ -125,7 +125,7 @@ Or message me if you would like to donate 💰
 
 **Note:** make sure you don't delete argumensts `{0}`, `{1}`, ... in message and please restart python script to apply changes
 
-### Currently available languages:
+### Currently available languages
 
 - 🇺🇸 English
 - 🇷🇺 Русский
@@ -150,7 +150,8 @@ If you want to add a language, create a pull request 💜
    1. `sudo apt-get install -y systemd`
 7. Create new service file
    1. `sudo nano /etc/systemd/system/gpt-telegramus.service`
-      ```
+
+      ```ini
       [Unit]
       Description=GPT-Telegramus service
       After=multi-user.target
@@ -167,6 +168,7 @@ If you want to add a language, create a pull request 💜
       WantedBy=multi-user.target
       
       ```
+
 8. Reload systemctl daemon
    1. `sudo systemctl daemon-reload`
 9. Enable and start service
@@ -179,7 +181,8 @@ If you want to add a language, create a pull request 💜
 ## 🍓 Running on Raspberry Pi (ARM)
 
 1. Install Python 3.10 if not installed
-   1. ```
+
+   1. ```shell
       sudo apt-get update
       sudo apt-get install -y build-essential tk-dev libncurses5-dev libncursesw5-dev libreadline6-dev libdb5.3-dev libgdbm-dev libsqlite3-dev libssl-dev libbz2-dev libexpat1-dev liblzma-dev zlib1g-dev libffi-dev
       wget https://www.python.org/ftp/python/3.10.13/Python-3.10.13.tgz
@@ -189,9 +192,11 @@ If you want to add a language, create a pull request 💜
       sudo make -j 4
       sudo make altinstall
       ```
+
    2. Check version by typing `python3.10 -V`. After this, you should use `python3.10` command instead of `python` or you can add it to the `bashrc` by typing `echo "alias python=/usr/local/bin/python3.10" >> ~/.bashrc`
 2. For ChatGPTProxy, install GO and tls-client
-   1. ```
+
+   1. ```shell
       sudo apt-get install golang-go
       
       git clone https://github.com/bogdanfinn/tls-client.git
@@ -200,27 +205,31 @@ If you want to add a language, create a pull request 💜
       mv ./dist/tls-client-arm64.so /home/pi/.local/lib/python3.10/site-packages/tls_client/dependencies/
       mv ./dist/tls-client-arm64.h /home/pi/.local/lib/python3.10/site-packages/tls_client/dependencies/
       ```
+
 3. Build ChatGPTProxy
-   1. ```
+
+   1. ```shell
       git clone https://github.com/acheong08/ChatGPTProxy
       /usr/local/go/bin/go build
       ```
+
    2. Create and start service as mention in the **🔗 Chat-GPT Base URL (proxy)** section
 4. Follow the **🐧 Running as service on linux** guide
 
 ## 🐋 Running in Docker
-
-**WARNING: not tested**
 
 ### From GitHub Package
 
 1. Clone repo or download [`config.json`](./config.json) and [`messages.json`](./messages.json)
 2. Edit the `config.json`, set options in the `files` section to the path in the container (`/app/config/<FILE_NAME>`)
 3. Run the container
+
    ```shell
    docker run -d -e TELEGRAMUS_CONFIG_FILE="/app/config/config.json" -v <YOUR_CONFIG_FOLDER>:/app/config --name gpt-telegramus --restart on-failure ghcr.io/f33rni/gpt-telegramus:latest
    ```
+
    If you want to try the preview version
+
    ```shell
    docker run -d -e TELEGRAMUS_CONFIG_FILE="/app/config/config.json" -v <YOUR_CONFIG_FOLDER>:/app/config --name gpt-telegramus --restart on-failure ghcr.io/f33rni/gpt-telegramus:edge
    ```
@@ -230,14 +239,19 @@ If you want to add a language, create a pull request 💜
 1. Install Docker
 2. Clone repo
 3. Build container
+
     ```shell
     docker buildx build -t telegramus --load -f Dockerfile .
     ```
+
 4. Run the container
+
     ```shell
     docker run -d --name gpt-telegramus --restart on-failure telegramus
     ```
+
    or if you want to use a custom config
+
    ```shell
    docker run -d -e TELEGRAMUS_CONFIG_FILE="/app/config/config.json" -v <YOUR_CONFIG_FOLDER>:/app/config --name gpt-telegramus --restart on-failure telegramus
    ```
@@ -260,7 +274,8 @@ Default base URL by acheong08/ChatGPT stopped working. Below is an instruction o
    1. `sudo apt-get install systemd`
 5. Create service
    1. `sudo nano /etc/systemd/system/chatgpt-proxy.service`
-      ```
+
+      ```ini
       [Unit]
       Description=ChatGPTProxy service
       After=multi-user.target
@@ -284,6 +299,7 @@ Default base URL by acheong08/ChatGPT stopped working. Below is an instruction o
       WantedBy=multi-user.target
       
       ```
+
 6. Reload systemctl daemon
    1. `sudo systemctl daemon-reload`
 7. Enable and start service
@@ -298,15 +314,15 @@ Default base URL by acheong08/ChatGPT stopped working. Below is an instruction o
 
 ## 🌎 Proxy to bypass geo-blocking
 
-### NOT TESTED AND MOST LIKELY WILL NOT WORK
+### NOT TESTED AND MOST LIKELY WILL NOT WORK WITH BARD AND BING AI
 
-**I won't respond to the issue if it's related to auto proxy**
+#### I won't respond to the issue if it's related to auto proxy
 
 It is possible to bypass geo-blocking of ChatGPT, EdgeGPT, DALL-E or Bard. GPT-Telegramus includes automatic proxy-list downloading with periodic checks
 
 1. Set `enabled` in `proxy_automation` in `config.json` to `true`
 2. Set `auto` in `proxy` for modules you want to connect automatic proxy search
-3. Restart app and hope for the best. 
+3. Restart app and hope for the best.
 
 GPT-Telegramus will download the proxy list itself and start trying various proxies (see console for logs).
 Sometimes, searching for a proxy can take a long time. If you think that the found proxy is not suitable, you can restart the bot using the `/restart` command
@@ -332,8 +348,8 @@ Sometimes, searching for a proxy can take a long time. If you think that the fou
 - `/bard <Text request>` - Request to the Bard module
 - `/gemini <Text request>` - Request to the Gemini module
 
+### Admin commands
 
-### Admin commands:
 - 💬 `/queue` - Show requests queue
 - 🔃 `/restart` - Restart proxies and telegram bot
 - 👤 `/users` - Show list of all users
@@ -377,6 +393,6 @@ You can enable and configure data collection in config in `data_collecting` bloc
 
 ----------
 
-### 🚧 P.S. This project is still under development!
+### 🚧 P.S. This project is still under development
 
 - If you find a **bug** in GPT-Telegramus, please create an Issue
