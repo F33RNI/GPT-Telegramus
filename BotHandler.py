@@ -1,5 +1,5 @@
 """
- Copyright (C) 2022-2023 Fern Lane, GPT-Telegramus
+ Copyright (C) 2022-2024 Fern Lane, GPT-Telegramus
  Licensed under the GNU Affero General Public License, Version 3.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
@@ -20,6 +20,7 @@ from __future__ import annotations
 import asyncio
 import datetime
 import logging
+from math import sqrt
 import multiprocessing
 import threading
 import time
@@ -143,9 +144,7 @@ async def send_message_async(
     :return:
     """
     try:
-        response_len = (
-            len(request_response.response) if request_response.response else 0
-        )
+        response_len = len(request_response.response) if request_response.response else 0
         # Get user language
         lang = UsersHandler.get_key_or_none(request_response.user, "lang", 0)
         messages = messages[lang]
@@ -155,9 +154,7 @@ async def send_message_async(
             if response_len == 0 and len(request_response.response_images) == 0:
                 request_response.response = messages["empty_message"]
 
-        await _send_prepared_message_async(
-            config, messages, request_response, end, plain_text
-        )
+        await _send_prepared_message_async(config, messages, request_response, end, plain_text)
 
     # Error?
     except Exception as e:
@@ -258,9 +255,7 @@ def build_markup(
     # Generate regenerate button
     button_regenerate = InlineKeyboardButton(
         messages["button_regenerate"],
-        callback_data="{0}_regenerate_{1}".format(
-            request_response.request_type, request_response.reply_message_id
-        ),
+        callback_data="{0}_regenerate_{1}".format(request_response.request_type, request_response.reply_message_id),
     )
     buttons = [button_regenerate]
 
@@ -280,14 +275,11 @@ def build_markup(
     # Add clear button for all modules except DALL-E and Bing ImageGen
     if (
         not request_response.request_type == RequestResponseContainer.REQUEST_TYPE_DALLE
-        and not request_response.request_type
-        == RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN
+        and not request_response.request_type == RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN
     ):
         button_clear = InlineKeyboardButton(
             messages["button_clear"],
-            callback_data="{0}_clear_{1}".format(
-                request_response.request_type, request_response.reply_message_id
-            ),
+            callback_data="{0}_clear_{1}".format(request_response.request_type, request_response.reply_message_id),
         )
         buttons.append(button_clear)
 
@@ -295,9 +287,7 @@ def build_markup(
     if request_response.request_type == RequestResponseContainer.REQUEST_TYPE_EDGEGPT:
         button_style = InlineKeyboardButton(
             messages["button_style_change"],
-            callback_data="{0}_style_{1}".format(
-                request_response.request_type, request_response.reply_message_id
-            ),
+            callback_data="{0}_style_{1}".format(request_response.request_type, request_response.reply_message_id),
         )
         buttons.append(button_style)
 
@@ -338,11 +328,7 @@ async def parse_img(img_source: str):
         if content_type == "image/svg+xml":
             raise Exception("SVG Image")
     except Exception as e:
-        logging.warning(
-            "Invalid image from {}: {}, You can ignore this message".format(
-                img_source, str(e)
-            )
-        )
+        logging.warning("Invalid image from {}: {}, You can ignore this message".format(img_source, str(e)))
         return None
     return img_source
 
@@ -366,8 +352,7 @@ async def _split_and_send_message_async(
     response = request_response.response or ""
     # Add cursor symbol?
     if (
-        request_response.processing_state
-        != RequestResponseContainer.PROCESSING_STATE_INITIALIZING
+        request_response.processing_state != RequestResponseContainer.PROCESSING_STATE_INITIALIZING
         and not end
         and config["telegram"]["add_cursor_symbol"]
     ):
@@ -376,11 +361,7 @@ async def _split_and_send_message_async(
     # Verify images
     images = [
         img
-        for img in (
-            await asyncio.gather(
-                *[parse_img(img) for img in request_response.response_images]
-            )
-        )
+        for img in (await asyncio.gather(*[parse_img(img) for img in request_response.response_images]))
         if img is not None
     ]
     sent_len = request_response.response_sent_len
@@ -421,9 +402,7 @@ async def _split_and_send_message_async(
         message_type = None
         if should_contains_images:
             # Try to fit the message in caption
-            message_to_send, consumed_len = _split_message(
-                response, message_start_index, caption_limit
-            )
+            message_to_send, consumed_len = _split_message(response, message_start_index, caption_limit)
             if message_start_index + consumed_len == len(response):
                 if len(images) == 1:
                     message_type = 2
@@ -432,13 +411,8 @@ async def _split_and_send_message_async(
                 sent_len = message_start_index + consumed_len
         if message_type is None:
             # No images
-            message_to_send, consumed_len = _split_message(
-                response, message_start_index, msg_limit
-            )
-            if (
-                message_start_index + consumed_len < len(response)
-                or should_contains_images
-            ):
+            message_to_send, consumed_len = _split_message(response, message_start_index, msg_limit)
+            if message_start_index + consumed_len < len(response) or should_contains_images:
                 # Not the last chunk
                 message_type = 0
             else:
@@ -448,9 +422,7 @@ async def _split_and_send_message_async(
 
         request_response.response_next_chunk_start_index = sent_len
         # Don't count the cursor in
-        request_response.response_sent_len = min(
-            sent_len, len(request_response.response or "")
-        )
+        request_response.response_sent_len = min(sent_len, len(request_response.response or ""))
 
         if message_type == 0:
             request_response.message_id = await send_reply(
@@ -493,9 +465,7 @@ async def _split_and_send_message_async(
                 # send new message
                 response += err_msg
         elif message_type == 3:
-            media_group = [
-                InputMediaPhoto(media=image_url) for image_url in images[0:9]
-            ]
+            media_group = [InputMediaPhoto(media=image_url) for image_url in images[0:9]]
             images = images[len(media_group) :]
             message_id, err_msg = await send_media_group(
                 config["telegram"]["api_key"],
@@ -511,9 +481,7 @@ async def _split_and_send_message_async(
                 response += err_msg
 
             if len(images) == 0:
-                response += messages["media_group_response"].format(
-                    request_response.request
-                )
+                response += messages["media_group_response"].format(request_response.request)
         else:
             raise Exception(f"Unknown message type {message_type}")
 
@@ -696,9 +664,7 @@ def _get_tg_code_block(msg: str, at: int):
     return ("" if code_id == "" else "```", skipped - 4, "", skipped - 1)
 
 
-def _regfind(
-    msg: str, reg: str, start: Optional[int] = None, end: Optional[int] = None
-):
+def _regfind(msg: str, reg: str, start: Optional[int] = None, end: Optional[int] = None):
     """
     Behave like str.find but support regex
     :param msg: The message
@@ -753,9 +719,7 @@ async def send_reply(
     if (edit_message_id or -1) < 0:
         edit_message_id = None
     try:
-        parse_mode, parsed_message = (
-            ("MarkdownV2", md2tgmd.escape(message)) if markdown else (None, message)
-        )
+        parse_mode, parsed_message = ("MarkdownV2", md2tgmd.escape(message)) if markdown else (None, message)
 
         if edit_message_id is None:
             if parsed_message == "":
@@ -796,9 +760,7 @@ async def send_reply(
     except Exception as e:
         if markdown:
             logging.warning(
-                "Error sending reply with markdown {0}: {1}\t You can ignore this message".format(
-                    markdown, str(e)
-                )
+                "Error sending reply with markdown {0}: {1}\t You can ignore this message".format(markdown, str(e))
             )
             return await send_reply(
                 api_key,
@@ -809,9 +771,7 @@ async def send_reply(
                 reply_markup,
                 edit_message_id,
             )
-        logging.error(
-            "Error sending reply with markdown {}!".format(markdown), exc_info=e
-        )
+        logging.error("Error sending reply with markdown {}!".format(markdown), exc_info=e)
         return edit_message_id
 
 
@@ -837,9 +797,7 @@ async def send_photo(
     """
     try:
         if caption:
-            parse_mode, parsed_caption = (
-                ("MarkdownV2", md2tgmd.escape(caption)) if markdown else (None, caption)
-            )
+            parse_mode, parsed_caption = ("MarkdownV2", md2tgmd.escape(caption)) if markdown else (None, caption)
         else:
             parse_mode = None
         return (
@@ -859,9 +817,7 @@ async def send_photo(
 
     except Exception as e:
         logging.warning(
-            "Error sending photo with markdown {0}: {1}\t You can ignore this message".format(
-                markdown, str(e)
-            )
+            "Error sending photo with markdown {0}: {1}\t You can ignore this message".format(markdown, str(e))
         )
         if not markdown:
             return (None, f"\n\n{photo}\n\n")
@@ -879,9 +835,7 @@ async def send_photo(
 async def send_media_group(
     api_key: str,
     chat_id: int,
-    media: Sequence[
-        InputMediaAudio | InputMediaDocument | InputMediaPhoto | InputMediaVideo
-    ],
+    media: Sequence[InputMediaAudio | InputMediaDocument | InputMediaPhoto | InputMediaVideo],
     caption: str,
     reply_to_message_id: int | None,
     markdown=False,
@@ -897,9 +851,7 @@ async def send_media_group(
     :return: message_id if sent correctly, or None if not
     """
     try:
-        parse_mode, parsed_caption = (
-            ("MarkdownV2", md2tgmd.escape(caption)) if markdown else (None, caption)
-        )
+        parse_mode, parsed_caption = ("MarkdownV2", md2tgmd.escape(caption)) if markdown else (None, caption)
 
         return (
             (
@@ -916,18 +868,14 @@ async def send_media_group(
         )
     except Exception as e:
         logging.warning(
-            "Error sending media group with markdown {0}: {1}\t You can ignore this message".format(
-                markdown, str(e)
-            )
+            "Error sending media group with markdown {0}: {1}\t You can ignore this message".format(markdown, str(e))
         )
         if not markdown:
             return (
                 None,
                 "\n\n" + "\n".join([f"{url.media}" for url in media]) + "\n\n",
             )
-        return await send_media_group(
-            api_key, chat_id, media, caption, reply_to_message_id, False
-        )
+        return await send_media_group(api_key, chat_id, media, caption, reply_to_message_id, False)
 
 
 async def _send_safe(
@@ -956,9 +904,7 @@ async def _send_safe(
         )
     except Exception as e:
         logging.error(
-            "Error sending {0} to {1}!".format(
-                text.replace("\\n", "\n").replace("\\t", "\t"), chat_id
-            ),
+            "Error sending {0} to {1}!".format(text.replace("\\n", "\n").replace("\\t", "\t"), chat_id),
             exc_info=e,
         )
 
@@ -1094,14 +1040,10 @@ class BotHandler:
                 try:
                     loop = asyncio.get_running_loop()
                     if loop and loop.is_running():
-                        logging.info(
-                            "Stopping current event loop before starting a new one"
-                        )
+                        logging.info("Stopping current event loop before starting a new one")
                         loop.stop()
                 except Exception as e:
-                    logging.warning(
-                        "Error stopping current event loop: {}".format(str(e))
-                    )
+                    logging.warning("Error stopping current event loop: {}".format(str(e)))
 
                 # Create new event loop
                 logging.info("Creating new event loop")
@@ -1117,108 +1059,50 @@ class BotHandler:
                     try:
                         logging.info("Trying to set bot commands")
                         bot_commands = []
-                        for command_description in self.config["telegram"][
-                            "commands_description"
-                        ]:
+                        for command_description in self.config["telegram"]["commands_description"]:
                             bot_commands.append(
                                 BotCommand(
                                     command_description["command"],
                                     command_description["description"],
                                 )
                             )
-                        self._event_loop.run_until_complete(
-                            self._application.bot.set_my_commands(bot_commands)
-                        )
+                        self._event_loop.run_until_complete(self._application.bot.set_my_commands(bot_commands))
                     except Exception as e:
-                        logging.error(
-                            "Error setting bot commands description!", exc_info=e
-                        )
+                        logging.error("Error setting bot commands description!", exc_info=e)
 
                 # User commands
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_START, self.bot_command_start))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_HELP, self.bot_command_help))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_CHAT, self.bot_message))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_CHATGPT, self.bot_command_chatgpt))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_EDGEGPT, self.bot_command_edgegpt))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_DALLE, self.bot_command_dalle))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_BARD, self.bot_command_bard))
                 self._application.add_handler(
-                    CaptionCommandHandler(BOT_COMMAND_START, self.bot_command_start)
+                    CaptionCommandHandler(BOT_COMMAND_BING_IMAGEGEN, self.bot_command_bing_imagegen)
                 )
-                self._application.add_handler(
-                    CaptionCommandHandler(BOT_COMMAND_HELP, self.bot_command_help)
-                )
-                self._application.add_handler(
-                    CaptionCommandHandler(BOT_COMMAND_CHAT, self.bot_message)
-                )
-                self._application.add_handler(
-                    CaptionCommandHandler(BOT_COMMAND_CHATGPT, self.bot_command_chatgpt)
-                )
-                self._application.add_handler(
-                    CaptionCommandHandler(BOT_COMMAND_EDGEGPT, self.bot_command_edgegpt)
-                )
-                self._application.add_handler(
-                    CaptionCommandHandler(BOT_COMMAND_DALLE, self.bot_command_dalle)
-                )
-                self._application.add_handler(
-                    CaptionCommandHandler(BOT_COMMAND_BARD, self.bot_command_bard)
-                )
-                self._application.add_handler(
-                    CaptionCommandHandler(
-                        BOT_COMMAND_BING_IMAGEGEN, self.bot_command_bing_imagegen
-                    )
-                )
-                self._application.add_handler(
-                    CaptionCommandHandler(BOT_COMMAND_GEMINI, self.bot_command_gemini)
-                )
-                self._application.add_handler(
-                    CaptionCommandHandler(BOT_COMMAND_MODULE, self.bot_command_module)
-                )
-                self._application.add_handler(
-                    CaptionCommandHandler(BOT_COMMAND_STYLE, self.bot_command_style)
-                )
-                self._application.add_handler(
-                    CaptionCommandHandler(BOT_COMMAND_CLEAR, self.bot_command_clear)
-                )
-                self._application.add_handler(
-                    CaptionCommandHandler(BOT_COMMAND_LANG, self.bot_command_lang)
-                )
-                self._application.add_handler(
-                    CaptionCommandHandler(BOT_COMMAND_CHAT_ID, self.bot_command_chatid)
-                )
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_GEMINI, self.bot_command_gemini))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_MODULE, self.bot_command_module))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_STYLE, self.bot_command_style))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_CLEAR, self.bot_command_clear))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_LANG, self.bot_command_lang))
+                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_CHAT_ID, self.bot_command_chatid))
 
                 # Handle requests as messages
                 if self.config["telegram"]["reply_to_messages"]:
-                    self._application.add_handler(
-                        MessageHandler(
-                            filters.TEXT & (~filters.COMMAND), self.bot_message
-                        )
-                    )
-                    self._application.add_handler(
-                        MessageHandler(
-                            filters.PHOTO & (~filters.COMMAND), self.bot_message
-                        )
-                    )
+                    self._application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), self.bot_message))
+                    self._application.add_handler(MessageHandler(filters.PHOTO & (~filters.COMMAND), self.bot_message))
 
                 # Admin commands
-                self._application.add_handler(
-                    CommandHandler(BOT_COMMAND_ADMIN_QUEUE, self.bot_command_queue)
-                )
-                self._application.add_handler(
-                    CommandHandler(BOT_COMMAND_ADMIN_RESTART, self.bot_command_restart)
-                )
-                self._application.add_handler(
-                    CommandHandler(BOT_COMMAND_ADMIN_USERS, self.bot_command_users)
-                )
-                self._application.add_handler(
-                    CommandHandler(BOT_COMMAND_ADMIN_BAN, self.bot_command_ban)
-                )
-                self._application.add_handler(
-                    CommandHandler(BOT_COMMAND_ADMIN_UNBAN, self.bot_command_unban)
-                )
-                self._application.add_handler(
-                    CommandHandler(
-                        BOT_COMMAND_ADMIN_BROADCAST, self.bot_command_broadcast
-                    )
-                )
+                self._application.add_handler(CommandHandler(BOT_COMMAND_ADMIN_QUEUE, self.bot_command_queue))
+                self._application.add_handler(CommandHandler(BOT_COMMAND_ADMIN_RESTART, self.bot_command_restart))
+                self._application.add_handler(CommandHandler(BOT_COMMAND_ADMIN_USERS, self.bot_command_users))
+                self._application.add_handler(CommandHandler(BOT_COMMAND_ADMIN_BAN, self.bot_command_ban))
+                self._application.add_handler(CommandHandler(BOT_COMMAND_ADMIN_UNBAN, self.bot_command_unban))
+                self._application.add_handler(CommandHandler(BOT_COMMAND_ADMIN_BROADCAST, self.bot_command_broadcast))
 
                 # Unknown command -> send help
-                self._application.add_handler(
-                    MessageHandler(filters.COMMAND, self.bot_command_unknown)
-                )
+                self._application.add_handler(MessageHandler(filters.COMMAND, self.bot_command_unknown))
 
                 # Add buttons handler
                 self._application.add_handler(CallbackQueryHandler(self.query_callback))
@@ -1235,29 +1119,20 @@ class BotHandler:
             # Bot error?
             except Exception as e:
                 if "Event loop is closed" in str(e):
-                    if (
-                        not self._restart_requested_flag
-                        and not self.queue_handler.prevent_shutdown_flag
-                    ):
+                    if not self._restart_requested_flag and not self.queue_handler.prevent_shutdown_flag:
                         logging.warning("Stopping telegram bot")
                         break
                 else:
                     logging.error("Telegram bot error!", exc_info=e)
 
                 # Restart bot
-                logging.info(
-                    "Restarting bot polling after {0} seconds".format(
-                        RESTART_ON_ERROR_DELAY
-                    )
-                )
+                logging.info("Restarting bot polling after {0} seconds".format(RESTART_ON_ERROR_DELAY))
                 try:
                     time.sleep(RESTART_ON_ERROR_DELAY)
 
                 # Exit requested while waiting for restart
                 except (KeyboardInterrupt, SystemExit):
-                    logging.warning(
-                        "KeyboardInterrupt or SystemExit while waiting @ bot_start"
-                    )
+                    logging.warning("KeyboardInterrupt or SystemExit while waiting @ bot_start")
                     break
 
             # Restart bot or exit from loop
@@ -1270,9 +1145,7 @@ class BotHandler:
         # If we're here, exit requested
         logging.warning("Telegram bot stopped")
 
-    async def query_callback(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def query_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         reply_markup buttons callback
         :param update:
@@ -1302,24 +1175,17 @@ class BotHandler:
                 # Regenerate request
                 if action == "regenerate":
                     # Get last message ID
-                    reply_message_id_last = UsersHandler.get_key_or_none(
-                        user, "reply_message_id_last"
-                    )
+                    reply_message_id_last = UsersHandler.get_key_or_none(user, "reply_message_id_last")
 
                     # Check if it is last message
-                    if (
-                        reply_message_id_last
-                        and reply_message_id_last == reply_message_id
-                    ):
+                    if reply_message_id_last and reply_message_id_last == reply_message_id:
                         # Get request
                         request = UsersHandler.get_key_or_none(user, "request_last")
 
                         # Check if we have the last request
                         if request:
                             # Ask
-                            request_image_url = UsersHandler.get_key_or_none(
-                                user, "request_last_image_url"
-                            )
+                            request_image_url = UsersHandler.get_key_or_none(user, "request_last_image_url")
                             await self.bot_command_or_message_request_raw(
                                 request_type,
                                 request,
@@ -1348,15 +1214,10 @@ class BotHandler:
                 # Continue generating (for ChatGPT)
                 elif action == "continue":
                     # Get last message ID
-                    reply_message_id_last = UsersHandler.get_key_or_none(
-                        user, "reply_message_id_last"
-                    )
+                    reply_message_id_last = UsersHandler.get_key_or_none(user, "reply_message_id_last")
 
                     # Check if it is last message
-                    if (
-                        reply_message_id_last
-                        and reply_message_id_last == reply_message_id
-                    ):
+                    if reply_message_id_last and reply_message_id_last == reply_message_id:
                         # Ask
                         await self.bot_command_or_message_request_raw(
                             request_type,
@@ -1377,20 +1238,13 @@ class BotHandler:
                 # Stop generating
                 elif action == "stop":
                     # Get last message ID
-                    reply_message_id_last = UsersHandler.get_key_or_none(
-                        user, "reply_message_id_last"
-                    )
+                    reply_message_id_last = UsersHandler.get_key_or_none(user, "reply_message_id_last")
 
                     # Check if it is last message
-                    if (
-                        reply_message_id_last
-                        and reply_message_id_last == reply_message_id
-                    ):
+                    if reply_message_id_last and reply_message_id_last == reply_message_id:
                         # Get queue as list
                         with self.queue_handler.lock:
-                            queue_list = QueueHandler.queue_to_list(
-                                self.queue_handler.request_response_queue
-                            )
+                            queue_list = QueueHandler.queue_to_list(self.queue_handler.request_response_queue)
 
                         # Try to find out container
                         aborted = False
@@ -1400,12 +1254,8 @@ class BotHandler:
                                 and container.reply_message_id == reply_message_id_last
                             ):
                                 # Change state to aborted
-                                logging.info(
-                                    "Requested container {} abort".format(container.id)
-                                )
-                                container.processing_state = (
-                                    RequestResponseContainer.PROCESSING_STATE_CANCEL
-                                )
+                                logging.info("Requested container {} abort".format(container.id))
+                                container.processing_state = RequestResponseContainer.PROCESSING_STATE_CANCEL
                                 QueueHandler.put_container_to_queue(
                                     self.queue_handler.request_response_queue,
                                     self.queue_handler.lock,
@@ -1452,9 +1302,7 @@ class BotHandler:
 
         await context.bot.answer_callback_query(update.callback_query.id)
 
-    async def bot_command_broadcast(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def bot_command_broadcast(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         /broadcast command
         :param update:
@@ -1465,11 +1313,7 @@ class BotHandler:
         user = await self._user_check_get(update, context)
 
         # Log command
-        logging.info(
-            "/broadcast command from {0} ({1})".format(
-                user["user_name"], user["user_id"]
-            )
-        )
+        logging.info("/broadcast command from {0} ({1})".format(user["user_name"], user["user_id"]))
 
         # Exit if banned
         if user["banned"]:
@@ -1480,22 +1324,16 @@ class BotHandler:
 
         # Check for admin rules
         if not user["admin"]:
-            await _send_safe(
-                user["user_id"], self.messages[lang]["permissions_deny"], context
-            )
+            await _send_safe(user["user_id"], self.messages[lang]["permissions_deny"], context)
             return
 
         # Check for message
         if not context.args or len(context.args) < 1:
-            await _send_safe(
-                user["user_id"], self.messages[lang]["broadcast_no_message"], context
-            )
+            await _send_safe(user["user_id"], self.messages[lang]["broadcast_no_message"], context)
             return
 
         # Send initial message
-        await _send_safe(
-            user["user_id"], self.messages[lang]["broadcast_initiated"], context
-        )
+        await _send_safe(user["user_id"], self.messages[lang]["broadcast_initiated"], context)
 
         # Get message
         broadcast_message = str(" ".join(context.args)).strip()
@@ -1512,34 +1350,24 @@ class BotHandler:
                 try:
                     # Try to send message and get message ID
                     message_id = (
-                        await telegram.Bot(
-                            self.config["telegram"]["api_key"]
-                        ).sendMessage(
+                        await telegram.Bot(self.config["telegram"]["api_key"]).sendMessage(
                             chat_id=broadcast_user["user_id"],
-                            text=self.messages[lang]["broadcast"]
-                            .replace("\\n", "\n")
-                            .format(broadcast_message),
+                            text=self.messages[lang]["broadcast"].replace("\\n", "\n").format(broadcast_message),
                         )
                     ).message_id
 
                     # Check
                     if message_id is not None and message_id != 0:
                         logging.info(
-                            "Message sent to: {0} ({1})".format(
-                                broadcast_user["user_name"], broadcast_user["user_id"]
-                            )
+                            "Message sent to: {0} ({1})".format(broadcast_user["user_name"], broadcast_user["user_id"])
                         )
                         broadcast_ok_users.append(broadcast_user["user_name"])
 
                     # Wait some time
-                    time.sleep(
-                        self.config["telegram"]["broadcast_delay_per_user_seconds"]
-                    )
+                    time.sleep(self.config["telegram"]["broadcast_delay_per_user_seconds"])
                 except Exception as e:
                     logging.warning(
-                        "Error sending message to {}!".format(
-                            broadcast_user["user_id"]
-                        ),
+                        "Error sending message to {}!".format(broadcast_user["user_id"]),
                         exc_info=e,
                     )
 
@@ -1550,19 +1378,13 @@ class BotHandler:
             context,
         )
 
-    async def bot_command_ban(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def bot_command_ban(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await self.bot_command_ban_unban(True, update, context)
 
-    async def bot_command_unban(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def bot_command_unban(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await self.bot_command_ban_unban(False, update, context)
 
-    async def bot_command_ban_unban(
-        self, ban: bool, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def bot_command_ban_unban(self, ban: bool, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         /ban, /unban commands
         :param ban: True to ban, False to unban
@@ -1575,9 +1397,7 @@ class BotHandler:
 
         # Log command
         logging.info(
-            "/{0} command from {1} ({2})".format(
-                "ban" if ban else "unban", user["user_name"], user["user_id"]
-            )
+            "/{0} command from {1} ({2})".format("ban" if ban else "unban", user["user_name"], user["user_id"])
         )
 
         # Exit if banned
@@ -1589,16 +1409,12 @@ class BotHandler:
 
         # Check for admin rules
         if not user["admin"]:
-            await _send_safe(
-                user["user_id"], self.messages[lang]["permissions_deny"], context
-            )
+            await _send_safe(user["user_id"], self.messages[lang]["permissions_deny"], context)
             return
 
         # Check user_id to ban
         if not context.args or len(context.args) < 1:
-            await _send_safe(
-                user["user_id"], self.messages[lang]["ban_no_user_id"], context
-            )
+            await _send_safe(user["user_id"], self.messages[lang]["ban_no_user_id"], context)
             return
         try:
             ban_user_id = int(str(context.args[0]).strip())
@@ -1626,9 +1442,7 @@ class BotHandler:
             await _send_safe(
                 user["user_id"],
                 self.messages[lang]["ban_message_admin"].format(
-                    "{0} ({1})".format(
-                        banned_user["user_name"], banned_user["user_id"]
-                    ),
+                    "{0} ({1})".format(banned_user["user_name"], banned_user["user_id"]),
                     reason,
                 ),
                 context,
@@ -1642,9 +1456,7 @@ class BotHandler:
                 context,
             )
 
-    async def bot_command_users(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def bot_command_users(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         /users command
         :param update:
@@ -1655,9 +1467,7 @@ class BotHandler:
         user = await self._user_check_get(update, context)
 
         # Log command
-        logging.info(
-            "/users command from {0} ({1})".format(user["user_name"], user["user_id"])
-        )
+        logging.info("/users command from {0} ({1})".format(user["user_name"], user["user_id"]))
 
         # Exit if banned
         if user["banned"]:
@@ -1668,9 +1478,7 @@ class BotHandler:
 
         # Check for admin rules
         if not user["admin"]:
-            await _send_safe(
-                user["user_id"], self.messages[lang]["permissions_deny"], context
-            )
+            await _send_safe(user["user_id"], self.messages[lang]["permissions_deny"], context)
             return
 
         # Get list of users
@@ -1695,44 +1503,21 @@ class BotHandler:
                 message += "  "
 
             # Language
-            message += (
-                self.messages[UsersHandler.get_key_or_none(user_info, "lang", 0)][
-                    "language_icon"
-                ]
-                + " "
-            )
+            message += self.messages[UsersHandler.get_key_or_none(user_info, "lang", 0)]["language_icon"] + " "
 
             # Module
-            message += (
-                self.messages[0]["module_icons"][
-                    UsersHandler.get_key_or_none(user_info, "module", 0)
-                ]
-                + " "
-            )
+            message += self.messages[0]["module_icons"][UsersHandler.get_key_or_none(user_info, "module", 0)] + " "
 
             user_id = user_info["user_id"]
-            is_private = (
-                (user_info["user_type"] == "private")
-                if "user_type" in user_info
-                else (user_id > 0)
-            )
+            is_private = (user_info["user_type"] == "private") if "user_type" in user_info else (user_id > 0)
             # User ID, name, total requests
-            message += (
-                "{0} ([{1}](tg://user?id={0})) - {2}\n"
-                if is_private
-                else "{0} ({1}) - {2}\n"
-            ).format(
+            message += ("{0} ([{1}](tg://user?id={0})) - {2}\n" if is_private else "{0} ({1}) - {2}\n").format(
                 user_id,
                 user_info["user_name"],
                 user_info["requests_total"],
             )
 
-        message = (
-            self.messages[lang]["users_admin"]
-            .format(message)
-            .replace("\\t", "\t")
-            .replace("\\n", "\n")
-        )
+        message = self.messages[lang]["users_admin"].format(message).replace("\\t", "\t").replace("\\n", "\n")
 
         # Send list of users as markdown
         await send_reply(
@@ -1743,9 +1528,7 @@ class BotHandler:
             markdown=True,
         )
 
-    async def bot_command_restart(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ):
+    async def bot_command_restart(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
         /restart command
         :param update:
@@ -1756,9 +1539,7 @@ class BotHandler:
         user = await self._user_check_get(update, context)
 
         # Log command
-        logging.info(
-            "/restart command from {0} ({1})".format(user["user_name"], user["user_id"])
-        )
+        logging.info("/restart command from {0} ({1})".format(user["user_name"], user["user_id"]))
 
         # Exit if banned
         if user["banned"]:
@@ -1769,9 +1550,7 @@ class BotHandler:
 
         # Check for admin rules
         if not user["admin"]:
-            await _send_safe(
-                user["user_id"], self.messages[lang]["permissions_deny"], context
-            )
+            await _send_safe(user["user_id"], self.messages[lang]["permissions_deny"], context)
             return
 
         # Send restarting message
@@ -1794,20 +1573,11 @@ class BotHandler:
             while self.queue_handler.request_response_queue.qsize() > 0:
                 # Cancel all active containers (clear the queue)
                 self.queue_handler.lock.acquire(block=True)
-                queue_list = QueueHandler.queue_to_list(
-                    self.queue_handler.request_response_queue
-                )
+                queue_list = QueueHandler.queue_to_list(self.queue_handler.request_response_queue)
                 for container in queue_list:
-                    if (
-                        container.processing_state
-                        != RequestResponseContainer.PROCESSING_STATE_ABORT
-                    ):
-                        container.processing_state = (
-                            RequestResponseContainer.PROCESSING_STATE_ABORT
-                        )
-                        QueueHandler.put_container_to_queue(
-                            self.queue_handler.request_response_queue, None, container
-                        )
+                    if container.processing_state != RequestResponseContainer.PROCESSING_STATE_ABORT:
+                        container.processing_state = RequestResponseContainer.PROCESSING_STATE_ABORT
+                        QueueHandler.put_container_to_queue(self.queue_handler.request_response_queue, None, container)
                 self.queue_handler.lock.release()
 
                 # Check every 1s
@@ -1841,9 +1611,7 @@ class BotHandler:
                 asyncio.run(
                     telegram.Bot(self.config["telegram"]["api_key"]).sendMessage(
                         chat_id=user["user_id"],
-                        text=self.messages[lang]["restarting_done"].replace(
-                            "\\n", "\n"
-                        ),
+                        text=self.messages[lang]["restarting_done"].replace("\\n", "\n"),
                     )
                 )
             except Exception as e:
@@ -1852,9 +1620,7 @@ class BotHandler:
         # Start thread that will restart bot polling
         threading.Thread(target=_restart_bot, daemon=True).start()
 
-    async def bot_command_queue(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def bot_command_queue(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         /queue command
         :param update:
@@ -1865,9 +1631,7 @@ class BotHandler:
         user = await self._user_check_get(update, context)
 
         # Log command
-        logging.info(
-            "/queue command from {0} ({1})".format(user["user_name"], user["user_id"])
-        )
+        logging.info("/queue command from {0} ({1})".format(user["user_name"], user["user_id"]))
 
         # Exit if banned
         if user["banned"]:
@@ -1878,22 +1642,16 @@ class BotHandler:
 
         # Check for admin rules
         if not user["admin"]:
-            await _send_safe(
-                user["user_id"], self.messages[lang]["permissions_deny"], context
-            )
+            await _send_safe(user["user_id"], self.messages[lang]["permissions_deny"], context)
             return
 
         # Get queue as list
         with self.queue_handler.lock:
-            queue_list = QueueHandler.queue_to_list(
-                self.queue_handler.request_response_queue
-            )
+            queue_list = QueueHandler.queue_to_list(self.queue_handler.request_response_queue)
 
         # Queue is empty
         if len(queue_list) == 0:
-            await _send_safe(
-                user["user_id"], self.messages[lang]["queue_empty"], context
-            )
+            await _send_safe(user["user_id"], self.messages[lang]["queue_empty"], context)
 
         # Send queue content
         else:
@@ -1901,9 +1659,7 @@ class BotHandler:
             container_counter = 1
             for container in queue_list:
                 text_to = RequestResponseContainer.REQUEST_NAMES[container.request_type]
-                request_status = RequestResponseContainer.PROCESSING_STATE_NAMES[
-                    container.processing_state
-                ]
+                request_status = RequestResponseContainer.PROCESSING_STATE_NAMES[container.processing_state]
                 message_ = "{0} ({1}). {2} ({3}) to {4} ({5}): {6}\n".format(
                     container_counter,
                     container.id,
@@ -1924,9 +1680,7 @@ class BotHandler:
             # Send queue content
             await send_message_async(self.config, self.messages, request_response, end=True, plain_text=True)
 
-    async def bot_command_chatid(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def bot_command_chatid(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         /chatid command
         :param update:
@@ -1937,16 +1691,12 @@ class BotHandler:
         user = await self._user_check_get(update, context)
 
         # Log command
-        logging.info(
-            "/chatid command from {0} ({1})".format(user["user_name"], user["user_id"])
-        )
+        logging.info("/chatid command from {0} ({1})".format(user["user_name"], user["user_id"]))
 
         # Send chat id and not exit if banned
         await _send_safe(user["user_id"], str(user["user_id"]), context)
 
-    async def bot_command_clear(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def bot_command_clear(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         /clear command
         :param update:
@@ -1957,9 +1707,7 @@ class BotHandler:
         user = await self._user_check_get(update, context)
 
         # Log command
-        logging.info(
-            "/clear command from {0} ({1})".format(user["user_name"], user["user_id"])
-        )
+        logging.info("/clear command from {0} ({1})".format(user["user_name"], user["user_id"]))
 
         # Exit if banned
         if user["banned"]:
@@ -1983,9 +1731,7 @@ class BotHandler:
         # Clear
         await self.bot_command_clear_raw(requested_module, user, context)
 
-    async def bot_command_clear_raw(
-        self, request_type: int, user: dict, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def bot_command_clear_raw(self, request_type: int, user: dict, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         Clears conversation
         :param request_type:
@@ -2061,9 +1807,7 @@ class BotHandler:
                     if type(str_or_exception) == str:
                         await _send_safe(
                             user["user_id"],
-                            self.messages[lang]["chat_cleared"].format(
-                                str_or_exception
-                            ),
+                            self.messages[lang]["chat_cleared"].format(str_or_exception),
                             context,
                         )
 
@@ -2074,14 +1818,10 @@ class BotHandler:
         # Error deleting conversation
         except Exception as e:
             logging.error("Error clearing conversation!", exc_info=e)
-            await _send_safe(
-                user["user_id"], self.messages[lang]["clear_error"].format(e), context
-            )
+            await _send_safe(user["user_id"], self.messages[lang]["clear_error"].format(e), context)
             return
 
-    async def bot_command_style(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def bot_command_style(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         /style command
         :param update:
@@ -2092,9 +1832,7 @@ class BotHandler:
         user = await self._user_check_get(update, context)
 
         # Log command
-        logging.info(
-            "/style command from {0} ({1})".format(user["user_name"], user["user_id"])
-        )
+        logging.info("/style command from {0} ({1})".format(user["user_name"], user["user_id"]))
 
         # Exit if banned
         if user["banned"]:
@@ -2118,9 +1856,7 @@ class BotHandler:
         # Clear
         await self.bot_command_style_raw(style, user, context)
 
-    async def bot_command_style_raw(
-        self, style: int, user: dict, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def bot_command_style_raw(self, style: int, user: dict, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         Changes conversation style of EdgeGPT
         :param style:
@@ -2134,15 +1870,9 @@ class BotHandler:
         # Create buttons for style selection
         if style < 0 or style > 2:
             buttons = [
-                InlineKeyboardButton(
-                    self.messages[lang]["style_precise"], callback_data="2_style_0"
-                ),
-                InlineKeyboardButton(
-                    self.messages[lang]["style_balanced"], callback_data="2_style_1"
-                ),
-                InlineKeyboardButton(
-                    self.messages[lang]["style_creative"], callback_data="2_style_2"
-                ),
+                InlineKeyboardButton(self.messages[lang]["style_precise"], callback_data="2_style_0"),
+                InlineKeyboardButton(self.messages[lang]["style_balanced"], callback_data="2_style_1"),
+                InlineKeyboardButton(self.messages[lang]["style_creative"], callback_data="2_style_2"),
             ]
 
             # Extract current style
@@ -2150,9 +1880,7 @@ class BotHandler:
 
             # Get default key instead
             if current_style is None:
-                current_style = self.config["edgegpt"][
-                    "conversation_style_type_default"
-                ]
+                current_style = self.config["edgegpt"]["conversation_style_type_default"]
 
             # Get as string
             if current_style == 0:
@@ -2199,9 +1927,7 @@ class BotHandler:
             )
             return
 
-    async def bot_command_module(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ):
+    async def bot_command_module(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
         /module command
         :param update:
@@ -2212,9 +1938,7 @@ class BotHandler:
         user = await self._user_check_get(update, context)
 
         # Log command
-        logging.info(
-            "/module command from {0} ({1})".format(user["user_name"], user["user_id"])
-        )
+        logging.info("/module command from {0} ({1})".format(user["user_name"], user["user_id"]))
 
         # Exit if banned
         if user["banned"]:
@@ -2223,9 +1947,7 @@ class BotHandler:
         # Request module selection
         await self.bot_command_module_raw(-1, user, context)
 
-    async def bot_command_module_raw(
-        self, request_type: int, user: dict, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def bot_command_module_raw(self, request_type: int, user: dict, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         Suggest module selection to the user or changes user's module
         :param request_type: <0 for module selection
@@ -2238,16 +1960,12 @@ class BotHandler:
 
         # Change module
         if request_type >= 0:
-            await self.bot_command_or_message_request_raw(
-                request_type, "", user, -1, context
-            )
+            await self.bot_command_or_message_request_raw(request_type, "", user, -1, context)
 
         # Suggest module
         else:
             buttons = []
-            for i, name in enumerate(
-                ["chatgpt", "dalle", "edgegpt", "bard", "bing_imagegen", "gemini"]
-            ):
+            for i, name in enumerate(["chatgpt", "dalle", "edgegpt", "bard", "bing_imagegen", "gemini"]):
                 if self.config["modules"][name]:
                     buttons.append(
                         InlineKeyboardButton(
@@ -2269,9 +1987,7 @@ class BotHandler:
                 )
             return
 
-    async def bot_command_lang(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ):
+    async def bot_command_lang(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
         /lang command
         :param update:
@@ -2282,9 +1998,7 @@ class BotHandler:
         user = await self._user_check_get(update, context)
 
         # Log command
-        logging.info(
-            "/lang command from {0} ({1})".format(user["user_name"], user["user_id"])
-        )
+        logging.info("/lang command from {0} ({1})".format(user["user_name"], user["user_id"]))
 
         # Exit if banned
         if user["banned"]:
@@ -2293,9 +2007,7 @@ class BotHandler:
         # Request module selection
         await self.bot_command_lang_raw(-1, user, context)
 
-    async def bot_command_lang_raw(
-        self, lang_index: int, user: dict, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def bot_command_lang_raw(self, lang_index: int, user: dict, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         Selects user language
         :param lang_index: <0 for language selection
@@ -2308,20 +2020,20 @@ class BotHandler:
             # Create language and buttons prompt
             buttons = []
             language_select_text = ""
-            for i in range(len(self.messages)):
+            for i, language in enumerate(self.messages):
                 buttons.append(
                     InlineKeyboardButton(
-                        self.messages[i]["language_name"],
-                        callback_data="{}_lang_0".format(i),
+                        language["language_name"],
+                        callback_data=f"{i}_lang_0",
                     )
                 )
-                language_select_text += self.messages[i]["language_select"] + "\n"
+                language_select_text += language["language_select"] + "\n"
 
             await _send_safe(
                 user["user_id"],
                 language_select_text,
                 context,
-                reply_markup=InlineKeyboardMarkup(build_menu(buttons)),
+                reply_markup=InlineKeyboardMarkup(build_menu(buttons, n_cols=min(int(sqrt(len(self.messages))), 3))),
             )
             return
 
@@ -2332,9 +2044,7 @@ class BotHandler:
             self.users_handler.save_user(user)
 
             # Send confirmation
-            await _send_safe(
-                user["user_id"], self.messages[lang_index]["language_changed"], context
-            )
+            await _send_safe(user["user_id"], self.messages[lang_index]["language_changed"], context)
 
             # Send start message if it is a new user
             user_started = UsersHandler.get_key_or_none(user, "started")
@@ -2350,47 +2060,23 @@ class BotHandler:
                 context,
             )
 
-    async def bot_command_chatgpt(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ):
-        await self.bot_command_or_message_request(
-            RequestResponseContainer.REQUEST_TYPE_CHATGPT, update, context
-        )
+    async def bot_command_chatgpt(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.bot_command_or_message_request(RequestResponseContainer.REQUEST_TYPE_CHATGPT, update, context)
 
-    async def bot_command_edgegpt(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ):
-        await self.bot_command_or_message_request(
-            RequestResponseContainer.REQUEST_TYPE_EDGEGPT, update, context
-        )
+    async def bot_command_edgegpt(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.bot_command_or_message_request(RequestResponseContainer.REQUEST_TYPE_EDGEGPT, update, context)
 
-    async def bot_command_dalle(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ):
-        await self.bot_command_or_message_request(
-            RequestResponseContainer.REQUEST_TYPE_DALLE, update, context
-        )
+    async def bot_command_dalle(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.bot_command_or_message_request(RequestResponseContainer.REQUEST_TYPE_DALLE, update, context)
 
-    async def bot_command_bard(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ):
-        await self.bot_command_or_message_request(
-            RequestResponseContainer.REQUEST_TYPE_BARD, update, context
-        )
+    async def bot_command_bard(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.bot_command_or_message_request(RequestResponseContainer.REQUEST_TYPE_BARD, update, context)
 
-    async def bot_command_bing_imagegen(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ):
-        await self.bot_command_or_message_request(
-            RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN, update, context
-        )
+    async def bot_command_bing_imagegen(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.bot_command_or_message_request(RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN, update, context)
 
-    async def bot_command_gemini(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ):
-        await self.bot_command_or_message_request(
-            RequestResponseContainer.REQUEST_TYPE_GEMINI, update, context
-        )
+    async def bot_command_gemini(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.bot_command_or_message_request(RequestResponseContainer.REQUEST_TYPE_GEMINI, update, context)
 
     async def bot_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         await self.bot_command_or_message_request(-1, update, context)
@@ -2410,39 +2096,17 @@ class BotHandler:
 
         # Log command or message
         if request_type == RequestResponseContainer.REQUEST_TYPE_CHATGPT:
-            logging.info(
-                "/chatgpt command from {0} ({1})".format(
-                    user["user_name"], user["user_id"]
-                )
-            )
+            logging.info("/chatgpt command from {0} ({1})".format(user["user_name"], user["user_id"]))
         elif request_type == RequestResponseContainer.REQUEST_TYPE_EDGEGPT:
-            logging.info(
-                "/edgegpt command from {0} ({1})".format(
-                    user["user_name"], user["user_id"]
-                )
-            )
+            logging.info("/edgegpt command from {0} ({1})".format(user["user_name"], user["user_id"]))
         elif request_type == RequestResponseContainer.REQUEST_TYPE_DALLE:
-            logging.info(
-                "/dalle command from {0} ({1})".format(
-                    user["user_name"], user["user_id"]
-                )
-            )
+            logging.info("/dalle command from {0} ({1})".format(user["user_name"], user["user_id"]))
         elif request_type == RequestResponseContainer.REQUEST_TYPE_BARD:
-            logging.info(
-                "/bard command from {0} ({1})".format(
-                    user["user_name"], user["user_id"]
-                )
-            )
+            logging.info("/bard command from {0} ({1})".format(user["user_name"], user["user_id"]))
         elif request_type == RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN:
-            logging.info(
-                "/bingigen command from {0} ({1})".format(
-                    user["user_name"], user["user_id"]
-                )
-            )
+            logging.info("/bingigen command from {0} ({1})".format(user["user_name"], user["user_id"]))
         else:
-            logging.info(
-                "Text message from {0} ({1})".format(user["user_name"], user["user_id"])
-            )
+            logging.info("Text message from {0} ({1})".format(user["user_name"], user["user_id"]))
 
         # Exit if banned
         if user["banned"]:
@@ -2452,11 +2116,7 @@ class BotHandler:
         image_url = None
         if update.message.photo:
             image_file_id = update.message.photo[-1].file_id
-            image_url = (
-                await telegram.Bot(self.config["telegram"]["api_key"]).getFile(
-                    image_file_id
-                )
-            ).file_path
+            image_url = (await telegram.Bot(self.config["telegram"]["api_key"]).getFile(image_file_id)).file_path
 
         # Extract text request
         if update.message.caption:
@@ -2522,21 +2182,14 @@ class BotHandler:
             return
 
         # Check queue size
-        if (
-            self.queue_handler.request_response_queue.qsize()
-            >= self.config["telegram"]["queue_max"]
-        ):
-            await _send_safe(
-                user["user_id"], self.messages[lang]["queue_overflow"], context
-            )
+        if self.queue_handler.request_response_queue.qsize() >= self.config["telegram"]["queue_max"]:
+            await _send_safe(user["user_id"], self.messages[lang]["queue_overflow"], context)
             return
 
         # Create request timestamp (for data collecting)
         request_timestamp = ""
         if self.config["data_collecting"]["enabled"]:
-            request_timestamp = datetime.datetime.now().strftime(
-                self.config["data_collecting"]["timestamp_format"]
-            )
+            request_timestamp = datetime.datetime.now().strftime(self.config["data_collecting"]["timestamp_format"])
 
         # Create request
         request_response = RequestResponseContainer.RequestResponseContainer(
@@ -2562,9 +2215,7 @@ class BotHandler:
 
         # Send confirmation if queue size is more than 1
         with self.queue_handler.lock:
-            queue_list = QueueHandler.queue_to_list(
-                self.queue_handler.request_response_queue
-            )
+            queue_list = QueueHandler.queue_to_list(self.queue_handler.request_response_queue)
             if len(queue_list) > 1:
                 await _send_safe(
                     user["user_id"],
@@ -2577,9 +2228,7 @@ class BotHandler:
                     reply_to_message_id=request_response.reply_message_id,
                 )
 
-    async def bot_command_unknown(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def bot_command_unknown(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         unknown command
         :param update:
@@ -2590,9 +2239,7 @@ class BotHandler:
             return
         await self.bot_command_help(update, context)
 
-    async def bot_command_help(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def bot_command_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         /help command
         :param update:
@@ -2603,9 +2250,7 @@ class BotHandler:
         user = await self._user_check_get(update, context)
 
         # Log command
-        logging.info(
-            "/help command from {0} ({1})".format(user["user_name"], user["user_id"])
-        )
+        logging.info("/help command from {0} ({1})".format(user["user_name"], user["user_id"]))
 
         # Exit if banned
         if user["banned"]:
@@ -2614,9 +2259,7 @@ class BotHandler:
         # Send help message
         await self.bot_command_help_raw(user, context)
 
-    async def bot_command_help_raw(
-        self, user: dict, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def bot_command_help_raw(self, user: dict, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         Sends help message to the user
         :param user:
@@ -2631,13 +2274,9 @@ class BotHandler:
 
         # Send admin help message
         if user["admin"]:
-            await _send_safe(
-                user["user_id"], self.messages[lang]["help_message_admin"], context
-            )
+            await _send_safe(user["user_id"], self.messages[lang]["help_message_admin"], context)
 
-    async def bot_command_start(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def bot_command_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         /start command
         :param update:
@@ -2648,9 +2287,7 @@ class BotHandler:
         user = await self._user_check_get(update, context)
 
         # Log command
-        logging.info(
-            "/start command from {0} ({1})".format(user["user_name"], user["user_id"])
-        )
+        logging.info("/start command from {0} ({1})".format(user["user_name"], user["user_id"]))
 
         # Exit if banned or user not selected the language
         if user["banned"] or UsersHandler.get_key_or_none(user, "lang") is None:
@@ -2659,9 +2296,7 @@ class BotHandler:
         # Send start message
         await self.bot_command_start_raw(user, context)
 
-    async def bot_command_start_raw(
-        self, user: dict, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def bot_command_start_raw(self, user: dict, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         Sends start message to teh user
         :param user:
@@ -2683,9 +2318,7 @@ class BotHandler:
         user["started"] = True
         self.users_handler.save_user(user)
 
-    async def _user_check_get(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> dict:
+    async def _user_check_get(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> dict:
         """
         Gets (or creates) user based on update.effective_chat.id
         and checks if they are banned or not
