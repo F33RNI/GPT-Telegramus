@@ -43,6 +43,7 @@ Or message me if you would like to donate 💰
 - 5️⃣ [Alexander Fadeyev](https://github.com/alfsoft) - *EdgeGPT Fix*
 - 6️⃣ AnthroAsja - *Author of the Belarusian translation*
 - 7️⃣ Anonymous Samurai - *Author of the Ukrainian translation*
+- 8️⃣ Dunya Jafari - *Author of the Persian translation*
 
 ----------
 
