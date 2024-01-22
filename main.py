@@ -1,5 +1,5 @@
 """
- Copyright (C) 2023 Fern Lane, GPT-Telegramus
+ Copyright (C) 2023-2024 Fern Lane, GPT-Telegramus
  Licensed under the GNU Affero General Public License, Version 3.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
@@ -50,8 +50,12 @@ def parse_args():
     :return:
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, help="config.json file location",
-                        default=os.getenv("TELEGRAMUS_CONFIG_FILE", CONFIG_FILE))
+    parser.add_argument(
+        "--config",
+        type=str,
+        help="config.json file location",
+        default=os.getenv("TELEGRAMUS_CONFIG_FILE", CONFIG_FILE),
+    )
     parser.add_argument("--version", action="version", version=__version__)
     return parser.parse_args()
 
@@ -64,7 +68,7 @@ def main():
     # Multiprocessing fix for Windows
     if sys.platform.startswith("win"):
         multiprocessing.freeze_support()
-        
+
     # Parse arguments
     args = parse_args()
 
@@ -73,10 +77,10 @@ def main():
     logging_handler_process = multiprocessing.Process(target=logging_handler.configure_and_start_listener)
     logging_handler_process.start()
     LoggingHandler.worker_configurer(logging_handler.queue)
-    logging.info("LoggingHandler PID: " + str(logging_handler_process.pid))
+    logging.info(f"LoggingHandler PID: {logging_handler_process.pid}")
 
     # Log software version and GitHub link
-    logging.info("GPT-Telegramus version: " + str(__version__))
+    logging.info(f"GPT-Telegramus version: {__version__}")
     logging.info("https://github.com/F33RNI/GPT-Telegramus")
 
     # Load config with multiprocessing support
@@ -87,7 +91,7 @@ def main():
 
     # Check and create conversations directory
     if not os.path.exists(config["files"]["conversations_dir"]):
-        logging.info("Creating directory: {0}".format(config["files"]["conversations_dir"]))
+        logging.info(f"Creating directory: {config['files']['conversations_dir']}")
         os.makedirs(config["files"]["conversations_dir"])
 
     # Initialize UsersHandler and ProxyAutomation classes
@@ -103,18 +107,34 @@ def main():
     gemini_module = GoogleAIModule.GoogleAIModule(config, "gemini", messages, user_handler)
 
     # Initialize QueueHandler class
-    queue_handler = QueueHandler.QueueHandler(config, messages, logging_handler.queue, user_handler, proxy_automation,
-                                              chatgpt_module,
-                                              dalle_module,
-                                              bard_module,
-                                              edgegpt_module,
-                                              bing_image_gen_module,
-                                              gemini_module)
+    queue_handler = QueueHandler.QueueHandler(
+        config,
+        messages,
+        logging_handler.queue,
+        user_handler,
+        proxy_automation,
+        chatgpt_module,
+        dalle_module,
+        bard_module,
+        edgegpt_module,
+        bing_image_gen_module,
+        gemini_module,
+    )
 
     # Initialize Telegram bot class
-    bot_handler = BotHandler.BotHandler(config, args.config, messages, user_handler, queue_handler, proxy_automation,
-                                        logging_handler.queue,
-                                        chatgpt_module, bard_module, edgegpt_module, gemini_module)
+    bot_handler = BotHandler.BotHandler(
+        config,
+        args.config,
+        messages,
+        user_handler,
+        queue_handler,
+        proxy_automation,
+        logging_handler.queue,
+        chatgpt_module,
+        bard_module,
+        edgegpt_module,
+        gemini_module,
+    )
 
     # Start proxy automation
     proxy_automation.start_automation_loop()
