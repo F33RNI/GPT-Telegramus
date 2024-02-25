@@ -1,286 +1,284 @@
 {
-    "__comment01__": "SPECIFY WHAT MODULES WILL BE INCLUDED IN TELEGRAM BOT",
-    "modules": {
-        "chatgpt": true,
-        "edgegpt": true,
-        "dalle": true,
-        "bard": true,
-        "bing_imagegen": true,
-        "gemini": true,
+  "__comment01__": "SPECIFY WHAT MODULES WILL BE INCLUDED IN TELEGRAM BOT",
+  "modules": {
+    "chatgpt": true,
+    "edgegpt": true,
+    "dalle": true,
+    "bard": true,
+    "bing_imagegen": true,
+    "gemini": true,
 
-        "__comment04__": "Default (initial) module for handling user messages (see RequestResponseContainer.py)",
-        "default_module": 0
-    },
+    "__comment04__": "Default (initial) module for handling user messages (see RequestResponseContainer.py)",
+    "default_module": 0
+  },
 
-    "__comment02__": "CHATGPT  SETTINGS",
-    "chatgpt": {
-        "__comment01__": "SPECIFY revChatGPT API TYPE (currently available only 1 or 3)",
-        "__comment02__": "1 - https://github.com/acheong08/ChatGPT#v1-standard-chatgpt",
-        "__comment03__": "3 - https://github.com/acheong08/ChatGPT#v3-official-chat-api",
-        "api_type": 1,
+  "__comment02__": "CHATGPT  SETTINGS",
+  "chatgpt": {
+    "__comment01__": "SPECIFY revChatGPT API TYPE (currently available only 1 or 3)",
+    "__comment02__": "1 - https://github.com/acheong08/ChatGPT#v1-standard-chatgpt",
+    "__comment03__": "3 - https://github.com/acheong08/ChatGPT#v3-official-chat-api",
+    "api_type": 1,
 
-        "__comment04__": "API_KEY FROM https://platform.openai.com/account/api-keys. ONLY FOR API 3",
-        "api_key": "",
+    "__comment04__": "API_KEY FROM https://platform.openai.com/account/api-keys. ONLY FOR API 3",
+    "api_key": "",
 
-        "__comment05__": "MODEL NAME FOR API TYPE 3 (default: gpt-3.5-turbo)",
-        "engine": "",
+    "__comment05__": "MODEL NAME FOR API TYPE 3 (default: gpt-3.5-turbo)",
+    "engine": "",
 
-        "__comment06__": "FOR API TYPE 1 ACCESS TOKEN IS RECOMMENDED. GET IT FROM https://chat.openai.com/api/auth/session",
-        "__comment07__": "OR SESSION_TOKEN (FROM COOKIES ON chat.openai.com AS __Secure-next-auth.session-token",
-        "email": "",
-        "password": "",
-        "session_token": "",
-        "access_token": "",
+    "__comment06__": "FOR API TYPE 1 ACCESS TOKEN IS RECOMMENDED. GET IT FROM https://chat.openai.com/api/auth/session",
+    "__comment07__": "OR SESSION_TOKEN (FROM COOKIES ON chat.openai.com AS __Secure-next-auth.session-token",
+    "email": "",
+    "password": "",
+    "session_token": "",
+    "access_token": "",
 
-        "__comment08__": "SET TO TRUE IF YOU HAVE PAID ACCOUNT",
-        "paid": false,
+    "__comment08__": "SET TO TRUE IF YOU HAVE PAID ACCOUNT",
+    "paid": false,
 
-        "__comment09__": "READ Base URL SECTION IN README. ONLY FOR API TYPE 1. SPECIFY NOTHING TO USE DEFAULT VALUE",
-        "__comment10__": "MUST BE IN FORMAT http://IP:PORT/api/ (ex. http://192.168.0.2:9090/api/)",
-        "__comment11__": "ENDING SLASH AND http:// (https://) IS MANDATORY!",
-        "base_url": "",
+    "__comment09__": "READ Base URL SECTION IN README. ONLY FOR API TYPE 1. SPECIFY NOTHING TO USE DEFAULT VALUE",
+    "__comment10__": "MUST BE IN FORMAT http://IP:PORT/api/ (ex. http://192.168.0.2:9090/api/)",
+    "__comment11__": "ENDING SLASH AND http:// (https://) IS MANDATORY!",
+    "base_url": "",
 
-        "__comment12__": "WHAT MESSAGE DOES THE Continue BUTTON SEND",
-        "continue_request_text": "continue",
+    "__comment12__": "WHAT MESSAGE DOES THE Continue BUTTON SEND",
+    "continue_request_text": "continue",
 
-        "__comment13__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
-        "__comment14__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
-        "proxy": "",
+    "__comment13__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+    "__comment14__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
+    "proxy": "",
 
-        "__comment15__": "MINIMUM INTERVAL (IN SECONDS) BETWEEN EACH CHATGPT REQUEST",
-        "cooldown_seconds": 20,
+    "__comment15__": "MINIMUM INTERVAL (IN SECONDS) BETWEEN EACH CHATGPT REQUEST",
+    "cooldown_seconds": 20,
 
-        "__comment16__": "RESPONSE TIMEOUT (IN SECONDS)",
-        "timeout_seconds": 120,
+    "__comment16__": "RESPONSE TIMEOUT (IN SECONDS)",
+    "timeout_seconds": 120,
 
-        "__comment17__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
-        "user_cooldown_seconds": 0
-    },
+    "__comment17__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
+    "user_cooldown_seconds": 0
+  },
 
-    "__comment03__": "EDGEGPT SETTINGS",
-    "edgegpt": {
-        "__comment01__": "Install cookie editor extension: https://chrome.google.com/webstore/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm",
-        "__comment02__": "Go to bing.com/chat and ask Bing about something",
-        "__comment03__": "Open the extension",
-        "__comment04__": "Click Export on the bottom right, then Export as JSON (This saves your cookies to clipboard)",
-        "__comment05__": "Create new .json file and paste cookies into it, save file and specify path to it here",
-        "cookies_file": "EdgeGPT_cookies.json",
+  "__comment03__": "EDGEGPT SETTINGS",
+  "edgegpt": {
+    "__comment01__": "Install cookie editor extension: https://chrome.google.com/webstore/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm",
+    "__comment02__": "Go to bing.com/chat and ask Bing about something",
+    "__comment03__": "Open the extension",
+    "__comment04__": "Click Export on the bottom right, then Export as JSON (This saves your cookies to clipboard)",
+    "__comment05__": "Create new .json file and paste cookies into it, save file and specify path to it here",
+    "cookies_file": "EdgeGPT_cookies.json",
 
-        "__comment06__": "WSS LINK FOR EDGE-GPT (LEAVE EMPTY FOR THE DEFAULT VALUE)",
-        "wss_link": "",
+    "__comment06__": "WSS LINK FOR EDGE-GPT (LEAVE EMPTY FOR THE DEFAULT VALUE)",
+    "wss_link": "",
 
-        "__comment07__": "DEFAULT CONVERSATION STYLE (0 - PRECISE, 1 - BALANCED, 3 - CREATIVE)",
-        "conversation_style_type_default": 1,
+    "__comment07__": "DEFAULT CONVERSATION STYLE (0 - PRECISE, 1 - BALANCED, 3 - CREATIVE)",
+    "conversation_style_type_default": 1,
 
-        "__comment08__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
-        "__comment09__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
-        "proxy": "",
+    "__comment08__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+    "__comment09__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
+    "proxy": "",
 
-        "__comment10__": "RESPONSE TIMEOUT (IN SECONDS)",
-        "timeout_seconds": 240,
+    "__comment10__": "RESPONSE TIMEOUT (IN SECONDS)",
+    "timeout_seconds": 240,
 
-        "__comment11__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
-        "user_cooldown_seconds": 0
-    },
+    "__comment11__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
+    "user_cooldown_seconds": 0
+  },
 
-    "__comment04__": "DALL-E SETTINGS",
-    "dalle": {
-        "__comment01__": "FOR REQUESTS TO DALL-E PROVIDE YOUR API_KEY FROM https://platform.openai.com/account/api-keys",
-        "open_ai_api_key": "",
+  "__comment04__": "DALL-E SETTINGS",
+  "dalle": {
+    "__comment01__": "FOR REQUESTS TO DALL-E PROVIDE YOUR API_KEY FROM https://platform.openai.com/account/api-keys",
+    "open_ai_api_key": "",
 
-        "__comment02__": "SPECIFY FORMAT OF GENERATED IMAGES (256x256 or 512x512 or 1024x1024)",
-        "image_size": "512x512",
+    "__comment02__": "SPECIFY FORMAT OF GENERATED IMAGES (256x256 or 512x512 or 1024x1024)",
+    "image_size": "512x512",
 
-        "__comment03__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
-        "__comment04__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
-        "proxy": "",
+    "__comment03__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+    "__comment04__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
+    "proxy": "",
 
-        "__comment05__": "RESPONSE TIMEOUT (IN SECONDS)",
-        "timeout_seconds": 120,
+    "__comment05__": "RESPONSE TIMEOUT (IN SECONDS)",
+    "timeout_seconds": 120,
 
-        "__comment06__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
-        "user_cooldown_seconds": 120
-    },
+    "__comment06__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
+    "user_cooldown_seconds": 120
+  },
 
-    "__comment05__": "BING IMAGEGEN SETTINGS",
-    "bing_imagegen": {
-        "__comment01__": "Install cookie editor extension: https://chrome.google.com/webstore/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm",
-        "__comment02__": "Go to bing.com/chat and ask Bing about something",
-        "__comment03__": "Open the extension",
-        "__comment04__": "Click Export on the bottom right, then Export as JSON (This saves your cookies to clipboard)",
-        "__comment05__": "Create new .json file and paste cookies into it, save file and specify path to it here",
-        "cookies_file": "EdgeGPT_cookies.json",
+  "__comment05__": "BING IMAGEGEN SETTINGS",
+  "bing_imagegen": {
+    "__comment01__": "Install cookie editor extension: https://chrome.google.com/webstore/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm",
+    "__comment02__": "Go to bing.com/chat and ask Bing about something",
+    "__comment03__": "Open the extension",
+    "__comment04__": "Click Export on the bottom right, then Export as JSON (This saves your cookies to clipboard)",
+    "__comment05__": "Create new .json file and paste cookies into it, save file and specify path to it here",
+    "cookies_file": "EdgeGPT_cookies.json",
 
-        "__comment06__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
-        "__comment07__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
-        "proxy": "",
+    "__comment06__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+    "__comment07__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
+    "proxy": "",
 
-        "__comment08__": "RESPONSE TIMEOUT (IN SECONDS)",
-        "timeout_seconds": 120,
+    "__comment08__": "RESPONSE TIMEOUT (IN SECONDS)",
+    "timeout_seconds": 120,
 
-        "__comment09__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
-        "user_cooldown_seconds": 30
-    },
+    "__comment09__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
+    "user_cooldown_seconds": 30
+  },
 
-    "__comment06__": "BARD SETTINGS",
-    "bard": {
-        "__comment01__": "Install cookie editor extension: https://chrome.google.com/webstore/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm",
-        "__comment02__": "Go to https://bard.google.com/ and ask Bard about something",
-        "__comment03__": "Open the extension",
-        "__comment04__": "Click Export on the bottom right, then Export as JSON (This saves your cookies to clipboard)",
-        "__comment05__": "Create new .json file and paste cookies into it, save file and specify path to it here",
-        "cookies_file": "Bard_cookies.json",
+  "__comment06__": "BARD SETTINGS",
+  "bard": {
+    "__comment01__": "Install cookie editor extension: https://chrome.google.com/webstore/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm",
+    "__comment02__": "Go to https://bard.google.com/ and ask Bard about something",
+    "__comment03__": "Open the extension",
+    "__comment04__": "Click Export on the bottom right, then Export as JSON (This saves your cookies to clipboard)",
+    "__comment05__": "Create new .json file and paste cookies into it, save file and specify path to it here",
+    "cookies_file": "Bard_cookies.json",
 
-        "__comment06__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
-        "__comment07__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
-        "proxy": "",
+    "__comment06__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+    "__comment07__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
+    "proxy": "",
 
-        "__comment08__": "RESPONSE TIMEOUT (IN SECONDS)",
-        "timeout_seconds": 120,
+    "__comment08__": "RESPONSE TIMEOUT (IN SECONDS)",
+    "timeout_seconds": 120,
 
-        "__comment09__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
-        "user_cooldown_seconds": 0
-    },
+    "__comment09__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
+    "user_cooldown_seconds": 0
+  },
 
-    "__comment07__": "GEMINI SETTINGS",
-    "gemini": {
-        "__comment01__": "API_KEY FROM https://makersuite.google.com/app/apikey",
-        "api_key": "",
+  "__comment07__": "GEMINI SETTINGS",
+  "gemini": {
+    "__comment01__": "API_KEY FROM https://makersuite.google.com/app/apikey",
+    "api_key": "",
 
-        "__comment02__": "AI CONFIG, SEE https://ai.google.dev/api/python/google/generativeai/GenerationConfig for more",
-        "temperature": 0.9,
-        "top_p": 1,
-        "top_k": 1,
-        "max_output_tokens": 2048,
+    "__comment02__": "AI CONFIG, SEE https://ai.google.dev/api/python/google/generativeai/GenerationConfig for more",
+    "temperature": 0.9,
+    "top_p": 1,
+    "top_k": 1,
+    "max_output_tokens": 2048,
 
-        "__comment03__": "MINIMUM INTERVAL (IN SECONDS) BETWEEN EACH GEMINI REQUEST",
-        "cooldown_seconds": 1,
+    "__comment03__": "MINIMUM INTERVAL (IN SECONDS) BETWEEN EACH GEMINI REQUEST",
+    "cooldown_seconds": 1,
 
-        "__comment04__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
-        "__comment05__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
-        "proxy": "",
+    "__comment04__": "IF NEEDED, SPECIFY PROXY IN THE http://IP:PORT FORMAT (SPECIFY HTTP EVEN IF IT IS HTTPS PROXY)",
+    "__comment05__": "OR SET TO auto AND ENABLE proxy_automation TO AUTOMATICALLY SEARCH WORKING PROXIES",
+    "proxy": "",
 
-        "__comment06__": "RESPONSE TIMEOUT (IN SECONDS)",
-        "timeout_seconds": 120,
+    "__comment06__": "RESPONSE TIMEOUT (IN SECONDS)",
+    "timeout_seconds": 120,
 
-        "__comment07__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
-        "user_cooldown_seconds": 0
-    },
+    "__comment07__": "HOW OFTEN EACH USER CAN SEND REQUESTS TO THIS MODULE (SPECIFY 0 TO REMOVE THE RESTRICTION)",
+    "user_cooldown_seconds": 0
+  },
 
-    "__comment08__": "TELEGRAM SETTINGS",
-    "telegram": {
-        "__comment01__": "PROVIDE YOUR BOT API KEY FROM https://t.me/BotFather",
-        "api_key": "",
+  "__comment08__": "TELEGRAM SETTINGS",
+  "telegram": {
+    "__comment01__": "PROVIDE YOUR BOT API KEY FROM https://t.me/BotFather",
+    "api_key": "",
 
-        "__comment02__": "SPECIFY THE chat_id OF THOSE WHO CAN USE ADMINISTRATOR COMMANDS",
-        "admin_ids": [],
+    "__comment02__": "SPECIFY THE chat_id OF THOSE WHO CAN USE ADMINISTRATOR COMMANDS",
+    "admin_ids": [],
 
-        "__comment03__": "SET TO TRUE TO BLOCK NEW USERS BY DEFAULT (WHITELIST)",
-        "ban_by_default": false,
+    "__comment03__": "SET TO TRUE TO BLOCK NEW USERS BY DEFAULT (WHITELIST)",
+    "ban_by_default": false,
 
-        "__comment04__": "SPECIFY THE SIZE OF THE REQUEST QUEUE AND WHETHER TO SHOW A MESSAGE ABOUT ADDING TO THE QUEUE",
-        "queue_max": 10,
+    "__comment04__": "SPECIFY THE SIZE OF THE REQUEST QUEUE AND WHETHER TO SHOW A MESSAGE ABOUT ADDING TO THE QUEUE",
+    "queue_max": 10,
 
-        "__comment05__": "IN HOW MANY SECONDS TO EDIT MESSAGES (FOR ChatGPT / EdgeGPT)",
-        "edit_message_every_seconds_num": 2,
+    "__comment05__": "IN HOW MANY SECONDS TO EDIT MESSAGES (FOR ChatGPT / EdgeGPT)",
+    "edit_message_every_seconds_num": 2,
 
-        "__comment06__": "ADD CURSOR CHARACTER TO END OF MESSAGE DURING RESPONSE",
-        "add_cursor_symbol": true,
-        "cursor_symbol": "▯",
+    "__comment06__": "ADD CURSOR CHARACTER TO END OF MESSAGE DURING RESPONSE",
+    "add_cursor_symbol": true,
+    "cursor_symbol": "▯",
 
-        "__comment07__": "IF RESPONSE IS LARGER THAN THIS NUMBER (IN CHARS), IT WILL BE SPLIT INTO MULTIPLE MESSAGES",
-        "one_message_limit": 3000,
+    "__comment07__": "IF RESPONSE IS LARGER THAN THIS NUMBER (IN CHARS), IT WILL BE SPLIT INTO MULTIPLE MESSAGES",
+    "one_message_limit": 3000,
 
-        "__comment08__": "IF CAPTION IS LARGER THAN THIS NUMBER (IN CHARS), IT WILL BE SPLIT INTO MULTIPLE MESSAGES",
-        "one_caption_limit": 1000,
+    "__comment08__": "IF CAPTION IS LARGER THAN THIS NUMBER (IN CHARS), IT WILL BE SPLIT INTO MULTIPLE MESSAGES",
+    "one_caption_limit": 1000,
 
-        "__comment09__": "SET TO true FOR THE BOT TO REPLY TO PLAIN MESSAGES AS WELL AS DIRECT MODULE COMMANDS",
-        "reply_to_messages": true,
+    "__comment09__": "SET TO true FOR THE BOT TO REPLY TO PLAIN MESSAGES AS WELL AS DIRECT MODULE COMMANDS",
+    "reply_to_messages": true,
 
-        "__comment10__": "HOW MANY SECONDS TO WAIT BETWEEN EACH MESSAGE WHEN BROADCASTING",
-        "broadcast_delay_per_user_seconds": 0.5,
+    "__comment10__": "HOW MANY SECONDS TO WAIT BETWEEN EACH MESSAGE WHEN BROADCASTING",
+    "broadcast_delay_per_user_seconds": 0.5,
 
-        "__comment11__": "BOT COMMANDS DESCRIPTION (WILL BE AUTOMATICALLY ADDED TO THE BOT)",
-        "commands_description_enabled": true,
-        "commands_description": [
-            {
-                "command": "start",
-                "description": "📄 Welcome message and bot version"
-            },
-            {
-                "command": "help",
-                "description": "❓ Show help message"
-            },
-            {
-                "command": "module",
-                "description": "↕ Change module to chat with"
-            },
-            {
-                "command": "clear",
-                "description": "🧹 Clear chat history"
-            },
-            {
-                "command": "lang",
-                "description": "🌎 Change the language"
-            },
-            {
-                "command": "chatid",
-                "description": "🆔 Show your chat_id"
-            }
-        ]
-    },
+    "__comment11__": "BOT COMMANDS DESCRIPTION (WILL BE AUTOMATICALLY ADDED TO THE BOT)",
+    "commands_description_enabled": true,
+    "commands_description": [
+      {
+        "command": "start",
+        "description": "📄 Welcome message and bot version"
+      },
+      {
+        "command": "help",
+        "description": "❓ Show help message"
+      },
+      {
+        "command": "module",
+        "description": "↕ Change module to chat with"
+      },
+      {
+        "command": "clear",
+        "description": "🧹 Clear chat history"
+      },
+      {
+        "command": "lang",
+        "description": "🌎 Change the language"
+      },
+      {
+        "command": "chatid",
+        "description": "🆔 Show your chat_id"
+      }
+    ]
+  },
 
-    "__comment09__": "FILES AND DIRECTORIES SETTINGS",
-    "files": {
-        "users_database": "users.json",
-        "conversations_dir": "conversations",
-        "messages_file": "messages.json",
-        "data_collecting_dir": "data"
-    },
+  "__comment09__": "FILES AND DIRECTORIES SETTINGS",
+  "files": {
+    "users_database": "users.json",
+    "conversations_dir": "conversations",
+    "messages_file": "messages.json",
+    "data_collecting_dir": "data"
+  },
 
-    "__comment10__": "SETTINGS TO SAVE REQUESTS AND RESPONSE TO FILES",
-    "data_collecting": {
-        "__comment01__": "SET true TO AUTOMATICALLY SAVE USER REQUESTS AND RESPONSES TO FILES INTO data_collecting_dir",
-        "__comment02__": "NOTE: YOU SHOULD NOTIFY USERS IF IT IS ENABLED!",
-        "enabled": false,
+  "__comment10__": "SETTINGS TO SAVE REQUESTS AND RESPONSE TO FILES",
+  "data_collecting": {
+    "__comment01__": "SET true TO AUTOMATICALLY SAVE USER REQUESTS AND RESPONSES TO FILES INTO data_collecting_dir",
+    "__comment02__": "NOTE: YOU SHOULD NOTIFY USERS IF IT IS ENABLED!",
+    "enabled": false,
 
-        "__comment03__": "MAXIMUM FILE SIZE (IN BYTES). IF THE SIZE WILL EXCEED THIS VALUE, A NEW FILE WILL BE CREATED",
-        "max_size": 33554432,
+    "__comment03__": "MAXIMUM FILE SIZE (IN BYTES). IF THE SIZE WILL EXCEED THIS VALUE, A NEW FILE WILL BE CREATED",
+    "max_size": 33554432,
 
-        "__comment04__": "NAME OF THE FILE TO BE CREATED",
-        "filename_timestamp_format": "%Y_%m_%d_%H_%M_%S",
-        "filename_extension": ".log",
+    "__comment04__": "NAME OF THE FILE TO BE CREATED",
+    "filename_timestamp_format": "%Y_%m_%d_%H_%M_%S",
+    "filename_extension": ".log",
 
-        "__comment05__": "REQUEST LOG FORMAT. {0} - TIMESTAMP, {1} - CONTAINER ID, {2} - USER NAME, {3} - USER ID, {4} - MODULE NAME, {5} - REQUEST",
-        "request_format": "{0} Request ({1}) from {2} ({3}) to {4}: {5}\\n\\n",
+    "__comment05__": "REQUEST LOG FORMAT. {0} - TIMESTAMP, {1} - CONTAINER ID, {2} - USER NAME, {3} - USER ID, {4} - MODULE NAME, {5} - REQUEST",
+    "request_format": "{0} Request ({1}) from {2} ({3}) to {4}: {5}\\n\\n",
 
-        "__comment06__": "RESPONSE LOG FORMAT. {0} - TIMESTAMP, {1} - CONTAINER ID, {2} - USER NAME, {3} - USER ID, {4} - MODULE NAME, {5} - RESPONSE",
-        "response_format": "{0} Response ({1}) from {4} to {2} ({3}): {5}\\n\\n",
+    "__comment06__": "RESPONSE LOG FORMAT. {0} - TIMESTAMP, {1} - CONTAINER ID, {2} - USER NAME, {3} - USER ID, {4} - MODULE NAME, {5} - RESPONSE",
+    "response_format": "{0} Response ({1}) from {4} to {2} ({3}): {5}\\n\\n",
 
-        "__comment07__": "TIME STAMP FORMAT",
-        "timestamp_format": "%Y-%m-%d %H:%M:%S"
-    },
+    "__comment07__": "TIME STAMP FORMAT",
+    "timestamp_format": "%Y-%m-%d %H:%M:%S"
+  },
 
-    "__comment11__": "AUTOMATIC PROXY SEARCHER SETTINGS",
-    "proxy_automation": {
-        "__comment01__": "SET TO true TO ENABLE AUTOMATIC PROXY SEARCH. SET proxy TO auto IN MODULE TO USE THIS PROXY",
-        "enabled": false,
+  "__comment11__": "AUTOMATIC PROXY SEARCHER SETTINGS",
+  "proxy_automation": {
+    "__comment01__": "SET TO true TO ENABLE AUTOMATIC PROXY SEARCH. SET proxy TO auto IN MODULE TO USE THIS PROXY",
+    "enabled": false,
 
-        "__comment02__": "COUNTRY FILTER FOR PROXY (FROM https://free-proxy-list.net/)",
-        "country_list": [
-            "us"
-        ],
+    "__comment02__": "COUNTRY FILTER FOR PROXY (FROM https://free-proxy-list.net/)",
+    "country_list": ["us"],
 
-        "__comment03__": "SET TO true TO ENABLE COUNTRY FILTER",
-        "country_list_enabled": false,
+    "__comment03__": "SET TO true TO ENABLE COUNTRY FILTER",
+    "country_list_enabled": false,
 
-        "__comment04__": "URL TO WHICH THE GET REQUEST WILL BE SENT TO CHECK THE CONNECTION",
-        "check_url": "https://bard.google.com/",
+    "__comment04__": "URL TO WHICH THE GET REQUEST WILL BE SENT TO CHECK THE CONNECTION",
+    "check_url": "https://bard.google.com/",
 
-        "__comment05__": "AFTER HOW LONG (SECONDS) TO CHECK WHETHER THE CURRENT PROXY IS WORKING",
-        "check_interval_seconds": 600,
+    "__comment05__": "AFTER HOW LONG (SECONDS) TO CHECK WHETHER THE CURRENT PROXY IS WORKING",
+    "check_interval_seconds": 600,
 
-        "__comment06__": "HOW LONG (SECONDS) TO WAIT A REPLY",
-        "check_timeout_seconds": 30
-    }
+    "__comment06__": "HOW LONG (SECONDS) TO WAIT A REPLY",
+    "check_timeout_seconds": 30
+  }
 }
