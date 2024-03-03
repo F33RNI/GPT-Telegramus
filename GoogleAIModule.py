@@ -39,7 +39,7 @@ from google.generativeai.client import (
 )
 
 import BotHandler
-import UsersHandler
+import users_handler
 from RequestResponseContainer import RequestResponseContainer
 
 
@@ -49,7 +49,7 @@ class GoogleAIModule:
         config: Dict,
         config_key: str,
         messages: List[Dict],
-        users_handler: UsersHandler.UsersHandler,
+        users_handler: users_handler.UsersHandler,
     ) -> None:
         self.config = config
         self.config_key = config_key

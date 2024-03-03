@@ -38,7 +38,7 @@ import BotHandler
 import LoggingHandler
 import ProxyAutomation
 import RequestResponseContainer
-import UsersHandler
+import users_handler
 
 # After how long (seconds) clear self.prevent_shutdown_flag
 CLEAR_PREVENT_SHUTDOWN_FLAG_AFTER = 5.0
@@ -254,7 +254,7 @@ def _request_processor(
     config: dict,
     messages: List[Dict],
     logging_queue: multiprocessing.Queue,
-    users_handler: UsersHandler,
+    users_handler: users_handler,
     request_response_queue: multiprocessing.Queue,
     lock: multiprocessing.Lock,
     request_id: int,
@@ -425,7 +425,7 @@ class QueueHandler:
         config: dict,
         messages: List[Dict],
         logging_queue: multiprocessing.Queue,
-        users_handler: UsersHandler,
+        users_handler: users_handler,
         proxy_automation: ProxyAutomation.ProxyAutomation,
         chatgpt_module,
         dalle_module,

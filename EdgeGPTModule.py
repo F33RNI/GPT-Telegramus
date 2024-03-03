@@ -31,7 +31,7 @@ from EdgeGPT.EdgeGPT import Chatbot
 from EdgeGPT.conversation_style import ConversationStyle
 
 import BotHandler
-import UsersHandler
+import users_handler
 from RequestResponseContainer import RequestResponseContainer
 
 
@@ -57,7 +57,7 @@ def async_helper(awaitable_) -> None:
 
 
 class EdgeGPTModule:
-    def __init__(self, config: dict, messages: List[Dict], users_handler: UsersHandler.UsersHandler) -> None:
+    def __init__(self, config: dict, messages: List[Dict], users_handler: users_handler.UsersHandler) -> None:
         self.config = config
         self.messages = messages
         self.users_handler = users_handler

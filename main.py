@@ -34,7 +34,7 @@ import GoogleAIModule
 import LoggingHandler
 import ProxyAutomation
 import QueueHandler
-import UsersHandler
+import users_handler
 from JSONReaderWriter import load_json
 
 # Logging level
@@ -95,7 +95,7 @@ def main():
         os.makedirs(config["files"]["conversations_dir"])
 
     # Initialize UsersHandler and ProxyAutomation classes
-    user_handler = UsersHandler.UsersHandler(config, messages)
+    user_handler = users_handler.UsersHandler(config, messages)
     proxy_automation = ProxyAutomation.ProxyAutomation(config)
 
     # Pre-initialize modules

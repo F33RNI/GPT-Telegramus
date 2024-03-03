@@ -24,7 +24,7 @@ import os
 from multiprocessing import Manager
 from typing import Any
 
-from UsersHandler import UsersHandler
+from users_handler import UsersHandler
 
 # Required language file keys
 _LANG_FILE_KEYS = [

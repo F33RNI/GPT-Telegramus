@@ -29,12 +29,12 @@ import uuid
 from typing import List, Dict
 
 import BotHandler
-import UsersHandler
+import users_handler
 from RequestResponseContainer import RequestResponseContainer
 
 
 class ChatGPTModule:
-    def __init__(self, config: dict, messages: List[Dict], users_handler: UsersHandler.UsersHandler) -> None:
+    def __init__(self, config: dict, messages: List[Dict], users_handler: users_handler.UsersHandler) -> None:
         self.config = config
         self.messages = messages
         self.users_handler = users_handler
@@ -295,7 +295,7 @@ class ChatGPTModule:
         # Finish message
         asyncio.run(BotHandler.send_message_async(self.config, self.messages, request_response, end=True))
 
-    def clear_conversation_for_user(self, user_handler: UsersHandler.UsersHandler, user: dict) -> None:
+    def clear_conversation_for_user(self, user_handler: users_handler.UsersHandler, user: dict) -> None:
         """
         Clears conversation (chat history) for selected user
         :param user_handler:

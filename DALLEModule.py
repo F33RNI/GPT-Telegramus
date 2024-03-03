@@ -24,12 +24,12 @@ from typing import List, Dict
 import openai
 
 import BotHandler
-import UsersHandler
+import users_handler
 from RequestResponseContainer import RequestResponseContainer
 
 
 class DALLEModule:
-    def __init__(self, config: dict, messages: List[Dict], users_handler: UsersHandler.UsersHandler) -> None:
+    def __init__(self, config: dict, messages: List[Dict], users_handler: users_handler.UsersHandler) -> None:
         self.config = config
         self.messages = messages
         self.users_handler = users_handler

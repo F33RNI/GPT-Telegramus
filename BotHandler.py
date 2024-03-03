@@ -57,7 +57,7 @@ import LoggingHandler
 import ProxyAutomation
 import QueueHandler
 import RequestResponseContainer
-import UsersHandler
+import users_handler
 from JSONReaderWriter import load_json
 from main import __version__
 
@@ -981,7 +981,7 @@ class BotHandler:
         config: dict,
         config_file: str,
         messages: List[Dict],
-        users_handler: UsersHandler.UsersHandler,
+        users_handler: users_handler.UsersHandler,
         queue_handler: QueueHandler.QueueHandler,
         proxy_automation: ProxyAutomation.ProxyAutomation,
         logging_queue: multiprocessing.Queue,

@@ -26,13 +26,13 @@ from typing import List, Dict
 from BingImageCreator import ImageGen
 
 import BotHandler
-import UsersHandler
+import users_handler
 from JSONReaderWriter import load_json
 from RequestResponseContainer import RequestResponseContainer
 
 
 class BingImageGenModule:
-    def __init__(self, config: dict, messages: List[Dict], users_handler: UsersHandler.UsersHandler) -> None:
+    def __init__(self, config: dict, messages: List[Dict], users_handler: users_handler.UsersHandler) -> None:
         self.config = config
         self.messages = messages
         self.users_handler = users_handler
