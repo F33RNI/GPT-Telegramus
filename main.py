@@ -24,6 +24,7 @@ import multiprocessing
 import os
 import sys
 
+from _version import __version__
 import BingImageGenModule
 import BotHandler
 import ChatGPTModule
@@ -35,9 +36,6 @@ import ProxyAutomation
 import QueueHandler
 import UsersHandler
 from JSONReaderWriter import load_json
-
-# GPT-Telegramus version
-__version__ = "4.1.4"
 
 # Logging level
 LOGGING_LEVEL = logging.INFO

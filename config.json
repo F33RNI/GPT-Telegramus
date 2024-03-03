@@ -8,7 +8,7 @@
         "gemini": true,
 
         "__comment04__": "Default (initial) module for handling user messages (see RequestResponseContainer.py)",
-        "default_module": 0
+        "default_module": "chatgpt"
     },
 
     "__comment02__": "CHATGPT  SETTINGS",
