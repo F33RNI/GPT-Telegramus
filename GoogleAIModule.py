@@ -134,9 +134,9 @@ class GoogleAIModule:
         :param request_response: RequestResponseContainer object
         :return:
         """
-        lang = UsersHandler.get_key_or_none(request_response.user, "lang", 0)
+        lang = request_response.user.get("lang", 0)
         conversations_dir = self.config["files"]["conversations_dir"]
-        conversation_id = UsersHandler.get_key_or_none(request_response.user, f"{self.config_key}_conversation_id")
+        conversation_id = request_response.user.get(f"{self.config_key}_conversation_id")
 
         # Check if we are initialized
         if not self._enabled:
@@ -236,7 +236,7 @@ class GoogleAIModule:
         :param user:
         :return: True if cleared successfully
         """
-        conversation_id = UsersHandler.get_key_or_none(user, f"{self.config_key}_conversation_id")
+        conversation_id = user.get(f"{self.config_key}_conversation_id")
         if conversation_id is None:
             return
 

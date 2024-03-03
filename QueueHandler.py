@@ -213,7 +213,7 @@ def _user_module_cooldown(
     :return:
     """
     # Get user language
-    lang = UsersHandler.get_key_or_none(request.user, "lang", 0)
+    lang = request.user.get("lang", 0)
 
     # Calculate time left
     if time_left_seconds < 0:
@@ -306,7 +306,7 @@ def _request_processor(
 
         # ChatGPT
         if request_.request_type == RequestResponseContainer.REQUEST_TYPE_CHATGPT:
-            chatgpt_user_last_request_timestamp = UsersHandler.get_key_or_none(request_.user, "timestamp_chatgpt", 0)
+            chatgpt_user_last_request_timestamp = request_.user.get("timestamp_chatgpt", 0)
             time_passed_seconds = int(time.time()) - chatgpt_user_last_request_timestamp
             if time_passed_seconds < config["chatgpt"]["user_cooldown_seconds"]:
                 request_.error = True
@@ -326,7 +326,7 @@ def _request_processor(
 
         # DALL-E
         elif request_.request_type == RequestResponseContainer.REQUEST_TYPE_DALLE:
-            dalle_user_last_request_timestamp = UsersHandler.get_key_or_none(request_.user, "timestamp_dalle", 0)
+            dalle_user_last_request_timestamp = request_.user.get("timestamp_dalle", 0)
             time_passed_seconds = int(time.time()) - dalle_user_last_request_timestamp
             if time_passed_seconds < config["dalle"]["user_cooldown_seconds"]:
                 request_.error = True
@@ -345,7 +345,7 @@ def _request_processor(
 
         # EdgeGPT
         elif request_.request_type == RequestResponseContainer.REQUEST_TYPE_EDGEGPT:
-            edgegpt_user_last_request_timestamp = UsersHandler.get_key_or_none(request_.user, "timestamp_edgegpt", 0)
+            edgegpt_user_last_request_timestamp = request_.user.get("timestamp_edgegpt", 0)
             time_passed_seconds = int(time.time()) - edgegpt_user_last_request_timestamp
             if time_passed_seconds < config["edgegpt"]["user_cooldown_seconds"]:
                 request_.error = True
@@ -365,7 +365,7 @@ def _request_processor(
 
         # Bard
         elif request_.request_type == RequestResponseContainer.REQUEST_TYPE_BARD:
-            bard_user_last_request_timestamp = UsersHandler.get_key_or_none(request_.user, "timestamp_bard", 0)
+            bard_user_last_request_timestamp = request_.user.get("timestamp_bard", 0)
             time_passed_seconds = int(time.time()) - bard_user_last_request_timestamp
             if time_passed_seconds < config["bard"]["user_cooldown_seconds"]:
                 request_.error = True
@@ -385,9 +385,7 @@ def _request_processor(
 
         # Bing ImageGen
         elif request_.request_type == RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN:
-            bing_imagegen_user_last_request_timestamp = UsersHandler.get_key_or_none(
-                request_.user, "timestamp_bing_imagegen", 0
-            )
+            bing_imagegen_user_last_request_timestamp = request_.user.get("timestamp_bing_imagegen", 0)
             time_passed_seconds = int(time.time()) - bing_imagegen_user_last_request_timestamp
             if time_passed_seconds < config["bing_imagegen"]["user_cooldown_seconds"]:
                 request_.error = True
@@ -406,7 +404,7 @@ def _request_processor(
 
         # Gemini
         elif request_.request_type == RequestResponseContainer.REQUEST_TYPE_GEMINI:
-            gemini_user_last_request_timestamp = UsersHandler.get_key_or_none(request_.user, "timestamp_gemini", 0)
+            gemini_user_last_request_timestamp = request_.user.get("timestamp_gemini", 0)
             time_passed_seconds = int(time.time()) - gemini_user_last_request_timestamp
             if time_passed_seconds < config["gemini"]["user_cooldown_seconds"]:
                 request_.error = True
@@ -430,7 +428,7 @@ def _request_processor(
     # Error during processing request
     except Exception as e:
         request_.error = True
-        lang = UsersHandler.get_key_or_none(request_.user, "lang", 0)
+        lang = request_.user.get("lang", 0)
         request_.response = messages[lang]["response_error"].replace("\\n", "\n").format(str(e))
         BotHandler.async_helper(BotHandler.send_message_async(config, messages, request_, end=True))
         logging.error("Error processing request!", exc_info=e)

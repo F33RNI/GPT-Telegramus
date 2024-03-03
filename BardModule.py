@@ -117,7 +117,7 @@ class BardModule:
         # Check if we are initialized
         if not self._enabled or self._chatbot is None:
             logging.error("Bard module not initialized!")
-            lang = UsersHandler.get_key_or_none(request_response.user, "lang", 0)
+            lang = request_response.user.get("lang", 0)
             request_response.response = (
                 self.messages[lang]["response_error"].replace("\\n", "\n").format("Bard module not initialized!")
             )
@@ -130,9 +130,9 @@ class BardModule:
             self.processing_flag.value = True
 
             # Get user data
-            conversation_id = UsersHandler.get_key_or_none(request_response.user, "bard_conversation_id")
-            response_id = UsersHandler.get_key_or_none(request_response.user, "bard_response_id")
-            choice_id = UsersHandler.get_key_or_none(request_response.user, "bard_choice_id")
+            conversation_id = request_response.user.get("bard_conversation_id")
+            response_id = request_response.user.get("bard_response_id")
+            choice_id = request_response.user.get("bard_choice_id")
 
             # Try to load conversation
             if conversation_id and response_id and choice_id:
@@ -188,7 +188,7 @@ class BardModule:
             if len(error_text) > 100:
                 error_text = error_text[:100] + "..."
 
-            lang = UsersHandler.get_key_or_none(request_response.user, "lang", 0)
+            lang = request_response.user.get("lang", 0)
             request_response.response = self.messages[lang]["response_error"].replace("\\n", "\n").format(error_text)
             request_response.error = True
 
@@ -219,7 +219,7 @@ class BardModule:
         :return:
         """
         # Get conversation id
-        bard_conversation_id = UsersHandler.get_key_or_none(user, "bard_conversation_id")
+        bard_conversation_id = user.get("bard_conversation_id")
 
         # Check if we need to clear it
         if bard_conversation_id:

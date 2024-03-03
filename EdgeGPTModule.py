@@ -119,7 +119,7 @@ class EdgeGPTModule:
         :return:
         """
         # Get user language
-        lang = UsersHandler.get_key_or_none(request_response.user, "lang", 0)
+        lang = request_response.user.get("lang", 0)
 
         # Check if we are initialized
         if not self._enabled or self._chatbot is None:
@@ -136,8 +136,8 @@ class EdgeGPTModule:
             self.cancel_requested.value = False
 
             # Get user data
-            conversation_id = UsersHandler.get_key_or_none(request_response.user, "edgegpt_conversation_id")
-            conversation_style = UsersHandler.get_key_or_none(request_response.user, "edgegpt_style")
+            conversation_id = request_response.user.get("edgegpt_conversation_id")
+            conversation_style = request_response.user.get("edgegpt_style")
 
             # Set default conversation style
             if conversation_style is None:
@@ -309,7 +309,7 @@ class EdgeGPTModule:
         :return:
         """
         # Get conversation id
-        edgegpt_conversation_id = UsersHandler.get_key_or_none(user, "edgegpt_conversation_id")
+        edgegpt_conversation_id = user.get("edgegpt_conversation_id")
 
         # Check if we need to clear it
         if edgegpt_conversation_id:

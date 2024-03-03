@@ -149,7 +149,7 @@ async def send_message_async(
     try:
         response_len = len(request_response.response) if request_response.response else 0
         # Get user language
-        lang = UsersHandler.get_key_or_none(request_response.user, "lang", 0)
+        lang = request_response.user.get("lang", 0)
         messages = messages[lang]
 
         # Fix empty message
@@ -935,7 +935,7 @@ def clear_conversation_process(
 
     try:
         # Get user language
-        lang = UsersHandler.get_key_or_none(user, "lang", 0)
+        lang = user.get("lang", 0)
 
         # Clear ChatGPT
         if request_type == RequestResponseContainer.REQUEST_TYPE_CHATGPT:
@@ -1161,22 +1161,22 @@ class BotHandler:
                     return
 
                 # Get user language
-                lang = UsersHandler.get_key_or_none(user, "lang", 0)
+                lang = user.get("lang", 0)
 
                 # Regenerate request
                 if action == "regenerate":
                     # Get last message ID
-                    reply_message_id_last = UsersHandler.get_key_or_none(user, "reply_message_id_last")
+                    reply_message_id_last = user.get("reply_message_id_last")
 
                     # Check if it is last message
                     if reply_message_id_last and reply_message_id_last == reply_message_id:
                         # Get request
-                        request = UsersHandler.get_key_or_none(user, "request_last")
+                        request = user.get("request_last")
 
                         # Check if we have the last request
                         if request:
                             # Ask
-                            request_image_url = UsersHandler.get_key_or_none(user, "request_last_image_url")
+                            request_image_url = user.get("request_last_image_url")
                             await self.bot_command_or_message_request_raw(
                                 request_type,
                                 request,
@@ -1205,7 +1205,7 @@ class BotHandler:
                 # Continue generating (for ChatGPT)
                 elif action == "continue":
                     # Get last message ID
-                    reply_message_id_last = UsersHandler.get_key_or_none(user, "reply_message_id_last")
+                    reply_message_id_last = user.get("reply_message_id_last")
 
                     # Check if it is last message
                     if reply_message_id_last and reply_message_id_last == reply_message_id:
@@ -1229,7 +1229,7 @@ class BotHandler:
                 # Stop generating
                 elif action == "stop":
                     # Get last message ID
-                    reply_message_id_last = UsersHandler.get_key_or_none(user, "reply_message_id_last")
+                    reply_message_id_last = user.get("reply_message_id_last")
 
                     # Check if it is last message
                     if reply_message_id_last and reply_message_id_last == reply_message_id:
@@ -1311,7 +1311,7 @@ class BotHandler:
             return
 
         # Get user language
-        lang = UsersHandler.get_key_or_none(user, "lang", 0)
+        lang = user.get("lang", 0)
 
         # Check for admin rules
         if not user["admin"]:
@@ -1392,7 +1392,7 @@ class BotHandler:
             return
 
         # Get user language
-        lang = UsersHandler.get_key_or_none(user, "lang", 0)
+        lang = user.get("lang", 0)
 
         # Check for admin rules
         if not user["admin"]:
@@ -1461,7 +1461,7 @@ class BotHandler:
             return
 
         # Get user language
-        lang = UsersHandler.get_key_or_none(user, "lang", 0)
+        lang = user.get("lang", 0)
 
         # Check for admin rules
         if not user["admin"]:
@@ -1490,10 +1490,10 @@ class BotHandler:
                 message += "  "
 
             # Language
-            message += self.messages[UsersHandler.get_key_or_none(user_info, "lang", 0)]["language_icon"] + " "
+            message += self.messages[user_info.get("lang", 0)]["language_icon"] + " "
 
             # Module
-            message += self.messages[0]["module_icons"][UsersHandler.get_key_or_none(user_info, "module", 0)] + " "
+            message += self.messages[0]["module_icons"][user_info.get("module", 0)] + " "
 
             user_id = user_info["user_id"]
             is_private = (user_info["user_type"] == "private") if "user_type" in user_info else (user_id > 0)
@@ -1533,7 +1533,7 @@ class BotHandler:
             return
 
         # Get user language
-        lang = UsersHandler.get_key_or_none(user, "lang", 0)
+        lang = user.get("lang", 0)
 
         # Check for admin rules
         if not user["admin"]:
@@ -1625,7 +1625,7 @@ class BotHandler:
             return
 
         # Get user language
-        lang = UsersHandler.get_key_or_none(user, "lang", 0)
+        lang = user.get("lang", 0)
 
         # Check for admin rules
         if not user["admin"]:
@@ -1702,7 +1702,7 @@ class BotHandler:
                 requested_module = int(context.args[0].strip().lower())
             except Exception as e:
                 logging.error("Error retrieving requested module!", exc_info=e)
-                lang = UsersHandler.get_key_or_none(user, "lang", 0)
+                lang = user.get("lang", 0)
                 await _send_safe(
                     user["user_id"],
                     self.messages[lang]["clear_error"].format(e),
@@ -1722,7 +1722,7 @@ class BotHandler:
         :return:
         """
         # Get user language
-        lang = UsersHandler.get_key_or_none(user, "lang", 0)
+        lang = user.get("lang", 0)
 
         # Create buttons for module selection
         if request_type < 0:
@@ -1827,7 +1827,7 @@ class BotHandler:
                 style = int(context.args[0].strip().lower())
             except Exception as e:
                 logging.error("Error retrieving requested style!", exc_info=e)
-                lang = UsersHandler.get_key_or_none(user, "lang", 0)
+                lang = user.get("lang", 0)
                 await _send_safe(
                     user["user_id"],
                     self.messages[lang]["style_change_error"].format(e),
@@ -1847,7 +1847,7 @@ class BotHandler:
         :return:
         """
         # Get user language
-        lang = UsersHandler.get_key_or_none(user, "lang", 0)
+        lang = user.get("lang", 0)
 
         # Create buttons for style selection
         if style < 0 or style > 2:
@@ -1858,11 +1858,7 @@ class BotHandler:
             ]
 
             # Extract current style
-            current_style = UsersHandler.get_key_or_none(user, "edgegpt_style")
-
-            # Get default key instead
-            if current_style is None:
-                current_style = self.config["edgegpt"]["conversation_style_type_default"]
+            current_style = user.get("edgegpt_style", self.config["edgegpt"]["conversation_style_type_default"])
 
             # Get as string
             if current_style == 0:
@@ -1938,7 +1934,7 @@ class BotHandler:
         :return:
         """
         # Get user language
-        lang = UsersHandler.get_key_or_none(user, "lang", 0)
+        lang = user.get("lang", 0)
 
         # Change module
         if request_type >= 0:
@@ -2029,7 +2025,7 @@ class BotHandler:
             await _send_safe(user["user_id"], self.messages[lang_index]["language_changed"], context)
 
             # Send start message if it is a new user
-            user_started = UsersHandler.get_key_or_none(user, "started")
+            user_started = user.get("started")
             if not user_started:
                 await self.bot_command_start_raw(user, context)
 
@@ -2149,7 +2145,7 @@ class BotHandler:
             request_type = user["module"]
 
         # Get user language
-        lang = UsersHandler.get_key_or_none(user, "lang", 0)
+        lang = user.get("lang", 0)
 
         # Check request
         if not request_message or len(request_message) <= 0:
@@ -2247,7 +2243,7 @@ class BotHandler:
         :return:
         """
         # Get user language
-        lang = UsersHandler.get_key_or_none(user, "lang", 0)
+        lang = user.get("lang", 0)
 
         # Send default help message
         await _send_safe(user["user_id"], self.messages[lang]["help_message"], context)
@@ -2270,7 +2266,7 @@ class BotHandler:
         logging.info(f"/start command from {user['user_name']} ({user['user_id']})")
 
         # Exit if banned or user not selected the language
-        if user["banned"] or UsersHandler.get_key_or_none(user, "lang") is None:
+        if user["banned"] or user.get("lang") is None:
             return
 
         # Send start message
@@ -2284,7 +2280,7 @@ class BotHandler:
         :return:
         """
         # Send start message
-        lang = UsersHandler.get_key_or_none(user, "lang", 0)
+        lang = user.get("lang", 0)
         await _send_safe(
             user["user_id"],
             self.messages[lang]["start_message"].format(__version__),
@@ -2319,7 +2315,7 @@ class BotHandler:
 
         # Send banned info
         if user["banned"]:
-            lang = UsersHandler.get_key_or_none(user, "lang", 0)
+            lang = user.get("lang", 0)
             await _send_safe(
                 telegram_chat_id,
                 self.messages[lang]["ban_message_user"].format(user["ban_reason"]),
@@ -2328,7 +2324,7 @@ class BotHandler:
 
         # Ask for user to select the language
         else:
-            lang = UsersHandler.get_key_or_none(user, "lang")
+            lang = user.get("lang")
             if lang is None or lang < 0:
                 await self.bot_command_lang_raw(-1, user, context)
 

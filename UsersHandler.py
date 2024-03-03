@@ -27,26 +27,6 @@ import JSONReaderWriter
 DEFAULT_USER_NAME = "Noname"
 
 
-def get_key_or_none(dictionary: dict, key, default_value=None):
-    """
-    Safely gets value of key from dictionary
-    :param dictionary:
-    :param key:
-    :param default_value: default value if key not found
-    :return: key value or default_value if not found
-    """
-    if key is None:
-        return default_value
-
-    if key in dictionary:
-        if dictionary[key] is None:
-            return default_value
-        else:
-            return dictionary[key]
-
-    return default_value
-
-
 class UsersHandler:
     def __init__(self, config: dict, messages: List[Dict]):
         self.config = config

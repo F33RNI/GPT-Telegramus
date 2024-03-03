@@ -124,7 +124,7 @@ class ChatGPTModule:
         :return:
         """
         # Get user language
-        lang = UsersHandler.get_key_or_none(request_response.user, "lang", 0)
+        lang = request_response.user.get("lang", 0)
 
         # Check if we are initialized
         if not self._enabled or self._chatbot is None:
@@ -142,8 +142,8 @@ class ChatGPTModule:
             self.cancel_requested.value = False
 
             # Get user data
-            conversation_id = UsersHandler.get_key_or_none(request_response.user, "conversation_id")
-            parent_id = UsersHandler.get_key_or_none(request_response.user, "parent_id")
+            conversation_id = request_response.user.get("conversation_id")
+            parent_id = request_response.user.get("parent_id")
 
             # Cooldown to prevent 429 Too Many Requests
             if time.time() - self._last_request_time.value <= self.config["chatgpt"]["cooldown_seconds"]:
@@ -304,7 +304,7 @@ class ChatGPTModule:
         """
         if not self._enabled or self._chatbot is None:
             return
-        conversation_id = UsersHandler.get_key_or_none(user, "conversation_id")
+        conversation_id = user.get("conversation_id")
         if conversation_id is None:
             return
 

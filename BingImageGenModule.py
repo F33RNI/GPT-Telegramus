@@ -111,7 +111,7 @@ class BingImageGenModule:
         :return:
         """
         # Get user language
-        lang = UsersHandler.get_key_or_none(request_response.user, "lang", 0)
+        lang = request_response.user.get("lang", 0)
 
         # Check if we are initialized
         if not self._enabled:
