@@ -261,7 +261,6 @@ def _request_processor(
     proxy: str,
     chatgpt_module,
     dalle_module,
-    bard_module,
     edgegpt_module,
     bing_image_gen_module,
     gemini_module,
@@ -363,26 +362,6 @@ def _request_processor(
                 edgegpt_module.process_request(request_)
                 edgegpt_module.exit()
 
-        # Bard
-        elif request_.request_type == RequestResponseContainer.REQUEST_TYPE_BARD:
-            bard_user_last_request_timestamp = request_.user.get("timestamp_bard", 0)
-            time_passed_seconds = int(time.time()) - bard_user_last_request_timestamp
-            if time_passed_seconds < config["bard"]["user_cooldown_seconds"]:
-                request_.error = True
-                logging.warning(f"User {request_.user['user_id']} sends Bard requests too quickly!")
-                _user_module_cooldown(
-                    config, messages, request_, config["bard"]["user_cooldown_seconds"] - time_passed_seconds
-                )
-            else:
-                request_.user["timestamp_bard"] = int(time.time())
-                users_handler.save_user(request_.user)
-                proxy_ = None
-                if proxy and config["bard"]["proxy"] == "auto":
-                    proxy_ = proxy
-                bard_module.initialize(proxy_)
-                bard_module.process_request(request_)
-                bard_module.exit()
-
         # Bing ImageGen
         elif request_.request_type == RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN:
             bing_imagegen_user_last_request_timestamp = request_.user.get("timestamp_bing_imagegen", 0)
@@ -450,7 +429,6 @@ class QueueHandler:
         proxy_automation: ProxyAutomation.ProxyAutomation,
         chatgpt_module,
         dalle_module,
-        bard_module,
         edgegpt_module,
         bing_image_gen_module,
         gemini_module,
@@ -465,7 +443,6 @@ class QueueHandler:
         # Modules
         self.chatgpt_module = chatgpt_module
         self.dalle_module = dalle_module
-        self.bard_module = bard_module
         self.edgegpt_module = edgegpt_module
         self.gemini_module = gemini_module
 
@@ -573,7 +550,6 @@ class QueueHandler:
                                     self.proxy_automation.working_proxy,
                                     self.chatgpt_module,
                                     self.dalle_module,
-                                    self.bard_module,
                                     self.edgegpt_module,
                                     self.bing_image_gen_module,
                                     self.gemini_module,
@@ -599,8 +575,6 @@ class QueueHandler:
                             timeout_seconds = self.config["edgegpt"]["timeout_seconds"]
                         elif request_.request_type == RequestResponseContainer.REQUEST_TYPE_DALLE:
                             timeout_seconds = self.config["dalle"]["timeout_seconds"]
-                        elif request_.request_type == RequestResponseContainer.REQUEST_TYPE_BARD:
-                            timeout_seconds = self.config["bard"]["timeout_seconds"]
                         elif request_.request_type == RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN:
                             timeout_seconds = self.config["bing_imagegen"]["timeout_seconds"]
                         elif request_.request_type == RequestResponseContainer.REQUEST_TYPE_GEMINI:

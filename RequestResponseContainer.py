@@ -21,7 +21,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 REQUEST_TYPE_CHATGPT = 0
 REQUEST_TYPE_DALLE = 1
 REQUEST_TYPE_EDGEGPT = 2
-REQUEST_TYPE_BARD = 3
 REQUEST_TYPE_BING_IMAGEGEN = 4
 REQUEST_TYPE_GEMINI = 5
 
@@ -34,7 +33,7 @@ PROCESSING_STATE_CANCEL = 5
 PROCESSING_STATE_CANCELING = 6
 PROCESSING_STATE_ABORT = 7
 
-REQUEST_NAMES = ["ChatGPT", "DALL-E", "EdgeGPT", "Bard", "Bing ImageGen", "Gemini"]
+REQUEST_NAMES = ["ChatGPT", "DALL-E", "EdgeGPT" "Bing ImageGen", "Gemini"]
 PROCESSING_STATE_NAMES = ["Waiting", "Starting", "Active", "Done", "Timed out", "Canceling", "Canceling"]
 
 

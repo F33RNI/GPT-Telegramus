@@ -24,7 +24,6 @@ import multiprocessing
 import os
 import sys
 
-import BardModule
 import BingImageGenModule
 import BotHandler
 import ChatGPTModule
@@ -104,7 +103,6 @@ def main():
     # Pre-initialize modules
     chatgpt_module = ChatGPTModule.ChatGPTModule(config, messages, user_handler)
     dalle_module = DALLEModule.DALLEModule(config, messages, user_handler)
-    bard_module = BardModule.BardModule(config, messages, user_handler)
     edgegpt_module = EdgeGPTModule.EdgeGPTModule(config, messages, user_handler)
     bing_image_gen_module = BingImageGenModule.BingImageGenModule(config, messages, user_handler)
     gemini_module = GoogleAIModule.GoogleAIModule(config, "gemini", messages, user_handler)
@@ -118,7 +116,6 @@ def main():
         proxy_automation,
         chatgpt_module,
         dalle_module,
-        bard_module,
         edgegpt_module,
         bing_image_gen_module,
         gemini_module,
@@ -134,7 +131,6 @@ def main():
         proxy_automation,
         logging_handler.queue,
         chatgpt_module,
-        bard_module,
         edgegpt_module,
         gemini_module,
     )

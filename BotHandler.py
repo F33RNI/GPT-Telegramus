@@ -68,7 +68,6 @@ BOT_COMMAND_CHAT = "chat"
 BOT_COMMAND_CHATGPT = "chatgpt"
 BOT_COMMAND_EDGEGPT = "bing"
 BOT_COMMAND_DALLE = "dalle"
-BOT_COMMAND_BARD = "bard"
 BOT_COMMAND_BING_IMAGEGEN = "bingigen"
 BOT_COMMAND_GEMINI = "gemini"
 BOT_COMMAND_MODULE = "module"
@@ -910,7 +909,6 @@ def clear_conversation_process(
     users_handler,
     user: dict,
     chatgpt_module,
-    bard_module,
     edgegpt_module,
     gemini_module,
 ) -> None:
@@ -925,7 +923,6 @@ def clear_conversation_process(
     :param users_handler:
     :param user:
     :param chatgpt_module:
-    :param bard_module:
     :param edgegpt_module:
     :param gemini_module:
     :return:
@@ -955,14 +952,6 @@ def clear_conversation_process(
             requested_module = messages[lang]["modules"][2]
             if not edgegpt_module.processing_flag.value:
                 edgegpt_module.clear_conversation_for_user(user)
-            else:
-                raise Exception("The module is busy. Please try again later!")
-
-        # Clear Bard
-        elif request_type == RequestResponseContainer.REQUEST_TYPE_BARD:
-            requested_module = messages[lang]["modules"][3]
-            if not bard_module.processing_flag.value:
-                bard_module.clear_conversation_for_user(user)
             else:
                 raise Exception("The module is busy. Please try again later!")
 
@@ -997,7 +986,6 @@ class BotHandler:
         proxy_automation: ProxyAutomation.ProxyAutomation,
         logging_queue: multiprocessing.Queue,
         chatgpt_module,
-        bard_module,
         edgegpt_module,
         gemini_module,
     ):
@@ -1010,7 +998,6 @@ class BotHandler:
         self.logging_queue = logging_queue
 
         self.chatgpt_module = chatgpt_module
-        self.bard_module = bard_module
         self.edgegpt_module = edgegpt_module
         self.gemini_module = gemini_module
 
@@ -1068,7 +1055,6 @@ class BotHandler:
                 self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_CHATGPT, self.bot_command_chatgpt))
                 self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_EDGEGPT, self.bot_command_edgegpt))
                 self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_DALLE, self.bot_command_dalle))
-                self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_BARD, self.bot_command_bard))
                 self._application.add_handler(
                     CaptionCommandHandler(BOT_COMMAND_BING_IMAGEGEN, self.bot_command_bing_imagegen)
                 )
@@ -1727,7 +1713,7 @@ class BotHandler:
         # Create buttons for module selection
         if request_type < 0:
             buttons = []
-            for i, name in [(0, "chatgpt"), (2, "edgegpt"), (3, "bard"), (5, "gemini")]:
+            for i, name in [(0, "chatgpt"), (2, "edgegpt"), (5, "gemini")]:
                 if self.config["modules"][name]:
                     buttons.append(
                         InlineKeyboardButton(
@@ -1764,7 +1750,6 @@ class BotHandler:
                     self.users_handler,
                     user,
                     self.chatgpt_module,
-                    self.bard_module,
                     self.edgegpt_module,
                     self.gemini_module,
                 ),
@@ -1943,7 +1928,7 @@ class BotHandler:
         # Suggest module
         else:
             buttons = []
-            for i, name in enumerate(["chatgpt", "dalle", "edgegpt", "bard", "bing_imagegen", "gemini"]):
+            for i, name in enumerate(["chatgpt", "dalle", "edgegpt", "bing_imagegen", "gemini"]):
                 if self.config["modules"][name]:
                     buttons.append(
                         InlineKeyboardButton(
@@ -2047,9 +2032,6 @@ class BotHandler:
     async def bot_command_dalle(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         await self.bot_command_or_message_request(RequestResponseContainer.REQUEST_TYPE_DALLE, update, context)
 
-    async def bot_command_bard(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await self.bot_command_or_message_request(RequestResponseContainer.REQUEST_TYPE_BARD, update, context)
-
     async def bot_command_bing_imagegen(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         await self.bot_command_or_message_request(RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN, update, context)
 
@@ -2063,7 +2045,7 @@ class BotHandler:
         self, request_type: int, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         """
-        /chatgpt, /edgegpt, /dalle, /bard, /bingigen or message request
+        /chatgpt, /edgegpt, /dalle, /bingigen or message request
         :param request_type: -1 for message, or RequestResponseContainer.REQUEST_TYPE_...
         :param update:
         :param context:
@@ -2079,8 +2061,6 @@ class BotHandler:
             logging.info(f"/edgegpt command from {user['user_name']} ({user['user_id']})")
         elif request_type == RequestResponseContainer.REQUEST_TYPE_DALLE:
             logging.info(f"/dalle command from {user['user_name']} ({user['user_id']})")
-        elif request_type == RequestResponseContainer.REQUEST_TYPE_BARD:
-            logging.info(f"/bard command from {user['user_name']} ({user['user_id']})")
         elif request_type == RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN:
             logging.info(f"/bingigen command from {user['user_name']} ({user['user_id']})")
         else:
