@@ -39,21 +39,23 @@ PROCESSING_STATE_NAMES = ["Waiting", "Starting", "Active", "Done", "Timed out", 
 
 
 class RequestResponseContainer:
-    def __init__(self,
-                 user: dict,
-                 reply_message_id: int,
-                 processing_state=PROCESSING_STATE_IN_QUEUE,
-                 message_id=-1,
-                 request="",
-                 response="",
-                 response_images=None,
-                 request_type=REQUEST_TYPE_CHATGPT,
-                 request_timestamp="",
-                 response_timestamp="",
-                 response_send_timestamp_last=0,
-                 reply_markup=None,
-                 pid=0,
-                 image_url=None) -> None:
+    def __init__(
+        self,
+        user: dict,
+        reply_message_id: int,
+        processing_state=PROCESSING_STATE_IN_QUEUE,
+        message_id=-1,
+        request="",
+        response="",
+        response_images=None,
+        request_type=REQUEST_TYPE_CHATGPT,
+        request_timestamp="",
+        response_timestamp="",
+        response_send_timestamp_last=0,
+        reply_markup=None,
+        pid=0,
+        image_url=None,
+    ) -> None:
         """
         Contains all info about request
         :param user: user data as dictionary from UsersHandler class
@@ -92,7 +94,7 @@ class RequestResponseContainer:
         else:
             self.response_images = response_images
 
-        self.processing_start_timestamp = 0.
+        self.processing_start_timestamp = 0.0
         self.error = False
 
         # Used by BotHandler to split large message into smaller ones

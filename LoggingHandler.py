@@ -68,17 +68,19 @@ class LoggingHandler:
             os.makedirs(LOGS_DIR)
 
         # Create logs formatter
-        log_formatter = logging.Formatter("[%(asctime)s] [%(process)-8d] [%(levelname)-8s] %(message)s",
-                                          datefmt="%Y-%m-%d %H:%M:%S")
+        log_formatter = logging.Formatter(
+            "[%(asctime)s] [%(process)-8d] [%(levelname)-8s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+        )
 
         # Setup logging into file
-        file_handler = logging.FileHandler(os.path.join(LOGS_DIR,
-                                                        datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + ".log"),
-                                           encoding="utf-8")
+        file_handler = logging.FileHandler(
+            os.path.join(LOGS_DIR, datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + ".log"), encoding="utf-8"
+        )
         file_handler.setFormatter(log_formatter)
 
         # Setup logging into console
         import sys
+
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(log_formatter)
 
@@ -95,8 +97,11 @@ class LoggingHandler:
                 record = self.queue.get()
 
                 # Ignore python-telegram-bot logs
-                if record is not None and record.message \
-                        and str(record.message).startswith(TELEGRAM_LOGS_IGNORE_PREFIX):
+                if (
+                    record is not None
+                    and record.message
+                    and str(record.message).startswith(TELEGRAM_LOGS_IGNORE_PREFIX)
+                ):
                     continue
 
                 # Send None to exit
@@ -114,5 +119,6 @@ class LoggingHandler:
             # Error! WHY???
             except Exception:
                 import sys, traceback
+
                 print("Logging error: ", file=sys.stderr)
                 traceback.print_exc(file=sys.stderr)

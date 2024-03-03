@@ -247,10 +247,7 @@ def build_markup(
         if request_response.message_id is None or request_response.message_id < 0:
             button_stop = InlineKeyboardButton(
                 messages["button_stop_generating"],
-                callback_data="{0}_stop_{1}".format(
-                    request_response.request_type,
-                    request_response.reply_message_id,
-                ),
+                callback_data=f"{request_response.request_type}_stop_{request_response.reply_message_id}",
             )
             return InlineKeyboardMarkup(build_menu([button_stop]))
         return None
@@ -258,7 +255,7 @@ def build_markup(
     # Generate regenerate button
     button_regenerate = InlineKeyboardButton(
         messages["button_regenerate"],
-        callback_data="{0}_regenerate_{1}".format(request_response.request_type, request_response.reply_message_id),
+        callback_data=f"{request_response.request_type}_regenerate_{request_response.reply_message_id}",
     )
     buttons = [button_regenerate]
 
@@ -268,10 +265,7 @@ def build_markup(
         if not request_response.error:
             button_continue = InlineKeyboardButton(
                 messages["button_continue"],
-                callback_data="{0}_continue_{1}".format(
-                    request_response.request_type,
-                    request_response.reply_message_id,
-                ),
+                callback_data=f"{request_response.request_type}_continue_{request_response.reply_message_id}",
             )
             buttons.append(button_continue)
 
@@ -282,7 +276,7 @@ def build_markup(
     ):
         button_clear = InlineKeyboardButton(
             messages["button_clear"],
-            callback_data="{0}_clear_{1}".format(request_response.request_type, request_response.reply_message_id),
+            callback_data=f"{request_response.request_type}_clear_{request_response.reply_message_id}",
         )
         buttons.append(button_clear)
 
@@ -290,14 +284,14 @@ def build_markup(
     if request_response.request_type == RequestResponseContainer.REQUEST_TYPE_EDGEGPT:
         button_style = InlineKeyboardButton(
             messages["button_style_change"],
-            callback_data="{0}_style_{1}".format(request_response.request_type, request_response.reply_message_id),
+            callback_data=f"{request_response.request_type}_style_{request_response.reply_message_id}",
         )
         buttons.append(button_style)
 
     # Add change module button for all modules
     button_module = InlineKeyboardButton(
         messages["button_module"],
-        callback_data="-1_module_{0}".format(request_response.reply_message_id),
+        callback_data=f"-1_module_{request_response.reply_message_id}",
     )
     buttons.append(button_module)
 
@@ -331,7 +325,7 @@ async def parse_img(img_source: str):
         if content_type == "image/svg+xml":
             raise Exception("SVG Image")
     except Exception as e:
-        logging.warning("Invalid image from {}: {}, You can ignore this message".format(img_source, str(e)))
+        logging.warning(f"Invalid image from {img_source}: {e}, You can ignore this message")
         return None
     return img_source
 
@@ -762,9 +756,7 @@ async def send_reply(
         return None
     except Exception as e:
         if markdown:
-            logging.warning(
-                "Error sending reply with markdown {0}: {1}\t You can ignore this message".format(markdown, str(e))
-            )
+            logging.warning(f"Error sending reply with markdown {markdown}: {e}\t You can ignore this message")
             return await send_reply(
                 api_key,
                 chat_id,
@@ -774,7 +766,7 @@ async def send_reply(
                 reply_markup,
                 edit_message_id,
             )
-        logging.error("Error sending reply with markdown {}!".format(markdown), exc_info=e)
+        logging.error(f"Error sending reply with markdown {markdown}!", exc_info=e)
         return edit_message_id
 
 
@@ -819,9 +811,7 @@ async def send_photo(
         )
 
     except Exception as e:
-        logging.warning(
-            "Error sending photo with markdown {0}: {1}\t You can ignore this message".format(markdown, str(e))
-        )
+        logging.warning(f"Error sending photo with markdown {markdown}: {e}\t You can ignore this message")
         if not markdown:
             return (None, f"\n\n{photo}\n\n")
         return await send_photo(
@@ -870,9 +860,7 @@ async def send_media_group(
             "",
         )
     except Exception as e:
-        logging.warning(
-            "Error sending media group with markdown {0}: {1}\t You can ignore this message".format(markdown, str(e))
-        )
+        logging.warning(f"Error sending media group with markdown {markdown}: {e}\t You can ignore this message")
         if not markdown:
             return (
                 None,
@@ -988,7 +976,7 @@ def clear_conversation_process(
 
         # Wrong module
         else:
-            raise Exception("Wrong module type: {}".format(request_type))
+            raise Exception(f"Wrong module type: {request_type}")
 
         # Return module name if everything is OK
         str_or_exception_queue.put(requested_module)
@@ -1046,7 +1034,7 @@ class BotHandler:
                         logging.info("Stopping current event loop before starting a new one")
                         loop.stop()
                 except Exception as e:
-                    logging.warning("Error stopping current event loop: {}".format(str(e)))
+                    logging.warning(f"Error stopping current event loop: {e}")
 
                 # Create new event loop
                 logging.info("Creating new event loop")
@@ -1129,7 +1117,7 @@ class BotHandler:
                     logging.error("Telegram bot error!", exc_info=e)
 
                 # Restart bot
-                logging.info("Restarting bot polling after {0} seconds".format(RESTART_ON_ERROR_DELAY))
+                logging.info(f"Restarting bot polling after {RESTART_ON_ERROR_DELAY} seconds")
                 try:
                     time.sleep(RESTART_ON_ERROR_DELAY)
 
@@ -1257,7 +1245,7 @@ class BotHandler:
                                 and container.reply_message_id == reply_message_id_last
                             ):
                                 # Change state to aborted
-                                logging.info("Requested container {} abort".format(container.id))
+                                logging.info(f"Requested container {container.id} abort")
                                 container.processing_state = RequestResponseContainer.PROCESSING_STATE_CANCEL
                                 QueueHandler.put_container_to_queue(
                                     self.queue_handler.request_response_queue,
@@ -1316,7 +1304,7 @@ class BotHandler:
         user = await self._user_check_get(update, context)
 
         # Log command
-        logging.info("/broadcast command from {0} ({1})".format(user["user_name"], user["user_id"]))
+        logging.info(f"/broadcast command from {user['user_name']} ({user['user_id']})")
 
         # Exit if banned
         if user["banned"]:
@@ -1361,16 +1349,14 @@ class BotHandler:
 
                     # Check
                     if message_id is not None and message_id != 0:
-                        logging.info(
-                            "Message sent to: {0} ({1})".format(broadcast_user["user_name"], broadcast_user["user_id"])
-                        )
+                        logging.info(f"Message sent to: {broadcast_user['user_name']} ({broadcast_user['user_id']})")
                         broadcast_ok_users.append(broadcast_user["user_name"])
 
                     # Wait some time
                     time.sleep(self.config["telegram"]["broadcast_delay_per_user_seconds"])
                 except Exception as e:
                     logging.warning(
-                        "Error sending message to {}!".format(broadcast_user["user_id"]),
+                        f"Error sending message to {broadcast_user['user_id']}!",
                         exc_info=e,
                     )
 
@@ -1399,9 +1385,7 @@ class BotHandler:
         user = await self._user_check_get(update, context)
 
         # Log command
-        logging.info(
-            "/{0} command from {1} ({2})".format("ban" if ban else "unban", user["user_name"], user["user_id"])
-        )
+        logging.info(f"/{'ban' if ban else 'unban'} command from {user['user_name']} ({user['user_id']})")
 
         # Exit if banned
         if user["banned"]:
@@ -1445,7 +1429,7 @@ class BotHandler:
             await _send_safe(
                 user["user_id"],
                 self.messages[lang]["ban_message_admin"].format(
-                    "{0} ({1})".format(banned_user["user_name"], banned_user["user_id"]),
+                    f"{banned_user['user_name']} ({banned_user['user_id']})",
                     reason,
                 ),
                 context,
@@ -1454,7 +1438,7 @@ class BotHandler:
             await _send_safe(
                 user["user_id"],
                 self.messages[lang]["unban_message_admin"].format(
-                    "{0} ({1})".format(banned_user["user_name"], banned_user["user_id"])
+                    f"{banned_user['user_name']} ({banned_user['user_id']})"
                 ),
                 context,
             )
@@ -1470,7 +1454,7 @@ class BotHandler:
         user = await self._user_check_get(update, context)
 
         # Log command
-        logging.info("/users command from {0} ({1})".format(user["user_name"], user["user_id"]))
+        logging.info(f"/users command from {user['user_name']} ({user['user_id']})")
 
         # Exit if banned
         if user["banned"]:
@@ -1542,7 +1526,7 @@ class BotHandler:
         user = await self._user_check_get(update, context)
 
         # Log command
-        logging.info("/restart command from {0} ({1})".format(user["user_name"], user["user_id"]))
+        logging.info(f"/restart command from {user['user_name']} ({user['user_id']})")
 
         # Exit if banned
         if user["banned"]:
@@ -1565,7 +1549,7 @@ class BotHandler:
         self.proxy_automation.stop_automation_loop()
 
         # Reload config
-        logging.info("Reloading config from {} file".format(self.config_file))
+        logging.info(f"Reloading config from {self.config_file} file")
         config_new = load_json(self.config_file)
         for key, value in config_new.items():
             self.config[key] = value
@@ -1634,7 +1618,7 @@ class BotHandler:
         user = await self._user_check_get(update, context)
 
         # Log command
-        logging.info("/queue command from {0} ({1})".format(user["user_name"], user["user_id"]))
+        logging.info(f"/queue command from {user['user_name']} ({user['user_id']})")
 
         # Exit if banned
         if user["banned"]:
@@ -1663,14 +1647,9 @@ class BotHandler:
             for container in queue_list:
                 text_to = RequestResponseContainer.REQUEST_NAMES[container.request_type]
                 request_status = RequestResponseContainer.PROCESSING_STATE_NAMES[container.processing_state]
-                message_ = "{0} ({1}). {2} ({3}) to {4} ({5}): {6}\n".format(
-                    container_counter,
-                    container.id,
-                    container.user["user_name"],
-                    container.user["user_id"],
-                    text_to,
-                    request_status,
-                    container.request,
+                message_ = (
+                    f"{container_counter} ({container.id}). {container.user['user_name']} "
+                    f"({container.user['user_id']}) to {text_to} ({request_status}): {container.request}\n"
                 )
                 message += message_
                 container_counter += 1
@@ -1694,7 +1673,7 @@ class BotHandler:
         user = await self._user_check_get(update, context)
 
         # Log command
-        logging.info("/chatid command from {0} ({1})".format(user["user_name"], user["user_id"]))
+        logging.info(f"/chatid command from {user['user_name']} ({user['user_id']})")
 
         # Send chat id and not exit if banned
         await _send_safe(user["user_id"], str(user["user_id"]), context)
@@ -1710,7 +1689,7 @@ class BotHandler:
         user = await self._user_check_get(update, context)
 
         # Log command
-        logging.info("/clear command from {0} ({1})".format(user["user_name"], user["user_id"]))
+        logging.info(f"/clear command from {user['user_name']} ({user['user_id']})")
 
         # Exit if banned
         if user["banned"]:
@@ -1807,7 +1786,7 @@ class BotHandler:
                     str_or_exception = str_or_exception_queue.get()
 
                     # Seems OK
-                    if type(str_or_exception) == str:
+                    if isinstance(str_or_exception, str):
                         await _send_safe(
                             user["user_id"],
                             self.messages[lang]["chat_cleared"].format(str_or_exception),
@@ -1835,7 +1814,7 @@ class BotHandler:
         user = await self._user_check_get(update, context)
 
         # Log command
-        logging.info("/style command from {0} ({1})".format(user["user_name"], user["user_id"]))
+        logging.info(f"/style command from {user['user_name']} ({user['user_id']})")
 
         # Exit if banned
         if user["banned"]:
@@ -1941,7 +1920,7 @@ class BotHandler:
         user = await self._user_check_get(update, context)
 
         # Log command
-        logging.info("/module command from {0} ({1})".format(user["user_name"], user["user_id"]))
+        logging.info(f"/module command from {user['user_name']} ({user['user_id']})")
 
         # Exit if banned
         if user["banned"]:
@@ -2001,7 +1980,7 @@ class BotHandler:
         user = await self._user_check_get(update, context)
 
         # Log command
-        logging.info("/lang command from {0} ({1})".format(user["user_name"], user["user_id"]))
+        logging.info("/lang command from {user['user_name']} ({user['user_id']})")
 
         # Exit if banned
         if user["banned"]:
@@ -2099,17 +2078,17 @@ class BotHandler:
 
         # Log command or message
         if request_type == RequestResponseContainer.REQUEST_TYPE_CHATGPT:
-            logging.info("/chatgpt command from {0} ({1})".format(user["user_name"], user["user_id"]))
+            logging.info(f"/chatgpt command from {user['user_name']} ({user['user_id']})")
         elif request_type == RequestResponseContainer.REQUEST_TYPE_EDGEGPT:
-            logging.info("/edgegpt command from {0} ({1})".format(user["user_name"], user["user_id"]))
+            logging.info(f"/edgegpt command from {user['user_name']} ({user['user_id']})")
         elif request_type == RequestResponseContainer.REQUEST_TYPE_DALLE:
-            logging.info("/dalle command from {0} ({1})".format(user["user_name"], user["user_id"]))
+            logging.info(f"/dalle command from {user['user_name']} ({user['user_id']})")
         elif request_type == RequestResponseContainer.REQUEST_TYPE_BARD:
-            logging.info("/bard command from {0} ({1})".format(user["user_name"], user["user_id"]))
+            logging.info(f"/bard command from {user['user_name']} ({user['user_id']})")
         elif request_type == RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN:
-            logging.info("/bingigen command from {0} ({1})".format(user["user_name"], user["user_id"]))
+            logging.info(f"/bingigen command from {user['user_name']} ({user['user_id']})")
         else:
-            logging.info("Text message from {0} ({1})".format(user["user_name"], user["user_id"]))
+            logging.info(f"Text message from {user['user_name']} ({user['user_id']})")
 
         # Exit if banned
         if user["banned"]:
@@ -2206,9 +2185,7 @@ class BotHandler:
 
         # Add request to the queue
         logging.info(
-            "Adding new request with type {0} from {1} ({2}) to the queue".format(
-                request_type, user["user_name"], user["user_id"]
-            )
+            f"Adding new request with type {request_type} from {user['user_name']} ({user['user_id']}) to the queue"
         )
         QueueHandler.put_container_to_queue(
             self.queue_handler.request_response_queue,
@@ -2253,7 +2230,7 @@ class BotHandler:
         user = await self._user_check_get(update, context)
 
         # Log command
-        logging.info("/help command from {0} ({1})".format(user["user_name"], user["user_id"]))
+        logging.info(f"/help command from {user['user_name']} ({user['user_id']})")
 
         # Exit if banned
         if user["banned"]:
@@ -2290,7 +2267,7 @@ class BotHandler:
         user = await self._user_check_get(update, context)
 
         # Log command
-        logging.info("/start command from {0} ({1})".format(user["user_name"], user["user_id"]))
+        logging.info(f"/start command from {user['user_name']} ({user['user_id']})")
 
         # Exit if banned or user not selected the language
         if user["banned"] or UsersHandler.get_key_or_none(user, "lang") is None:

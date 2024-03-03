@@ -57,7 +57,7 @@ class BardModule:
                 proxy = self.config["bard"]["proxy"]
 
             # Log
-            logging.info("Initializing Bard module with proxy {}".format(proxy))
+            logging.info(f"Initializing Bard module with proxy {proxy}")
 
             # Set enabled status
             self._enabled = self.config["modules"]["bard"]
@@ -69,21 +69,23 @@ class BardModule:
             secure_1psid = None
             session = requests.Session()
             session_cookies = load_json(self.config["bard"]["cookies_file"], logging_enabled=True)
-            for i in range(len(session_cookies)):
-                session.cookies.set(session_cookies[i]["name"],
-                                    session_cookies[i]["value"],
-                                    domain=session_cookies[i]["domain"],
-                                    path=session_cookies[i]["path"])
-                if secure_1psid is None and session_cookies[i]["name"] == "__Secure-1PSID":
-                    secure_1psid = session_cookies[i]["value"]
+            for session_cookie in session_cookies:
+                session.cookies.set(
+                    session_cookie["name"],
+                    session_cookie["value"],
+                    domain=session_cookie["domain"],
+                    path=session_cookie["path"],
+                )
+                if secure_1psid is None and session_cookie["name"] == "__Secure-1PSID":
+                    secure_1psid = session_cookie["value"]
 
             # Set headers
             session.headers = {
                 "Host": "bard.google.com",
                 "X-Same-Domain": "1",
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) "
-                              "AppleWebKit/537.36 (KHTML, like Gecko) "
-                              "Chrome/91.4472.114 Safari/537.36",
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/91.4472.114 Safari/537.36",
                 "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
                 "Origin": "https://bard.google.com",
                 "Referer": "https://bard.google.com/",
@@ -116,8 +118,9 @@ class BardModule:
         if not self._enabled or self._chatbot is None:
             logging.error("Bard module not initialized!")
             lang = UsersHandler.get_key_or_none(request_response.user, "lang", 0)
-            request_response.response = self.messages[lang]["response_error"].replace("\\n", "\n") \
-                .format("Bard module not initialized!")
+            request_response.response = (
+                self.messages[lang]["response_error"].replace("\\n", "\n").format("Bard module not initialized!")
+            )
             request_response.error = True
             self.processing_flag.value = False
             return
@@ -133,9 +136,9 @@ class BardModule:
 
             # Try to load conversation
             if conversation_id and response_id and choice_id:
-                logging.info("Using conversation_id: {}, response_id: {} and choice_id: {}".format(conversation_id,
-                                                                                                   response_id,
-                                                                                                   choice_id))
+                logging.info(
+                    f"Using conversation_id: {conversation_id}, response_id: {response_id} and choice_id: {choice_id}"
+                )
                 self._chatbot.conversation_id = conversation_id
                 self._chatbot.response_id = response_id
                 self._chatbot.choice_id = choice_id
@@ -155,15 +158,19 @@ class BardModule:
                 raise Exception("Wrong Bard response!")
 
             # OK?
-            logging.info("Response successfully processed for user {0} ({1})"
-                         .format(request_response.user["user_name"], request_response.user["user_id"]))
+            logging.info(
+                f"Response successfully processed for user {request_response.user['user_name']} "
+                f"({request_response.user['user_id']})"
+            )
             request_response.response = bard_response["content"]
             if "images" in bard_response and len(bard_response["images"]) > 0:
                 request_response.response_images = bard_response["images"]
 
             # Save conversation
-            logging.info("Saving conversation_id as {} and response_id as {} and choice_id as {}".
-                         format(self._chatbot.conversation_id, self._chatbot.response_id, self._chatbot.choice_id))
+            logging.info(
+                f"Saving conversation_id as {self._chatbot.conversation_id} and response_id as "
+                f"{self._chatbot.response_id} and choice_id as {self._chatbot.choice_id}"
+            )
             request_response.user["bard_conversation_id"] = self._chatbot.conversation_id
             request_response.user["bard_response_id"] = self._chatbot.response_id
             request_response.user["bard_choice_id"] = self._chatbot.choice_id
@@ -189,10 +196,12 @@ class BardModule:
         try:
             if self._chatbot and self._chatbot.session and self._chatbot.session.cookies:
                 session_cookies = load_json(self.config["bard"]["cookies_file"], logging_enabled=True)
-                for i in range(len(session_cookies)):
-                    session_cookies[i]["value"] = self._chatbot.session.cookies.get(session_cookies[i]["name"],
-                                                                                    domain=session_cookies[i]["domain"],
-                                                                                    path=session_cookies[i]["path"])
+                for session_cookie in session_cookies:
+                    session_cookie["value"] = self._chatbot.session.cookies.get(
+                        session_cookie["name"],
+                        domain=session_cookie["domain"],
+                        path=session_cookie["path"],
+                    )
                 save_json(self.config["bard"]["cookies_file"], session_cookies, True)
         except Exception as e:
             logging.error("Error saving cookies!", exc_info=e)
@@ -216,10 +225,11 @@ class BardModule:
         if bard_conversation_id:
             # Delete file
             try:
-                conversation_file = os.path.join(self.config["files"]["conversations_dir"],
-                                                 bard_conversation_id + ".json")
+                conversation_file = os.path.join(
+                    self.config["files"]["conversations_dir"], bard_conversation_id + ".json"
+                )
                 if os.path.exists(conversation_file):
-                    logging.info("Removing {}".format(conversation_file))
+                    logging.info(f"Removing {conversation_file}")
                     os.remove(conversation_file)
             except Exception as e:
                 logging.error("Error removing conversation file!", exc_info=e)

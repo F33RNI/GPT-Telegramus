@@ -27,7 +27,7 @@ from telegram.ext._utils.types import FilterDataDict
 
 class CaptionCommandHandler(CommandHandler):
     def check_update(
-            self, update: object
+        self, update: object
     ) -> Optional[Union[bool, Tuple[List[str], Optional[Union[bool, FilterDataDict]]]]]:
         """Determines whether an update should be passed to this handler's :attr:`callback`.
 
@@ -44,20 +44,20 @@ class CaptionCommandHandler(CommandHandler):
             entities = message.entities or message.caption_entities
 
             if (
-                    entities
-                    and entities[0].type == MessageEntity.BOT_COMMAND
-                    and entities[0].offset == 0
-                    and text
-                    and message.get_bot()
+                entities
+                and entities[0].type == MessageEntity.BOT_COMMAND
+                and entities[0].offset == 0
+                and text
+                and message.get_bot()
             ):
-                command = text[1: entities[0].length]
+                command = text[1 : entities[0].length]
                 args = text.split()[1:]
                 command_parts = command.split("@")
                 command_parts.append(message.get_bot().username)
 
                 if not (
-                        command_parts[0].lower() in self.commands
-                        and command_parts[1].lower() == message.get_bot().username.lower()
+                    command_parts[0].lower() in self.commands
+                    and command_parts[1].lower() == message.get_bot().username.lower()
                 ):
                     return None
 

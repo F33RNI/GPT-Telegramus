@@ -41,11 +41,14 @@ import RequestResponseContainer
 import UsersHandler
 
 # After how long (seconds) clear self.prevent_shutdown_flag
-CLEAR_PREVENT_SHUTDOWN_FLAG_AFTER = 5.
+CLEAR_PREVENT_SHUTDOWN_FLAG_AFTER = 5.0
 
 
-def get_container_from_queue(request_response_queue: multiprocessing.Queue, lock: multiprocessing.Lock,
-                             container_id: int) -> RequestResponseContainer.RequestResponseContainer | None:
+def get_container_from_queue(
+    request_response_queue: multiprocessing.Queue,
+    lock: multiprocessing.Lock,
+    container_id: int,
+) -> RequestResponseContainer.RequestResponseContainer | None:
     """
     Retrieves request_response_container from queue by ID without removing it
     :param request_response_queue: multiprocessing Queue to get container from
@@ -77,9 +80,11 @@ def get_container_from_queue(request_response_queue: multiprocessing.Queue, lock
         return get_container_from_queue_()
 
 
-def put_container_to_queue(request_response_queue: multiprocessing.Queue,
-                           lock: multiprocessing.Lock,
-                           request_response_container: RequestResponseContainer.RequestResponseContainer) -> int:
+def put_container_to_queue(
+    request_response_queue: multiprocessing.Queue,
+    lock: multiprocessing.Lock,
+    request_response_container: RequestResponseContainer.RequestResponseContainer,
+) -> int:
     """
     Generates unique container ID (if needed) and puts container to the queue (deletes previous one if exists)
     :param request_response_queue: multiprocessing Queue into which put the container
@@ -129,9 +134,9 @@ def put_container_to_queue(request_response_queue: multiprocessing.Queue,
         return put_container_to_queue_()
 
 
-def remove_container_from_queue(request_response_queue: multiprocessing.Queue,
-                                lock: multiprocessing.Lock,
-                                container_id: int) -> bool:
+def remove_container_from_queue(
+    request_response_queue: multiprocessing.Queue, lock: multiprocessing.Lock, container_id: int
+) -> bool:
     """
     Tries to remove container by specific ID from the queue
     :param request_response_queue: multiprocessing Queue to remove container from
@@ -193,10 +198,12 @@ def queue_to_list(request_response_queue: multiprocessing.Queue) -> list:
     return queue_list
 
 
-def _user_module_cooldown(config: dict,
-                          messages: List[Dict],
-                          request: RequestResponseContainer,
-                          time_left_seconds: int) -> None:
+def _user_module_cooldown(
+    config: dict,
+    messages: List[Dict],
+    request: RequestResponseContainer,
+    time_left_seconds: int,
+) -> None:
     """
     Sends cooldown message to the user
     :param config:
@@ -233,23 +240,32 @@ def _user_module_cooldown(config: dict,
         time_left_str = "0" + messages[lang]["seconds"]
 
     # Generate cooldown message
-    request.response = messages[lang]["user_cooldown_error"].replace("\\n", "\n") \
-        .format(time_left_str,
-                messages[lang]["modules"][request.request_type])
+    request.response = (
+        messages[lang]["user_cooldown_error"]
+        .replace("\\n", "\n")
+        .format(time_left_str, messages[lang]["modules"][request.request_type])
+    )
 
     # Send this message
     BotHandler.async_helper(BotHandler.send_message_async(config, messages, request, end=True))
 
 
-def _request_processor(config: dict,
-                       messages: List[Dict],
-                       logging_queue: multiprocessing.Queue,
-                       users_handler: UsersHandler,
-                       request_response_queue: multiprocessing.Queue,
-                       lock: multiprocessing.Lock,
-                       request_id: int,
-                       proxy: str,
-                       chatgpt_module, dalle_module, bard_module, edgegpt_module, bing_image_gen_module, gemini_module) -> None:
+def _request_processor(
+    config: dict,
+    messages: List[Dict],
+    logging_queue: multiprocessing.Queue,
+    users_handler: UsersHandler,
+    request_response_queue: multiprocessing.Queue,
+    lock: multiprocessing.Lock,
+    request_id: int,
+    proxy: str,
+    chatgpt_module,
+    dalle_module,
+    bard_module,
+    edgegpt_module,
+    bing_image_gen_module,
+    gemini_module,
+) -> None:
     """
     Processes request to any module
     This method should be called from multiprocessing as process
@@ -294,9 +310,10 @@ def _request_processor(config: dict,
             time_passed_seconds = int(time.time()) - chatgpt_user_last_request_timestamp
             if time_passed_seconds < config["chatgpt"]["user_cooldown_seconds"]:
                 request_.error = True
-                logging.warning("User {0} sends ChatGPT requests too quickly!".format(request_.user["user_id"]))
-                _user_module_cooldown(config, messages, request_,
-                                      config["chatgpt"]["user_cooldown_seconds"] - time_passed_seconds)
+                logging.warning(f"User {request_.user['user_id']} sends ChatGPT requests too quickly!")
+                _user_module_cooldown(
+                    config, messages, request_, config["chatgpt"]["user_cooldown_seconds"] - time_passed_seconds
+                )
             else:
                 request_.user["timestamp_chatgpt"] = int(time.time())
                 users_handler.save_user(request_.user)
@@ -313,9 +330,10 @@ def _request_processor(config: dict,
             time_passed_seconds = int(time.time()) - dalle_user_last_request_timestamp
             if time_passed_seconds < config["dalle"]["user_cooldown_seconds"]:
                 request_.error = True
-                logging.warning("User {0} sends DALL-E requests too quickly!".format(request_.user["user_id"]))
-                _user_module_cooldown(config, messages, request_,
-                                      config["dalle"]["user_cooldown_seconds"] - time_passed_seconds)
+                logging.warning(f"User {request_.user['user_id']} sends DALL-E requests too quickly!")
+                _user_module_cooldown(
+                    config, messages, request_, config["dalle"]["user_cooldown_seconds"] - time_passed_seconds
+                )
             else:
                 request_.user["timestamp_dalle"] = int(time.time())
                 users_handler.save_user(request_.user)
@@ -331,9 +349,10 @@ def _request_processor(config: dict,
             time_passed_seconds = int(time.time()) - edgegpt_user_last_request_timestamp
             if time_passed_seconds < config["edgegpt"]["user_cooldown_seconds"]:
                 request_.error = True
-                logging.warning("User {0} sends EdgeGPT requests too quickly!".format(request_.user["user_id"]))
-                _user_module_cooldown(config, messages, request_,
-                                      config["edgegpt"]["user_cooldown_seconds"] - time_passed_seconds)
+                logging.warning(f"User {request_.user['user_id']} sends EdgeGPT requests too quickly!")
+                _user_module_cooldown(
+                    config, messages, request_, config["edgegpt"]["user_cooldown_seconds"] - time_passed_seconds
+                )
             else:
                 request_.user["timestamp_edgegpt"] = int(time.time())
                 users_handler.save_user(request_.user)
@@ -350,9 +369,10 @@ def _request_processor(config: dict,
             time_passed_seconds = int(time.time()) - bard_user_last_request_timestamp
             if time_passed_seconds < config["bard"]["user_cooldown_seconds"]:
                 request_.error = True
-                logging.warning("User {0} sends Bard requests too quickly!".format(request_.user["user_id"]))
-                _user_module_cooldown(config, messages, request_,
-                                      config["bard"]["user_cooldown_seconds"] - time_passed_seconds)
+                logging.warning(f"User {request_.user['user_id']} sends Bard requests too quickly!")
+                _user_module_cooldown(
+                    config, messages, request_, config["bard"]["user_cooldown_seconds"] - time_passed_seconds
+                )
             else:
                 request_.user["timestamp_bard"] = int(time.time())
                 users_handler.save_user(request_.user)
@@ -365,14 +385,16 @@ def _request_processor(config: dict,
 
         # Bing ImageGen
         elif request_.request_type == RequestResponseContainer.REQUEST_TYPE_BING_IMAGEGEN:
-            bing_imagegen_user_last_request_timestamp \
-                = UsersHandler.get_key_or_none(request_.user, "timestamp_bing_imagegen", 0)
+            bing_imagegen_user_last_request_timestamp = UsersHandler.get_key_or_none(
+                request_.user, "timestamp_bing_imagegen", 0
+            )
             time_passed_seconds = int(time.time()) - bing_imagegen_user_last_request_timestamp
             if time_passed_seconds < config["bing_imagegen"]["user_cooldown_seconds"]:
                 request_.error = True
-                logging.warning("User {0} sends BingImageGen requests too quickly!".format(request_.user["user_id"]))
-                _user_module_cooldown(config, messages, request_,
-                                      config["bing_imagegen"]["user_cooldown_seconds"] - time_passed_seconds)
+                logging.warning(f"User {request_.user['user_id']} sends BingImageGen requests too quickly!")
+                _user_module_cooldown(
+                    config, messages, request_, config["bing_imagegen"]["user_cooldown_seconds"] - time_passed_seconds
+                )
             else:
                 request_.user["timestamp_bing_imagegen"] = int(time.time())
                 users_handler.save_user(request_.user)
@@ -384,14 +406,14 @@ def _request_processor(config: dict,
 
         # Gemini
         elif request_.request_type == RequestResponseContainer.REQUEST_TYPE_GEMINI:
-            gemini_user_last_request_timestamp \
-                = UsersHandler.get_key_or_none(request_.user, "timestamp_gemini", 0)
+            gemini_user_last_request_timestamp = UsersHandler.get_key_or_none(request_.user, "timestamp_gemini", 0)
             time_passed_seconds = int(time.time()) - gemini_user_last_request_timestamp
             if time_passed_seconds < config["gemini"]["user_cooldown_seconds"]:
                 request_.error = True
-                logging.warning("User {0} sends Gemini requests too quickly!".format(request_.user["user_id"]))
-                _user_module_cooldown(config, messages, request_,
-                                      config["gemini"]["user_cooldown_seconds"] - time_passed_seconds)
+                logging.warning(f"User {request_.user['user_id']} sends Gemini requests too quickly!")
+                _user_module_cooldown(
+                    config, messages, request_, config["gemini"]["user_cooldown_seconds"] - time_passed_seconds
+                )
             else:
                 request_.user["timestamp_gemini"] = int(time.time())
                 users_handler.save_user(request_.user)
@@ -403,7 +425,7 @@ def _request_processor(config: dict,
 
         # Wrong API type
         else:
-            raise Exception("Wrong request type: {0}".format(request_.request_type))
+            raise Exception(f"Wrong request type: {request_.request_typ}")
 
     # Error during processing request
     except Exception as e:
@@ -421,12 +443,20 @@ def _request_processor(config: dict,
 
 
 class QueueHandler:
-    def __init__(self, config: dict,
-                 messages: List[Dict],
-                 logging_queue: multiprocessing.Queue,
-                 users_handler: UsersHandler,
-                 proxy_automation: ProxyAutomation.ProxyAutomation,
-                 chatgpt_module, dalle_module, bard_module, edgegpt_module, bing_image_gen_module, gemini_module):
+    def __init__(
+        self,
+        config: dict,
+        messages: List[Dict],
+        logging_queue: multiprocessing.Queue,
+        users_handler: UsersHandler,
+        proxy_automation: ProxyAutomation.ProxyAutomation,
+        chatgpt_module,
+        dalle_module,
+        bard_module,
+        edgegpt_module,
+        bing_image_gen_module,
+        gemini_module,
+    ):
         self.config = config
         self.messages = messages
         self.logging_queue = logging_queue
@@ -460,7 +490,7 @@ class QueueHandler:
         """
         self._processing_loop_thread = threading.Thread(target=self._queue_processing_loop)
         self._processing_loop_thread.start()
-        logging.info("queue_processing_loop thread: {0}".format(self._processing_loop_thread.name))
+        logging.info(f"queue_processing_loop thread: {self._processing_loop_thread.name}")
 
     def stop_processing_loop(self) -> None:
         """
@@ -482,9 +512,11 @@ class QueueHandler:
         while not self._exit_flag:
             try:
                 # Clear prevent shutdown flag
-                if self._prevent_shutdown_flag_clear_timer > 0 and \
-                        time.time() - self._prevent_shutdown_flag_clear_timer > CLEAR_PREVENT_SHUTDOWN_FLAG_AFTER and \
-                        self.prevent_shutdown_flag:
+                if (
+                    self._prevent_shutdown_flag_clear_timer > 0
+                    and time.time() - self._prevent_shutdown_flag_clear_timer > CLEAR_PREVENT_SHUTDOWN_FLAG_AFTER
+                    and self.prevent_shutdown_flag
+                ):
                     logging.info("Clearing prevent_shutdown_flag")
                     self.prevent_shutdown_flag = False
                     self._prevent_shutdown_flag_clear_timer = 0
@@ -507,8 +539,11 @@ class QueueHandler:
                         # Check if requested module is busy
                         module_busy = False
                         for request__ in queue_list:
-                            if request__.request_type == request_.request_type \
-                                    and request__.pid > 0 and psutil.pid_exists(request__.pid):
+                            if (
+                                request__.request_type == request_.request_type
+                                and request__.pid > 0
+                                and psutil.pid_exists(request__.pid)
+                            ):
                                 module_busy = True
                                 break
 
@@ -517,30 +552,35 @@ class QueueHandler:
                             # Set initializing state
                             request_.processing_state = RequestResponseContainer.PROCESSING_STATE_INITIALIZING
 
-                            # Set current time (for timout control)
+                            # Set current time (for timeout control)
                             request_.processing_start_timestamp = time.time()
 
                             # Log request
-                            logging.info("New request from user: {0} ({1})".format(request_.user["user_name"],
-                                                                                   request_.user["user_id"]))
+                            logging.info(
+                                f"New request from user: {request_.user['user_name']} ({request_.user['user_id']})"
+                            )
                             self._collect_data(request_, log_request=True)
 
                             # Create process for queue object
-                            request_process = multiprocessing.Process(target=_request_processor,
-                                                                      args=(self.config,
-                                                                            self.messages,
-                                                                            self.logging_queue,
-                                                                            self.users_handler,
-                                                                            self.request_response_queue,
-                                                                            self.lock,
-                                                                            request_.id,
-                                                                            self.proxy_automation.working_proxy,
-                                                                            self.chatgpt_module,
-                                                                            self.dalle_module,
-                                                                            self.bard_module,
-                                                                            self.edgegpt_module,
-                                                                            self.bing_image_gen_module,
-                                                                            self.gemini_module))
+                            request_process = multiprocessing.Process(
+                                target=_request_processor,
+                                args=(
+                                    self.config,
+                                    self.messages,
+                                    self.logging_queue,
+                                    self.users_handler,
+                                    self.request_response_queue,
+                                    self.lock,
+                                    request_.id,
+                                    self.proxy_automation.working_proxy,
+                                    self.chatgpt_module,
+                                    self.dalle_module,
+                                    self.bard_module,
+                                    self.edgegpt_module,
+                                    self.bing_image_gen_module,
+                                    self.gemini_module,
+                                ),
+                            )
 
                             # Start process
                             request_process.start()
@@ -571,23 +611,23 @@ class QueueHandler:
                         # Check timeout
                         if time.time() - request_.processing_start_timestamp > timeout_seconds:
                             # Log warning
-                            logging.warning("Request from user {0} to {1} timed out!"
-                                            .format(request_.user["user_id"],
-                                                    RequestResponseContainer.REQUEST_NAMES[request_.request_type]))
+                            logging.warning(
+                                f"Request from user {request_.user['user_id']} "
+                                f"to {RequestResponseContainer.REQUEST_NAMES[request_.request_type]} timed out!"
+                            )
 
                             # Set timeout status and message
                             request_.processing_state = RequestResponseContainer.PROCESSING_STATE_TIMED_OUT
-                            request_.response = "Timed out (>{} s)".format(timeout_seconds)
+                            request_.response = f"Timed out (>{timeout_seconds} s)"
                             request_.error = True
 
                             # Update
                             put_container_to_queue(self.request_response_queue, None, request_)
 
                             # Send timeout message
-                            BotHandler.async_helper(BotHandler.send_message_async(self.config,
-                                                                                  self.messages,
-                                                                                  request_,
-                                                                                  end=True))
+                            BotHandler.async_helper(
+                                BotHandler.send_message_async(self.config, self.messages, request_, end=True)
+                            )
 
                     # Cancel generating
                     if request_.processing_state == RequestResponseContainer.PROCESSING_STATE_CANCEL:
@@ -613,12 +653,14 @@ class QueueHandler:
                         put_container_to_queue(self.request_response_queue, None, request_)
 
                     # Done processing / Timed out / abort requested -> log data and finally remove it
-                    if request_.processing_state == RequestResponseContainer.PROCESSING_STATE_DONE \
-                            or request_.processing_state == RequestResponseContainer.PROCESSING_STATE_TIMED_OUT \
-                            or request_.processing_state == RequestResponseContainer.PROCESSING_STATE_ABORT:
+                    if (
+                        request_.processing_state == RequestResponseContainer.PROCESSING_STATE_DONE
+                        or request_.processing_state == RequestResponseContainer.PROCESSING_STATE_TIMED_OUT
+                        or request_.processing_state == RequestResponseContainer.PROCESSING_STATE_ABORT
+                    ):
                         # Kill process if it is active
                         if request_.pid > 0 and psutil.pid_exists(request_.pid):
-                            logging.info("Trying to kill process with PID {}".format(request_.pid))
+                            logging.info(f"Trying to kill process with PID {request_.pid}")
                             try:
                                 logging.info("Setting prevent_shutdown_flag")
                                 self.prevent_shutdown_flag = True
@@ -628,22 +670,24 @@ class QueueHandler:
                                 process.kill()
                                 process.wait(timeout=5)
                             except Exception as e:
-                                logging.error("Error killing process with PID {}".format(request_.pid), exc_info=e)
-                            logging.info("Killed? {}".format(not psutil.pid_exists(request_.pid)))
+                                logging.error(f"Error killing process with PID {request_.pid}", exc_info=e)
+                            logging.info(f"Killed? {not psutil.pid_exists(request_.pid)}")
 
                         # Set response timestamp (for data collecting)
                         response_timestamp = ""
                         if self.config["data_collecting"]["enabled"]:
-                            response_timestamp = datetime.datetime.now() \
-                                .strftime(self.config["data_collecting"]["timestamp_format"])
+                            response_timestamp = datetime.datetime.now().strftime(
+                                self.config["data_collecting"]["timestamp_format"]
+                            )
                         request_.response_timestamp = response_timestamp
 
                         # Log response
                         self._collect_data(request_, log_request=False)
 
                         # Remove from queue
-                        logging.info("Container with id {0} (PID {1}) was removed from the queue"
-                                     .format(request_.id, request_.pid))
+                        logging.info(
+                            f"Container with id {request_.id} (PID {request_.pid}) was removed from the queue"
+                        )
                         remove_container_from_queue(self.request_response_queue, None, request_.id)
 
                         # Collect garbage
@@ -665,14 +709,14 @@ class QueueHandler:
                     queue_list = queue_to_list(self.request_response_queue)
                     for container in queue_list:
                         if container.pid > 0 and psutil.pid_exists(container.pid):
-                            logging.info("Trying to kill process with PID {}".format(container.pid))
+                            logging.info(f"Trying to kill process with PID {container.pid}")
                             try:
                                 process = psutil.Process(container.pid)
                                 process.kill()
                                 process.wait(timeout=5)
                             except Exception as e:
-                                logging.error("Error killing process with PID {}".format(container.pid), exc_info=e)
-                            logging.info("Killed? {}".format(not psutil.pid_exists(container.pid)))
+                                logging.error(f"Error killing process with PID {container.pid}", exc_info=e)
+                            logging.info(f"Killed? {not psutil.pid_exists(container.pid)}")
 
                         remove_container_from_queue(self.request_response_queue, None, container.id)
 
@@ -705,11 +749,14 @@ class QueueHandler:
             if not os.path.exists(self.config["files"]["data_collecting_dir"]):
                 os.makedirs(self.config["files"]["data_collecting_dir"])
 
-            file_timestamp = datetime.datetime.now() \
-                .strftime(self.config["data_collecting"]["filename_timestamp_format"])
-            self._log_filename = os.path.join(self.config["files"]["data_collecting_dir"],
-                                              file_timestamp + self.config["data_collecting"]["filename_extension"])
-            logging.info("New file for data collecting: {0}".format(self._log_filename))
+            file_timestamp = datetime.datetime.now().strftime(
+                self.config["data_collecting"]["filename_timestamp_format"]
+            )
+            self._log_filename = os.path.join(
+                self.config["files"]["data_collecting_dir"],
+                file_timestamp + self.config["data_collecting"]["filename_extension"],
+            )
+            logging.info(f"New file for data collecting: {self._log_filename}")
 
         # Open log file for appending
         log_file = open(self._log_filename, "a", encoding="utf8")
@@ -717,79 +764,108 @@ class QueueHandler:
         try:
             # Log request
             if log_request:
-                request_str_to_format = self.config["data_collecting"]["request_format"].replace("\\n", "\n") \
-                    .replace("\\t", "\t").replace("\\r", "\r")
+                request_str_to_format = (
+                    self.config["data_collecting"]["request_format"]
+                    .replace("\\n", "\n")
+                    .replace("\\t", "\t")
+                    .replace("\\r", "\r")
+                )
 
                 # Log image request
                 try:
                     if request_response.image_url:
                         logging.info("Downloading user image")
-                        image_request = base64.b64encode(requests.get(request_response.image_url,
-                                                                      timeout=120).content).decode("utf-8")
-                        log_file.write(request_str_to_format.format(request_response.request_timestamp,
-                                                                    request_response.id,
-                                                                    request_response.user["user_name"],
-                                                                    request_response.user["user_id"],
-                                                                    RequestResponseContainer
-                                                                    .REQUEST_NAMES[request_response.request_type],
-                                                                    image_request))
+                        image_request = base64.b64encode(
+                            requests.get(request_response.image_url, timeout=120).content
+                        ).decode("utf-8")
+                        log_file.write(
+                            request_str_to_format.format(
+                                request_response.request_timestamp,
+                                request_response.id,
+                                request_response.user["user_name"],
+                                request_response.user["user_id"],
+                                RequestResponseContainer.REQUEST_NAMES[request_response.request_type],
+                                image_request,
+                            )
+                        )
                 except Exception as e:
                     logging.warning("Error logging image request!", exc_info=e)
 
                 # Log text
-                log_file.write(request_str_to_format.format(request_response.request_timestamp,
-                                                            request_response.id,
-                                                            request_response.user["user_name"],
-                                                            request_response.user["user_id"],
-                                                            RequestResponseContainer
-                                                            .REQUEST_NAMES[request_response.request_type],
-                                                            request_response.request))
+                log_file.write(
+                    request_str_to_format.format(
+                        request_response.request_timestamp,
+                        request_response.id,
+                        request_response.user["user_name"],
+                        request_response.user["user_id"],
+                        RequestResponseContainer.REQUEST_NAMES[request_response.request_type],
+                        request_response.request,
+                    )
+                )
 
             # Log response
             else:
                 # Get formatter
-                response_str_to_format = self.config["data_collecting"]["response_format"].replace("\\n", "\n") \
-                    .replace("\\t", "\t").replace("\\r", "\r")
+                response_str_to_format = (
+                    self.config["data_collecting"]["response_format"]
+                    .replace("\\n", "\n")
+                    .replace("\\t", "\t")
+                    .replace("\\r", "\r")
+                )
 
                 # Text
-                if request_response.response and type(request_response.response) == str:
-                    log_file.write(response_str_to_format.format(request_response.response_timestamp,
-                                                                 request_response.id,
-                                                                 request_response.user["user_name"],
-                                                                 request_response.user["user_id"],
-                                                                 RequestResponseContainer
-                                                                 .REQUEST_NAMES[request_response.request_type],
-                                                                 request_response.response))
+                if request_response.response and isinstance(request_response.response, str):
+                    log_file.write(
+                        response_str_to_format.format(
+                            request_response.response_timestamp,
+                            request_response.id,
+                            request_response.user["user_name"],
+                            request_response.user["user_id"],
+                            RequestResponseContainer.REQUEST_NAMES[request_response.request_type],
+                            request_response.response,
+                        )
+                    )
 
                 # Images
                 for image_url in request_response.response_images:
                     try:
                         response = base64.b64encode(requests.get(image_url, timeout=120).content).decode("utf-8")
-                        log_file.write(response_str_to_format.format(request_response.response_timestamp,
-                                                                     request_response.id,
-                                                                     request_response.user["user_name"],
-                                                                     request_response.user["user_id"],
-                                                                     RequestResponseContainer
-                                                                     .REQUEST_NAMES[request_response.request_type],
-                                                                     response))
+                        log_file.write(
+                            response_str_to_format.format(
+                                request_response.response_timestamp,
+                                request_response.id,
+                                request_response.user["user_name"],
+                                request_response.user["user_id"],
+                                RequestResponseContainer.REQUEST_NAMES[request_response.request_type],
+                                response,
+                            )
+                        )
                     # Error logging image
                     except Exception as e:
-                        logging.warning("Error logging image: {}".format(image_url), exc_info=e)
+                        logging.warning(f"Error logging image: {image_url}", exc_info=e)
 
-                if request_response.response and type(request_response.response) == str:
-                    response_str_to_format = self.config["data_collecting"]["response_format"].replace("\\n", "\n") \
-                        .replace("\\t", "\t").replace("\\r", "\r")
-                    log_file.write(response_str_to_format.format(request_response.response_timestamp,
-                                                                 request_response.id,
-                                                                 request_response.user["user_name"],
-                                                                 request_response.user["user_id"],
-                                                                 RequestResponseContainer
-                                                                 .REQUEST_NAMES[request_response.request_type],
-                                                                 request_response.response))
+                if request_response.response and isinstance(request_response.response, str):
+                    response_str_to_format = (
+                        self.config["data_collecting"]["response_format"]
+                        .replace("\\n", "\n")
+                        .replace("\\t", "\t")
+                        .replace("\\r", "\r")
+                    )
+                    log_file.write(
+                        response_str_to_format.format(
+                            request_response.response_timestamp,
+                            request_response.id,
+                            request_response.user["user_name"],
+                            request_response.user["user_id"],
+                            RequestResponseContainer.REQUEST_NAMES[request_response.request_type],
+                            request_response.response,
+                        )
+                    )
 
             # Log confirmation
-            logging.info("The {0} were written to the file: {1}".format("request" if log_request else "response",
-                                                                        self._log_filename))
+            logging.info(
+                f"The {'request' if log_request else 'response'} were written to the file: {self._log_filename}"
+            )
 
         # Error processing or logging data
         except Exception as e:
@@ -806,6 +882,8 @@ class QueueHandler:
         if self._log_filename and os.path.exists(self._log_filename):
             file_size = os.path.getsize(self._log_filename)
             if file_size > self.config["data_collecting"]["max_size"]:
-                logging.info("File {0} has size {1} bytes which is more than {2}. New file will be started!"
-                             .format(self._log_filename, file_size, self.config["data_collecting"]["max_size"]))
+                logging.info(
+                    f"File {self._log_filename} has size {file_size} bytes which is more "
+                    f"than {self.config['data_collecting']['max_size']}. New file will be started!"
+                )
                 self._log_filename = ""

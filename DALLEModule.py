@@ -47,7 +47,7 @@ class DALLEModule:
                 proxy = self.config["dalle"]["proxy"]
 
             # Log
-            logging.info("Initializing DALL-E module with proxy {}".format(proxy))
+            logging.info(f"Initializing DALL-E module with proxy {proxy}")
 
             # Set enabled status
             self._enabled = self.config["modules"]["dalle"]
@@ -82,8 +82,9 @@ class DALLEModule:
         # Check if we are initialized
         if not self._enabled:
             logging.error("DALL-E module not initialized!")
-            request_response.response = self.messages[lang]["response_error"].replace("\\n", "\n") \
-                .format("DALL-E module not initialized!")
+            request_response.response = (
+                self.messages[lang]["response_error"].replace("\\n", "\n").format("DALL-E module not initialized!")
+            )
             request_response.error = True
             return
 
@@ -93,9 +94,9 @@ class DALLEModule:
 
             # Generate image
             logging.info("Requesting image from DALL-E")
-            image_response = openai.Image.create(prompt=request_response.request,
-                                                 n=1,
-                                                 size=self.config["dalle"]["image_size"])
+            image_response = openai.Image.create(
+                prompt=request_response.request, n=1, size=self.config["dalle"]["image_size"]
+            )
             response_url = image_response["data"][0]["url"]
 
             # Check response
@@ -103,8 +104,10 @@ class DALLEModule:
                 raise Exception("Wrong DALL-E response!")
 
             # OK?
-            logging.info("Response successfully processed for user {0} ({1})"
-                         .format(request_response.user["user_name"], request_response.user["user_id"]))
+            logging.info(
+                f"Response successfully processed for user "
+                f"{request_response.user['user_name']} ({request_response.user['user_id']})"
+            )
             request_response.response = response_url
 
         # Exit requested

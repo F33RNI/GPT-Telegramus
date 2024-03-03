@@ -55,9 +55,10 @@ class UsersHandler:
         self.lock = multiprocessing.Lock()
 
     def read_users(self) -> list:
-        """
-        Reads users data from database
-        :return: users as list of dictionaries or [] if not found
+        """Reads users data from database
+
+        Returns:
+            list: users as list of dictionaries or [] if not found
         """
         with self.lock:
             users = JSONReaderWriter.load_json(self.config["files"]["users_database"])
@@ -66,10 +67,13 @@ class UsersHandler:
             return users
 
     def get_user_by_id(self, user_id: int) -> dict:
-        """
-        Returns user (or create new one) as dictionary from database using user_id
-        :param user_id:
-        :return: dictionary
+        """Returns user (or create new one) as dictionary from database using user_id
+
+        Args:
+            user_id (int): ID of user
+
+        Returns:
+            dict: user's data from database
         """
         users = self.read_users()
         for user in users:
@@ -80,10 +84,10 @@ class UsersHandler:
         return self._create_user(user_id)
 
     def save_user(self, user_data: dict) -> None:
-        """
-        Saves user_data to database
-        :param user_data:
-        :return:
+        """Saves user_data to database
+
+        Args:
+            user_data (dict): user's data from database
         """
         if user_data is None:
             return
@@ -92,8 +96,8 @@ class UsersHandler:
 
         with self.lock:
             user_index = -1
-            for i in range(len(users)):
-                if users[i]["user_id"] == user_data["user_id"]:
+            for i, user in enumerate(users):
+                if user["user_id"] == user_data["user_id"]:
                     user_index = i
                     break
 
@@ -111,21 +115,27 @@ class UsersHandler:
             JSONReaderWriter.save_json(self.config["files"]["users_database"], users)
 
     def _create_user(self, user_id: int) -> dict:
+        """Creates and saves new user
+
+        Args:
+            user_id (int): ID of user
+
+        Returns:
+            dict: new user data
         """
-        Creates and saves new user
-        :return:
-        """
-        logging.info("Creating new user with id: {0}".format(user_id))
+        logging.info(f"Creating new user with id: {user_id}")
         user = {
             "user_id": user_id,
             "user_name": DEFAULT_USER_NAME,
             "user_type": "",
             "admin": True if user_id in self.config["telegram"]["admin_ids"] else False,
-            "banned": False if user_id in self.config["telegram"]["admin_ids"] else self.config["telegram"]["ban_by_default"],
+            "banned": (
+                False if user_id in self.config["telegram"]["admin_ids"] else self.config["telegram"]["ban_by_default"]
+            ),
             "ban_reason": self.messages[0]["ban_reason_default"].replace("\\n", "\n"),
             "module": self.config["modules"]["default_module"],
             "requests_total": 0,
-            "reply_message_id_last": -1
+            "reply_message_id_last": -1,
         }
         self.save_user(user)
         return user

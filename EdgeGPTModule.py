@@ -83,12 +83,12 @@ class EdgeGPTModule:
                 proxy = self.config["edgegpt"]["proxy"]
 
             # Log
-            logging.info("Initializing EdgeGPT module with proxy {}".format(proxy))
+            logging.info(f"Initializing EdgeGPT module with proxy {proxy}")
 
             # Read cookies file
             cookies = None
             if self.config["edgegpt"]["cookies_file"] and os.path.exists(self.config["edgegpt"]["cookies_file"]):
-                logging.info("Loading cookies from {}".format(self.config["edgegpt"]["cookies_file"]))
+                logging.info(f"Loading cookies from {self.config['edgegpt']['cookies_file']}")
                 cookies = json.loads(open(self.config["edgegpt"]["cookies_file"], encoding="utf-8").read())
 
             # Set enabled status
@@ -124,8 +124,9 @@ class EdgeGPTModule:
         # Check if we are initialized
         if not self._enabled or self._chatbot is None:
             logging.error("EdgeGPT module not initialized!")
-            request_response.response = self.messages[lang]["response_error"].replace("\\n", "\n") \
-                .format("EdgeGPT module not initialized!")
+            request_response.response = (
+                self.messages[lang]["response_error"].replace("\\n", "\n").format("EdgeGPT module not initialized!")
+            )
             request_response.error = True
             return
 
@@ -151,9 +152,9 @@ class EdgeGPTModule:
                 conversation_style_ = ConversationStyle.creative
 
             async def async_ask_stream_():
-                async for data in self._chatbot.ask_stream(prompt=request_response.request,
-                                                           conversation_style=conversation_style_,
-                                                           raw=True):
+                async for data in self._chatbot.ask_stream(
+                    prompt=request_response.request, conversation_style=conversation_style_, raw=True
+                ):
                     # Split response
                     is_done, json_data = data
 
@@ -192,10 +193,16 @@ class EdgeGPTModule:
                                         if "sourceAttributions" in message:
                                             source_attributions = message["sourceAttributions"]
                                             for source_attribution in source_attributions:
-                                                if "providerDisplayName" in source_attribution \
-                                                        and "seeMoreUrl" in source_attribution:
-                                                    response_sources.append((source_attribution["providerDisplayName"],
-                                                                             source_attribution["seeMoreUrl"]))
+                                                if (
+                                                    "providerDisplayName" in source_attribution
+                                                    and "seeMoreUrl" in source_attribution
+                                                ):
+                                                    response_sources.append(
+                                                        (
+                                                            source_attribution["providerDisplayName"],
+                                                            source_attribution["seeMoreUrl"],
+                                                        )
+                                                    )
 
                                         # We found it
                                         if len(response_sources) > 0 and text_response:
@@ -210,9 +217,11 @@ class EdgeGPTModule:
                         if len(response_sources) > 0:
                             request_response.response += "\n"
                         for response_source in response_sources:
-                            request_response.response += self.messages[lang]["edgegpt_sources"]\
-                                .format(response_source[0],
-                                        response_source[1]).replace("\\n", "\n")
+                            request_response.response += (
+                                self.messages[lang]["edgegpt_sources"]
+                                .format(response_source[0], response_source[1])
+                                .replace("\\n", "\n")
+                            )
 
                         # Send message to user
                         await BotHandler.send_message_async(self.config, self.messages, request_response, end=False)
@@ -229,7 +238,7 @@ class EdgeGPTModule:
             if conversation_id:
                 conversation_file = os.path.join(self.config["files"]["conversations_dir"], conversation_id + ".json")
                 if os.path.exists(conversation_file):
-                    logging.info("Loading conversation from {}".format(conversation_file))
+                    logging.info(f"Loading conversation from {conversation_file}")
                     asyncio.run(self._chatbot.load_conversation(conversation_file))
                 else:
                     conversation_id = None
@@ -242,9 +251,12 @@ class EdgeGPTModule:
                 conversation_id = str(uuid.uuid4()) + "_edgegpt"
 
             # Save conversation
-            logging.info("Saving conversation to {}".format(conversation_id))
-            asyncio.run(self._chatbot.save_conversation(os.path.join(self.config["files"]["conversations_dir"],
-                                                                     conversation_id + ".json")))
+            logging.info(f"Saving conversation to {conversation_id}")
+            asyncio.run(
+                self._chatbot.save_conversation(
+                    os.path.join(self.config["files"]["conversations_dir"], conversation_id + ".json")
+                )
+            )
 
             # Save to user data
             request_response.user["edgegpt_conversation_id"] = conversation_id
@@ -252,15 +264,20 @@ class EdgeGPTModule:
 
             # Check response
             if len(request_response.response) > 0:
-                logging.info("Response successfully processed for user {0} ({1})"
-                             .format(request_response.user["user_name"], request_response.user["user_id"]))
+                logging.info(
+                    f"Response successfully processed for user "
+                    f"{request_response.user['user_name']} ({request_response.user['user_id']})"
+                )
 
             # No response
             else:
-                logging.warning("Empty response for user {0} ({1})!"
-                                .format(request_response.user["user_name"], request_response.user["user_id"]))
-                request_response.response = self.messages[lang]["response_error"].replace("\\n", "\n") \
-                    .format("Empty response!")
+                logging.warning(
+                    f"Empty response for user "
+                    f"{request_response.user['user_name']} ({request_response.user['user_id']})!"
+                )
+                request_response.response = (
+                    self.messages[lang]["response_error"].replace("\\n", "\n").format("Empty response!")
+                )
                 request_response.error = True
 
         # Exit requested
@@ -298,10 +315,11 @@ class EdgeGPTModule:
         if edgegpt_conversation_id:
             # Delete file
             try:
-                conversation_file = os.path.join(self.config["files"]["conversations_dir"],
-                                                 edgegpt_conversation_id + ".json")
+                conversation_file = os.path.join(
+                    self.config["files"]["conversations_dir"], edgegpt_conversation_id + ".json"
+                )
                 if os.path.exists(conversation_file):
-                    logging.info("Removing {}".format(conversation_file))
+                    logging.info(f"Removing {conversation_file}")
                     os.remove(conversation_file)
             except Exception as e:
                 logging.error("Error removing conversation file!", exc_info=e)

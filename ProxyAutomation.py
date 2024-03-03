@@ -34,9 +34,9 @@ PROXY_FROM_URL = "http://free-proxy-list.net/"
 GET_PROXY_EVERY_SECONDS = 10
 
 
-def proxy_tester_process(test_proxy_queue: multiprocessing.Queue,
-                         working_proxy_queue: multiprocessing.Queue,
-                         check_url: str, timeout) -> None:
+def proxy_tester_process(
+    test_proxy_queue: multiprocessing.Queue, working_proxy_queue: multiprocessing.Queue, check_url: str, timeout
+) -> None:
     """
     multiprocessing process to test proxy
     :param test_proxy_queue:
@@ -58,8 +58,7 @@ def proxy_tester_process(test_proxy_queue: multiprocessing.Queue,
             # Is it correct proxy?
             if proxy_to_test:
                 # Set proxies
-                session.proxies.update({"http": proxy_to_test,
-                                        "https": proxy_to_test})
+                session.proxies.update({"http": proxy_to_test, "https": proxy_to_test})
                 try:
                     # Try to send GET request to https google
                     response = session.get(check_url, timeout=timeout)
@@ -118,7 +117,7 @@ class ProxyAutomation:
         if self.config["proxy_automation"]["enabled"]:
             self._automation_loop_thread = threading.Thread(target=self._automation_loop)
             self._automation_loop_thread.start()
-            logging.info("automation_loop thread: {0}".format(self._automation_loop_thread.name))
+            logging.info(f"automation_loop thread: {self._automation_loop_thread.name}")
 
     def stop_automation_loop(self) -> None:
         """
@@ -147,7 +146,7 @@ class ProxyAutomation:
 
                 # Get list of proxies
                 while not self._proxy_get() and not self._exit_flag:
-                    logging.info("Trying again to download proxies after {}s".format(GET_PROXY_EVERY_SECONDS))
+                    logging.info(f"Trying again to download proxies after {GET_PROXY_EVERY_SECONDS}s")
                     time_started = time.time()
                     while not self._exit_flag and time.time() - time_started < GET_PROXY_EVERY_SECONDS:
                         time.sleep(0.1)
@@ -167,15 +166,19 @@ class ProxyAutomation:
 
                 # Start checkers
                 self._processes = []
-                for i in range(min(multiprocessing.cpu_count(), len(self._proxy_list))):
-                    process = multiprocessing.Process(target=proxy_tester_process,
-                                                      args=(self._test_proxy_queue,
-                                                            self._working_proxy_queue,
-                                                            self.config["proxy_automation"]["check_url"],
-                                                            self.config["proxy_automation"]["check_timeout_seconds"]))
+                for _ in range(min(multiprocessing.cpu_count(), len(self._proxy_list))):
+                    process = multiprocessing.Process(
+                        target=proxy_tester_process,
+                        args=(
+                            self._test_proxy_queue,
+                            self._working_proxy_queue,
+                            self.config["proxy_automation"]["check_url"],
+                            self.config["proxy_automation"]["check_timeout_seconds"],
+                        ),
+                    )
                     self._processes.append(process)
                     process.start()
-                logging.info("Total processes: {0}".format(len(self._processes)))
+                logging.info(f"Total processes: {len(self._processes)}")
 
                 # Get first working proxy
                 logging.info("Trying to find working proxy")
@@ -200,7 +203,7 @@ class ProxyAutomation:
                         # Check it
                         if working_proxy:
                             self.working_proxy = working_proxy
-                            logging.info("Found working proxy: {0}".format(self.working_proxy))
+                            logging.info(f"Found working proxy: {self.working_proxy}")
 
                             # Stop checkers
                             self._kill_processes()
@@ -235,18 +238,19 @@ class ProxyAutomation:
                         continue
 
                     # Check current proxy
-                    logging.info("Checking current proxy: {0}".format(self.working_proxy))
+                    logging.info(f"Checking current proxy: {self.working_proxy}")
                     is_proxy_working = False
                     session = requests.Session()
                     session.headers.update({"User-agent": "Mozilla/5.0"})
-                    session.proxies.update({"http": self.working_proxy,
-                                            "https": self.working_proxy})
+                    session.proxies.update({"http": self.working_proxy, "https": self.working_proxy})
                     try:
-                        response = session.get(self.config["proxy_automation"]["check_url"],
-                                               timeout=self.config["proxy_automation"]["check_timeout_seconds"])
+                        response = session.get(
+                            self.config["proxy_automation"]["check_url"],
+                            timeout=self.config["proxy_automation"]["check_timeout_seconds"],
+                        )
                         is_proxy_working = len(str(response.headers)) > 1 and response.status_code == 200
                     except Exception as e:
-                        logging.error("Error checking proxy: {0}".format(str(e)))
+                        logging.error(f"Error checking proxy: {e}")
                     session.close()
 
                     # OK?
@@ -285,12 +289,12 @@ class ProxyAutomation:
         """
         for process in self._processes:
             if process is not None and process.is_alive():
-                logging.info("Killing process with PID: " + str(process.pid))
+                logging.info(f"Killing process with PID: {process.pid}")
                 try:
                     process.kill()
                     process.join()
                 except Exception as e:
-                    logging.warning("Error killing process with PID: {0}".format(process.pid), exc_info=e)
+                    logging.warning(f"Error killing process with PID: {process.pid}", exc_info=e)
 
     def _proxy_get(self) -> bool:
         """
@@ -302,8 +306,8 @@ class ProxyAutomation:
 
         # Try to get proxy
         try:
-            logging.info("Trying to get proxy list from: {0}".format(PROXY_FROM_URL))
-            req = request.Request("%s" % PROXY_FROM_URL)
+            logging.info(f"Trying to get proxy list from: {PROXY_FROM_URL}")
+            req = request.Request(PROXY_FROM_URL)
             req.add_header("User-Agent", random.choice(useragents.USERAGENTS))
             sourcecode = request.urlopen(req)
             part = str(sourcecode.read()).replace(" ", "")
@@ -341,9 +345,10 @@ class ProxyAutomation:
                 return True
             else:
                 logging.warning("Proxies list is empty!")
+        except (SystemExit, KeyboardInterrupt) as e:
+            logging.warning("Interrupted")
+            raise e
         except Exception as e:
             logging.error("Error downloading proxy list!", exc_info=e)
-        except KeyboardInterrupt:
-            raise KeyboardInterrupt
 
         return False

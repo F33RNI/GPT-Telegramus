@@ -56,7 +56,7 @@ class BingImageGenModule:
                 proxy = self.config["bing_imagegen"]["proxy"]
 
             # Log
-            logging.info("Initializing Bing ImageGen module with proxy {}".format(proxy))
+            logging.info(f"Initializing Bing ImageGen module with proxy {proxy}")
 
             # Set enabled status
             self._enabled = self.config["modules"]["bing_imagegen"]
@@ -70,24 +70,26 @@ class BingImageGenModule:
             try:
                 cookies = load_json(self.config["bing_imagegen"]["cookies_file"])
                 if not cookies or len(cookies) < 1:
-                    raise "Error reading bing cookies!"
+                    raise Exception("Error reading bing cookies!")
                 for cookie in cookies:
                     if cookie["name"] == "_U":
                         auth_cookie = cookie["value"]
                     elif cookie["name"] == "SRCHHPGUSR":
                         auth_cookie_SRCHHPGUSR = cookie["value"]
                 if not auth_cookie:
-                    raise "No _U cookie!"
+                    raise Exception("No _U cookie!")
                 if not auth_cookie_SRCHHPGUSR:
-                    raise "No SRCHHPGUSR cookie!"
+                    raise Exception("No SRCHHPGUSR cookie!")
             except Exception as e:
                 raise e
 
             # Initialize Bing ImageGen
-            self._image_generator = ImageGen(auth_cookie=auth_cookie,
-                                             auth_cookie_SRCHHPGUSR=auth_cookie_SRCHHPGUSR,
-                                             quiet=True,
-                                             all_cookies=cookies)
+            self._image_generator = ImageGen(
+                auth_cookie=auth_cookie,
+                auth_cookie_SRCHHPGUSR=auth_cookie_SRCHHPGUSR,
+                quiet=True,
+                all_cookies=cookies,
+            )
 
             # Set proxy
             if proxy:
@@ -114,8 +116,11 @@ class BingImageGenModule:
         # Check if we are initialized
         if not self._enabled:
             logging.error("Bing ImageGen module not initialized!")
-            request_response.response = self.messages[lang]["response_error"].replace("\\n", "\n") \
+            request_response.response = (
+                self.messages[lang]["response_error"]
+                .replace("\\n", "\n")
                 .format("Bing ImageGen module not initialized!")
+            )
             request_response.error = True
             return
 
@@ -129,8 +134,10 @@ class BingImageGenModule:
                 raise Exception("Wrong Bing ImageGen response!")
 
             # Use all generated images
-            logging.info("Response successfully processed for user {0} ({1})"
-                         .format(request_response.user["user_name"], request_response.user["user_id"]))
+            logging.info(
+                f"Response successfully processed for user {request_response.user['user_name']} "
+                f"({request_response.user['user_id']})"
+            )
             request_response.response_images = response_urls
 
         # Exit requested

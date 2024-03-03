@@ -33,7 +33,8 @@ from google.ai.generativelanguage import (
 )
 import google.generativeai as genai
 
-from google.generativeai.client import (  # pylint: disable=no-name-in-module
+# pylint: disable=no-name-in-module
+from google.generativeai.client import (
     _ClientManager,
 )
 
@@ -100,9 +101,7 @@ class GoogleAIModule:
                 "temperature": self.config[self.config_key].get("temperature", 0.9),
                 "top_p": self.config[self.config_key].get("top_p", 1),
                 "top_k": self.config[self.config_key].get("top_k", 1),
-                "max_output_tokens": self.config[self.config_key].get(
-                    "max_output_tokens", 2048
-                ),
+                "max_output_tokens": self.config[self.config_key].get("max_output_tokens", 2048),
             }
             safety_settings = []
             self._model = genai.GenerativeModel(
@@ -137,17 +136,13 @@ class GoogleAIModule:
         """
         lang = UsersHandler.get_key_or_none(request_response.user, "lang", 0)
         conversations_dir = self.config["files"]["conversations_dir"]
-        conversation_id = UsersHandler.get_key_or_none(
-            request_response.user, f"{self.config_key}_conversation_id"
-        )
+        conversation_id = UsersHandler.get_key_or_none(request_response.user, f"{self.config_key}_conversation_id")
 
         # Check if we are initialized
         if not self._enabled:
             logging.error("Google AI module not initialized!")
             request_response.response = (
-                self.messages[lang]["response_error"]
-                .replace("\\n", "\n")
-                .format("Google AI module not initialized!")
+                self.messages[lang]["response_error"].replace("\\n", "\n").format("Google AI module not initialized!")
             )
             request_response.error = True
             self.processing_flag.value = False
@@ -158,22 +153,13 @@ class GoogleAIModule:
             self.processing_flag.value = True
 
             # Cool down
-            if (
-                time.time() - self._last_request_time.value
-                <= self.config[self.config_key]["cooldown_seconds"]
-            ):
-                logging.warning(
-                    "Too frequent requests. Waiting {0} seconds...".format(
-                        int(
-                            self.config[self.config_key]["cooldown_seconds"]
-                            - (time.time() - self._last_request_time.value)
-                        )
-                    )
+            if time.time() - self._last_request_time.value <= self.config[self.config_key]["cooldown_seconds"]:
+                time_to_wait = self.config[self.config_key]["cooldown_seconds"] - (
+                    time.time() - self._last_request_time.value
                 )
+                logging.warning(f"Too frequent requests. Waiting {time_to_wait} seconds...")
                 time.sleep(
-                    self._last_request_time.value
-                    + self.config[self.config_key]["cooldown_seconds"]
-                    - time.time()
+                    self._last_request_time.value + self.config[self.config_key]["cooldown_seconds"] - time.time()
                 )
             self._last_request_time.value = time.time()
 
@@ -199,20 +185,12 @@ class GoogleAIModule:
                 )
             else:
                 # Try to load conversation
-                conversation = (
-                    _load_conversation(conversations_dir, conversation_id) or []
-                )
+                conversation = _load_conversation(conversations_dir, conversation_id) or []
                 # Generate new random conversation ID
                 if conversation_id is None:
                     conversation_id = str(uuid.uuid4())
 
-                conversation.append(
-                    Content.to_json(
-                        Content(
-                            role="user", parts=[Part(text=request_response.request)]
-                        )
-                    )
-                )
+                conversation.append(Content.to_json(Content(role="user", parts=[Part(text=request_response.request)])))
 
                 logging.info("Asking Gemini...")
                 response = self._model.generate_content(
@@ -228,25 +206,17 @@ class GoogleAIModule:
 
                 request_response.response += chunk.parts[0].text
                 BotHandler.async_helper(
-                    BotHandler.send_message_async(
-                        self.config, self.messages, request_response, end=False
-                    )
+                    BotHandler.send_message_async(self.config, self.messages, request_response, end=False)
                 )
 
             if self.cancel_requested.value:
                 logging.info("Gemini module canceled")
             elif not request_response.image_url:
-                conversation.append(
-                    Content.to_json(Content(role="model", parts=response.parts))
-                )
+                conversation.append(Content.to_json(Content(role="model", parts=response.parts)))
 
-                if not _save_conversation(
-                    conversations_dir, conversation_id, conversation
-                ):
+                if not _save_conversation(conversations_dir, conversation_id, conversation):
                     conversation_id = None
-                request_response.user[
-                    f"{self.config_key}_conversation_id"
-                ] = conversation_id
+                request_response.user[f"{self.config_key}_conversation_id"] = conversation_id
                 self.users_handler.save_user(request_response.user)
 
         # Error
@@ -257,11 +227,7 @@ class GoogleAIModule:
             self.processing_flag.value = False
 
         # Finish message
-        BotHandler.async_helper(
-            BotHandler.send_message_async(
-                self.config, self.messages, request_response, end=True
-            )
-        )
+        BotHandler.async_helper(BotHandler.send_message_async(self.config, self.messages, request_response, end=True))
 
     def clear_conversation_for_user(self, user: dict) -> None:
         """
@@ -270,9 +236,7 @@ class GoogleAIModule:
         :param user:
         :return: True if cleared successfully
         """
-        conversation_id = UsersHandler.get_key_or_none(
-            user, f"{self.config_key}_conversation_id"
-        )
+        conversation_id = UsersHandler.get_key_or_none(user, f"{self.config_key}_conversation_id")
         if conversation_id is None:
             return
 
@@ -291,7 +255,7 @@ def _load_conversation(conversations_dir, conversation_id):
     :param conversation_id:
     :return: Content of conversation, None if error
     """
-    logging.info("Loading conversation {0}".format(conversation_id))
+    logging.info(f"Loading conversation {conversation_id}")
     try:
         if conversation_id is None:
             logging.info("conversation_id is None. Skipping loading")
@@ -304,12 +268,10 @@ def _load_conversation(conversations_dir, conversation_id):
             with open(conversation_file, "r", encoding="utf-8") as json_file:
                 return json.load(json_file)
         else:
-            logging.warning("File {0} not exists!".format(conversation_file))
+            logging.warning(f"File {conversation_file} not exists!")
 
     except Exception as e:
-        logging.warning(
-            "Error loading conversation {0}".format(conversation_id), exc_info=e
-        )
+        logging.warning(f"Error loading conversation {conversation_id}", exc_info=e)
 
     return None
 
@@ -322,7 +284,7 @@ def _save_conversation(conversations_dir, conversation_id, conversation) -> bool
     :param conversation:
     :return: True if no error
     """
-    logging.info("Saving conversation {0}".format(conversation_id))
+    logging.info(f"Saving conversation {conversation_id}")
     try:
         if conversation_id is None:
             logging.info("conversation_id is None. Skipping saving")
@@ -334,9 +296,7 @@ def _save_conversation(conversations_dir, conversation_id, conversation) -> bool
             json.dump(conversation, json_file, indent=4)
 
     except Exception as e:
-        logging.error(
-            "Error saving conversation {0}".format(conversation_id), exc_info=e
-        )
+        logging.error(f"Error saving conversation {conversation_id}", exc_info=e)
         return False
 
     return True
@@ -348,20 +308,18 @@ def _delete_conversation(conversations_dir, conversation_id) -> bool:
     :param conversation_id:
     :return:
     """
-    logging.info("Deleting conversation " + conversation_id)
+    logging.info(f"Deleting conversation {conversation_id}")
     # Delete conversation file if exists
     try:
         conversation_file = os.path.join(conversations_dir, conversation_id + ".json")
         if os.path.exists(conversation_file):
-            logging.info("Deleting {0} file".format(conversation_file))
+            logging.info(f"Deleting {conversation_file} file")
             os.remove(conversation_file)
         return True
 
     except Exception as e:
         logging.error(
-            "Error removing conversation file for conversation {0}".format(
-                conversation_id
-            ),
+            f"Error removing conversation file for conversation {conversation_id}",
             exc_info=e,
         )
 

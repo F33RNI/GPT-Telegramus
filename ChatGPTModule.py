@@ -64,7 +64,7 @@ class ChatGPTModule:
                 proxy = self.config["chatgpt"]["proxy"]
 
             # Log
-            logging.info("Initializing ChatGPT module with proxy {}".format(proxy))
+            logging.info(f"Initializing ChatGPT module with proxy {proxy}")
 
             # Set enabled status
             self._enabled = self.config["modules"]["chatgpt"]
@@ -106,7 +106,7 @@ class ChatGPTModule:
 
             # Wrong API type
             else:
-                raise Exception("Wrong API type: {0}".format(self.config["chatgpt"]["api_type"]))
+                raise Exception(f"Wrong API type: {self.config['chatgpt']['api_type']}")
 
             # Check
             if self._chatbot is not None:
@@ -147,11 +147,10 @@ class ChatGPTModule:
 
             # Cooldown to prevent 429 Too Many Requests
             if time.time() - self._last_request_time.value <= self.config["chatgpt"]["cooldown_seconds"]:
-                logging.warning(
-                    "Too frequent requests. Waiting {0} seconds...".format(
-                        int(self.config["chatgpt"]["cooldown_seconds"] - (time.time() - self._last_request_time.value))
-                    )
+                time_to_wait = int(
+                    self.config["chatgpt"]["cooldown_seconds"] - (time.time() - self._last_request_time.value)
                 )
+                logging.warning(f"Too frequent requests. Waiting {time_to_wait} seconds...")
                 while time.time() - self._last_request_time.value <= self.config["chatgpt"]["cooldown_seconds"]:
                     time.sleep(0.1)
                     # Exit requested?
@@ -200,7 +199,7 @@ class ChatGPTModule:
                         break
 
                 # Log conversation id and parent id
-                logging.info("Current conversation_id: {0}, parent_id: {1}".format(conversation_id, parent_id))
+                logging.info(f"Current conversation_id: {conversation_id}, parent_id: {parent_id}")
 
                 # Save conversation id and parent id
                 request_response.user["conversation_id"] = conversation_id
@@ -245,14 +244,12 @@ class ChatGPTModule:
                     try:
                         del self._chatbot.conversation[conversation_id]
                     except Exception as e:
-                        logging.warning(
-                            "Error deleting key {0} from chatbot.conversation".format(conversation_id), exc_info=e
-                        )
+                        logging.warning("Error deleting key {conversation_id} from chatbot.conversation", exc_info=e)
 
             # Wrong API type
             else:
                 self.processing_flag.value = False
-                raise Exception("Wrong API type: {0}".format(self.config["chatgpt"]["api_type"]))
+                raise Exception(f"Wrong API type: {self.config['chatgpt']['api_type']}")
 
             # Save user data to database
             self.users_handler.save_user(request_response.user)
@@ -260,17 +257,15 @@ class ChatGPTModule:
             # Check response
             if request_response.response:
                 logging.info(
-                    "Response successfully processed for user {0} ({1})".format(
-                        request_response.user["user_name"], request_response.user["user_id"]
-                    )
+                    f"Response successfully processed for user "
+                    f"{request_response.user['user_name']} ({request_response.user['user_id']})"
                 )
 
             # No response
             else:
                 logging.warning(
-                    "Empty response for user {0} ({1})!".format(
-                        request_response.user["user_name"], request_response.user["user_id"]
-                    )
+                    f"Empty response for user {request_response.user['user_name']} "
+                    f"({request_response.user['user_id']})!"
                 )
                 request_response.response = (
                     self.messages[lang]["response_error"].replace("\\n", "\n").format("Empty response!")
@@ -353,7 +348,7 @@ class ChatGPTModule:
         :param conversation_id:
         :return: True if no error
         """
-        logging.info("Saving conversation {0}".format(conversation_id))
+        logging.info(f"Saving conversation {conversation_id}")
         try:
             if conversation_id is None:
                 logging.info("conversation_id is None. Skipping saving")
@@ -368,7 +363,7 @@ class ChatGPTModule:
                     json_file.close()
 
         except Exception as e:
-            logging.error("Error saving conversation {0}".format(conversation_id), exc_info=e)
+            logging.error(f"Error saving conversation {conversation_id}", exc_info=e)
             return False
 
         return True
@@ -379,7 +374,7 @@ class ChatGPTModule:
         :param conversation_id:
         :return: True if no error
         """
-        logging.info("Loading conversation {0}".format(conversation_id))
+        logging.info(f"Loading conversation {conversation_id}")
         try:
             if conversation_id is None:
                 logging.info("conversation_id is None. Skipping loading")
@@ -394,10 +389,10 @@ class ChatGPTModule:
                         self._chatbot.conversation = json.load(json_file)
                         json_file.close()
                 else:
-                    logging.warning("File {0} not exists!".format(conversation_file))
+                    logging.warning(f"File {conversation_file} not exists!")
 
         except Exception as e:
-            logging.warning("Error loading conversation {0}".format(conversation_id), exc_info=e)
+            logging.warning(f"Error loading conversation {conversation_id}", exc_info=e)
             return False
 
         return True
@@ -408,7 +403,7 @@ class ChatGPTModule:
         :param conversation_id:
         :return:
         """
-        logging.info("Deleting conversation " + conversation_id)
+        logging.info(f"Deleting conversation {conversation_id}")
         try:
             deleted = False
 
@@ -419,7 +414,7 @@ class ChatGPTModule:
                     self._chatbot.delete_conversation(conversation_id)
                     deleted = True
                 except Exception as e:
-                    logging.error("Error deleting conversation {0}".format(conversation_id), exc_info=e)
+                    logging.error(f"Error deleting conversation {conversation_id}", exc_info=e)
 
             # API type 3
             elif self.config["chatgpt"]["api_type"] == 3:
@@ -428,23 +423,21 @@ class ChatGPTModule:
 
             # Wrong API type
             else:
-                raise Exception("Wrong API type: {0}".format(self.config["chatgpt"]["api_type"]))
+                raise Exception(f"Wrong API type: {self.config['chatgpt']['api_type']}")
 
             # Delete conversation file if exists
             try:
                 conversation_file = os.path.join(self.config["files"]["conversations_dir"], conversation_id + ".json")
                 if os.path.exists(conversation_file):
-                    logging.info("Deleting {0} file".format(conversation_file))
+                    logging.info("Deleting {conversation_file} file")
                     os.remove(conversation_file)
                 return deleted
 
             except Exception as e:
-                logging.error(
-                    "Error removing conversation file for conversation {0}".format(conversation_id), exc_info=e
-                )
+                logging.error(f"Error removing conversation file for conversation {conversation_id}", exc_info=e)
 
         except Exception as e:
-            logging.warning("Error loading conversation {0}".format(conversation_id), exc_info=e)
+            logging.warning(f"Error loading conversation {conversation_id}", exc_info=e)
         return False
 
     def _get_chatbot_config(self, proxy: str) -> dict:

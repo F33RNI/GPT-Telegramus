@@ -21,54 +21,56 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import json
 import logging
 import os.path
+from typing import Dict, List
 
 
-def load_json(file_name: str, logging_enabled=True):
-    """
-    Loads json from file_name
-    :param file_name: filename to load
-    :param logging_enabled: set True to have logs
-    :return: json if loaded or None if not
+def load_json(file_name: str, logging_enabled=True) -> Dict or List or None:
+    """Loads json from file_name
+
+    Args:
+        file_name (str): filename to load
+        logging_enabled (bool, optional): set True to print logs. Defaults to True.
+
+    Returns:
+        Dict or List or None: json if loaded or None if not
     """
     try:
         if os.path.exists(file_name):
             if logging_enabled:
-                logging.info("Loading {0}".format(file_name))
+                logging.info(f"Loading {file_name}")
 
-            messages_file = open(file_name, encoding="utf-8")
-            json_content = json.load(messages_file)
-            messages_file.close()
+            with open(file_name, "r", encoding="utf-8") as file:
+                json_content = json.load(file)
 
             if json_content is not None:
                 if logging_enabled:
-                    logging.info("Loaded json from {0}".format(file_name))
+                    logging.info(f"Loaded json from {file_name}")
             else:
                 if logging_enabled:
-                    logging.error("Error loading json data from file {0}".format(file_name))
+                    logging.error(f"Error loading json data from file {file_name}")
                 return None
         else:
             if logging_enabled:
-                logging.warning("No {0} file! Returning empty json".format(file_name))
+                logging.warning(f"No {file_name} file! Returning empty json")
             return None
 
     except Exception as e:
         if logging_enabled:
-            logging.error("Error loading json data from file {0}".format(file_name), exc_info=e)
+            logging.error(f"Error loading json data from file {file_name}", exc_info=e)
         return None
 
     return json_content
 
 
 def save_json(file_name: str, content, logging_enabled=True):
-    """
-    Saves
-    :param file_name: filename to save
-    :param content: JSON dictionary
-    :param logging_enabled: set True to have logs
-    :return:
+    """Saves json file
+
+    Args:
+        file_name (str): filename to save
+        content (Dict or List): JSON content
+        logging_enabled (bool, optional): set True to print logs. Defaults to True.
     """
     if logging_enabled:
-        logging.info("Saving to {0}".format(file_name))
-    file = open(file_name, "w")
-    json.dump(content, file, indent=4)
-    file.close()
+        logging.info(f"Saving to {file_name}")
+    with open(file_name, "w", encoding="utf-8") as file:
+        json.dump(content, file, indent=4, ensure_ascii=False)
