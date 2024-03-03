@@ -14,4 +14,7 @@ Banner.xcf
 Banner.tif
 UsersRecover.py
 venv
+.venv
+env
+.env
 __pycache__
