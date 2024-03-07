@@ -30,30 +30,9 @@ from typing import List, Dict
 from EdgeGPT.EdgeGPT import Chatbot
 from EdgeGPT.conversation_style import ConversationStyle
 
-import BotHandler
+import bot_handler
 import users_handler
-from RequestResponseContainer import RequestResponseContainer
-
-
-def async_helper(awaitable_) -> None:
-    """
-    Runs async function inside sync
-    :param awaitable_:
-    :return:
-    """
-    # Try to get current event loop
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = None
-
-    # Check it
-    if loop and loop.is_running():
-        loop.create_task(awaitable_)
-
-    # We need new event loop
-    else:
-        asyncio.run(awaitable_)
+from request_response_container import RequestResponseContainer
 
 
 class EdgeGPTModule:
@@ -224,7 +203,7 @@ class EdgeGPTModule:
                             )
 
                         # Send message to user
-                        await BotHandler.send_message_async(self.config, self.messages, request_response, end=False)
+                        await bot_handler.send_message_async(self.config, self.messages, request_response, end=False)
 
                     # Exit requested?
                     if self.cancel_requested.value:
@@ -297,7 +276,7 @@ class EdgeGPTModule:
             self.processing_flag.value = False
 
         # Finish message
-        BotHandler.async_helper(BotHandler.send_message_async(self.config, self.messages, request_response, end=True))
+        bot_handler.async_helper(bot_handler.send_message_async(self.config, self.messages, request_response, end=True))
 
         # Clear processing flag
         self.processing_flag.value = False

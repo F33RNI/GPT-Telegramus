@@ -30,27 +30,35 @@ LOGGING_LEVEL = logging.INFO
 # Where to save log files
 LOGS_DIR = "logs"
 
-# Will ignore logs from python-telegram-bot that start with this message
-TELEGRAM_LOGS_IGNORE_PREFIX = "HTTP Request: POST https://api.telegram.org/bot"
+# Logs entry to ignore if they started with any string from list below
+LOGS_IGNORE_PREFIXES = ["HTTP Request: POST https://api.telegram.org/bot"]
+
+# Logging formatter
+FORMATTER_FMT = "[%(asctime)s] [%(process)-7d] [%(levelname)-7s] %(message)s"
+FORMATTER_DATEFMT = "%Y-%m-%d %H:%M:%S"
 
 
-def worker_configurer(queue: multiprocessing.Queue):
+def worker_configurer(queue: multiprocessing.Queue, log_test_message: bool = True):
+    """Call this method in your process
+
+    Args:
+        queue (multiprocessing.Queue): logging queue
+        log_test_message (bool, optional): set to False to disable test log message with process PID. Defaults to True
     """
-    Call this method in your process
-    :param queue:
-    :return:
-    """
-    # Setup queue handler
-    queue_handler = logging.handlers.QueueHandler(queue)
+    # Remove all current handlers
     root_logger = logging.getLogger()
     if root_logger.handlers:
         for handler in root_logger.handlers:
             root_logger.removeHandler(handler)
+
+    # Setup queue handler
+    queue_handler = logging.handlers.QueueHandler(queue)
     root_logger.addHandler(queue_handler)
-    root_logger.setLevel(logging.INFO)
+    root_logger.setLevel(LOGGING_LEVEL)
 
     # Log test message
-    logging.info("Logging setup is complete for current process")
+    if log_test_message:
+        logging.info(f"Logging setup is complete for process with PID: {multiprocessing.current_process().pid}")
 
 
 class LoggingHandler:
@@ -68,9 +76,7 @@ class LoggingHandler:
             os.makedirs(LOGS_DIR)
 
         # Create logs formatter
-        log_formatter = logging.Formatter(
-            "[%(asctime)s] [%(process)-8d] [%(levelname)-8s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
-        )
+        log_formatter = logging.Formatter(FORMATTER_FMT, datefmt=FORMATTER_DATEFMT)
 
         # Setup logging into file
         file_handler = logging.FileHandler(
@@ -78,9 +84,13 @@ class LoggingHandler:
         )
         file_handler.setFormatter(log_formatter)
 
-        # Setup logging into console
+        # This import must be here
+        # pylint: disable=import-outside-toplevel
         import sys
 
+        # pylint: enable=import-outside-toplevel
+
+        # Setup logging into console
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(log_formatter)
 
@@ -96,29 +106,37 @@ class LoggingHandler:
                 # Get logging record
                 record = self.queue.get()
 
-                # Ignore python-telegram-bot logs
-                if (
-                    record is not None
-                    and record.message
-                    and str(record.message).startswith(TELEGRAM_LOGS_IGNORE_PREFIX)
-                ):
-                    continue
-
                 # Send None to exit
                 if record is None:
                     break
+
+                # Skip empty messages
+                if record.message is None:
+                    continue
+
+                # Ignore some record messages
+                ignore = False
+                for ignore_str in LOGS_IGNORE_PREFIXES:
+                    if str(record.message).startswith(ignore_str):
+                        ignore = True
+                        break
+                if ignore:
+                    continue
 
                 # Handle current logging record
                 logger = logging.getLogger(record.name)
                 logger.handle(record)
 
             # Ignore Ctrl+C (call queue.put(None) to stop this listener)
-            except KeyboardInterrupt:
+            except (SystemExit, KeyboardInterrupt):
                 pass
 
             # Error! WHY???
             except Exception:
-                import sys, traceback
+                # pylint: disable=import-outside-toplevel
+                import traceback
+
+                # pylint: enable=import-outside-toplevel
 
                 print("Logging error: ", file=sys.stderr)
                 traceback.print_exc(file=sys.stderr)

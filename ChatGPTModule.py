@@ -28,9 +28,9 @@ import time
 import uuid
 from typing import List, Dict
 
-import BotHandler
+import bot_handler
 import users_handler
-from RequestResponseContainer import RequestResponseContainer
+from request_response_container import RequestResponseContainer
 
 
 class ChatGPTModule:
@@ -180,7 +180,7 @@ class ChatGPTModule:
                     request_response.response = str(data["message"])
 
                     # Send message to user
-                    asyncio.run(BotHandler.send_message_async(self.config, self.messages, request_response, end=False))
+                    asyncio.run(bot_handler.send_message_async(self.config, self.messages, request_response, end=False))
 
                     # Store conversation_id
                     if "conversation_id" in data and data["conversation_id"] is not None:
@@ -222,7 +222,7 @@ class ChatGPTModule:
                     request_response.response += str(data)
 
                     # Send message to user
-                    asyncio.run(BotHandler.send_message_async(self.config, self.messages, request_response, end=False))
+                    asyncio.run(bot_handler.send_message_async(self.config, self.messages, request_response, end=False))
 
                     # Cancel requested?
                     if self.cancel_requested.value:
@@ -293,7 +293,7 @@ class ChatGPTModule:
             self.processing_flag.value = False
 
         # Finish message
-        asyncio.run(BotHandler.send_message_async(self.config, self.messages, request_response, end=True))
+        asyncio.run(bot_handler.send_message_async(self.config, self.messages, request_response, end=True))
 
     def clear_conversation_for_user(self, user_handler: users_handler.UsersHandler, user: dict) -> None:
         """

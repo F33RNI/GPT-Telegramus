@@ -50,6 +50,7 @@ _LANG_FILE_KEYS = [
     "stop_error_not_last",
     "stop_error",
     "edgegpt_sources",
+    "users_read_error",
     "users_admin",
     "restarting",
     "restarting_done",
@@ -83,7 +84,6 @@ _LANG_FILE_KEYS = [
     "button_module",
     "button_style_change",
     "modules",
-    "module_icons",
 ]
 
 
@@ -92,7 +92,16 @@ class Messages:
         self.users_handler = users_handler
 
         self._manager = Manager()
-        self._langs = self._manager.dict()
+
+        # self.langs contains all messages in format
+        # {
+        #   "lang_id": {
+        #       "message_id": "Message text",
+        #       ...
+        #   },
+        #   ...
+        # }
+        self.langs = self._manager.dict()
 
     def langs_load(self, langs_dir: str) -> None:
         """Loads and parses languages from json files into multiprocessing dictionary
@@ -121,16 +130,19 @@ class Messages:
                         raise Exception(f"No {key} key in {file} language file")
 
                 # Append to loaded languages
-                self._langs[lang_id] = lang_dict
+                self.langs[lang_id] = lang_dict
+
+        # Sort alphabetically
+        self.langs = {key: value for key, value in sorted(self.langs.items())}
 
         # Print final number of languages
-        logging.info(f"Loaded {len(self._langs)} languages")
+        logging.info(f"Loaded {len(self.langs)} languages")
 
-    def message_get(
+    def get_message(
         self,
         message_key: str,
         lang_id: str or None = None,
-        user_id: str or None = None,
+        user_id: int or None = None,
         default_value: Any = None,
     ) -> Any:
         """Retrieves message from language
@@ -138,7 +150,7 @@ class Messages:
         Args:
             message_key (str): key from lang file
             lang_id (str or None, optional): ID of language or None to retrieve from user. Defaults to None.
-            user_id (str or None, optional): ID of user to retrieve lang_id. Defaults to None.
+            user_id (int or None, optional): ID of user to retrieve lang_id. Defaults to None.
             default_value (Any, optional): fallback value in case of no message_key. Defaults to None.
 
         Returns:
@@ -146,18 +158,18 @@ class Messages:
         """
         # Retrieve lang_id from user
         if lang_id is None and user_id is not None:
-            lang_id = self.users_handler.get_key(user_id, "user_id", "eng")
+            lang_id = self.users_handler.get_key(user_id, "lang_id", "eng")
 
         # Fallback to English
-        elif lang_id is None and user_id is None:
+        if lang_id is None:
             lang_id = "eng"
 
         # Get messages
-        messages = self._langs.get(lang_id)
+        messages = self.langs.get(lang_id)
 
-        # Check if lang_id exists and fallback to English
+        # Check if lang_id exists or fallback to English
         if messages is None:
             logging.warning(f"No language with ID {lang_id}")
-            messages = self._langs.get("eng")
+            messages = self.langs.get("eng")
 
         return messages.get(message_key, default_value)

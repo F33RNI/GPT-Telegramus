@@ -19,6 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import logging
+import os
 import json
 import multiprocessing
 from typing import Any, Dict, List, Tuple
@@ -35,22 +36,46 @@ class UsersHandler:
 
         self._lock = multiprocessing.Lock()
 
-    def get_user(self, id_: str) -> Dict or None:
-        """Tries to find user in database
-
-        Args:
-            id_ (str): ID of user to find
+    def read_database(self) -> List[Dict] or None:
+        """Tries to read and parse database
 
         Returns:
-            Dict or None: user's data as dictionary or None if not found
+            List[Dict] or None: list of users or None in case of error
         """
         try:
-            # Read database
-            database_file = self.config["files"]["users_database"]
+            database_file = self.config.get("files").get("users_database")
+
+            # Create empty file
+            if not os.path.exists(database_file):
+                logging.info(f"Creating database file {database_file}")
+                with self._lock:
+                    with open(database_file, "w+", encoding="utf-8") as file_:
+                        json.dump([], file_, ensure_ascii=False, indent=4)
+
+            # Read and parse
             logging.info(f"Reading users database from {database_file}")
             with self._lock:
                 with open(database_file, "r", encoding="utf-8") as file_:
                     database = json.loads(file_.read())
+            return database
+        except Exception as e:
+            logging.error("Error reading users database", exc_info=e)
+        return None
+
+    def get_user(self, id_: int) -> Dict or None:
+        """Tries to find user in database
+
+        Args:
+            id_ (int): ID of user to find
+
+        Returns:
+            Dict or None: user's data as dictionary as is (without replacing any keys) or None if not found
+        """
+        try:
+            # Read database
+            database = self.read_database()
+            if database is None:
+                return None
 
             # Find user
             user = None
@@ -62,6 +87,8 @@ class UsersHandler:
             # Check if we found them
             if user:
                 return user
+
+            # No user
             else:
                 logging.warning(f"No user {id_}")
                 return None
@@ -70,22 +97,26 @@ class UsersHandler:
             logging.error(f"Error finding user {id_} in database", exc_info=e)
         return None
 
-    def get_key(self, id_: str, key: str, default_value: Any) -> Any:
+    def get_key(self, id_: int, key: str, default_value: Any = None, user: Dict or None = None) -> Any:
         """Tries to read key value of user and handles previous formats (legacy)
+        It's possible to use pre-loaded dictionary as user argument (ex. from get_user() function)
+        If user argument is specified, id_ argument doesn't matter
 
         Args:
-            id_ (str): ID of user
+            id_ (int): ID of user
             key (str): target key
-            default_value (Any): fallback value
+            default_value (Any, optional): fallback value. Defaults to None
+            user (Dict or None, optional): None to load from file, or Dict to use pre-loaded one. Defaults to None
 
         Returns:
             Any: key's value or default_value
         """
         # Find user
-        user = self.get_user(id_)
+        if user is None:
+            user = self.get_user(id_)
 
         # Check
-        if not user:
+        if user is None:
             return default_value
 
         # Get user's format version
@@ -101,26 +132,28 @@ class UsersHandler:
             # Old format
             if lang_id is None and format_version is None:
                 lang_index = user.get("lang")
+                if lang_index is None:
+                    return default_value
                 if lang_index == 0:
-                    lang_id = "eng"
-                elif lang_index == 1:
-                    lang_id = "rus"
-                elif lang_index == 2:
-                    lang_id = "tof"
-                elif lang_index == 3:
-                    lang_id = "ind"
-                elif lang_index == 4:
-                    lang_id = "zho"
-                elif lang_index == 5:
-                    lang_id = "bel"
-                elif lang_index == 6:
-                    lang_id = "ukr"
-                elif lang_index == 7:
-                    lang_id = "fas"
-                elif lang_index == 8:
-                    lang_id = "spa"
+                    return "eng"
+                if lang_index == 1:
+                    return "rus"
+                if lang_index == 2:
+                    return "tof"
+                if lang_index == 3:
+                    return "ind"
+                if lang_index == 4:
+                    return "zho"
+                if lang_index == 5:
+                    return "bel"
+                if lang_index == 6:
+                    return "ukr"
+                if lang_index == 7:
+                    return "fas"
+                if lang_index == 8:
+                    return "spa"
+                return default_value
 
-            # Still None?
             return default_value if lang_id is None else lang_id
 
         ##########
@@ -133,40 +166,59 @@ class UsersHandler:
             # Old format
             if module is not None and isinstance(module, int):
                 if module == 0:
-                    module = "chatgpt"
-                elif module == 1:
-                    module = "dalle"
-                elif lang_index == 2:
-                    module = "copilot"
-                elif lang_index == 3:
-                    module = "bard"
-                elif lang_index == 4:
-                    module = "copilot_image_creator"
-                elif lang_index == 5:
-                    module = "gemini"
-                else:
-                    module = "chatgpt"
+                    return "lmao_chatgpt"
+                if module == 1:
+                    return "dalle"
+                if module == 2:
+                    return "ms_copilot"
+                if module == 3:
+                    return "gemini"
+                if module == 4:
+                    return "ms_copilot_image_creator"
+                if module == 5:
+                    return "gemini"
+                return self.config.get("modules").get("default", default_value)
 
             return default_value if module is None else module
+
+        ####################
+        # MS Copilot style #
+        ####################
+        elif key == "ms_copilot_style":
+            # Try current format
+            ms_copilot_style = user.get("ms_copilot_style")
+
+            # Old format
+            if ms_copilot_style is None and format_version is None:
+                edgegpt_style = user.get("edgegpt_style")
+                if edgegpt_style is None:
+                    return default_value
+                if edgegpt_style == 0:
+                    return "precise"
+                if edgegpt_style == 1:
+                    return "balanced"
+                if edgegpt_style == 2:
+                    return "creative"
+                return default_value
+
+            return default_value if ms_copilot_style is None else ms_copilot_style
 
         # Return key value or default value
         return user.get(key, default_value)
 
-    def set_key(self, id_: str, key: str, value: Any) -> None:
+    def set_key(self, id_: int, key: str, value: Any) -> None:
         """Sets key's value of user and saves it to database or creates a new user
 
         Args:
-            id_ (str): ID of user
+            id_ (int): ID of user
             key (str): key to set
             value (Any): value of the key
         """
         try:
             # Read database
-            database_file = self.config["files"]["users_database"]
-            logging.info(f"Reading users database from {database_file}")
-            with self._lock:
-                with open(database_file, "r", encoding="utf-8") as file_:
-                    database = json.loads(file_.read())
+            database = self.read_database()
+            if database is None:
+                return
 
             # Find user
             user_index = -1
@@ -181,6 +233,7 @@ class UsersHandler:
                 database[user_index][key] = value
 
                 # Save database
+                database_file = self.config.get("files").get("users_database")
                 logging.info(f"Saving users database to {database_file}")
                 with self._lock:
                     with open(database_file, "w+", encoding="utf-8") as file_:
@@ -193,11 +246,11 @@ class UsersHandler:
         except Exception as e:
             logging.error(f"Error setting value of key {key} for user {id_}", exc_info=e)
 
-    def create_user(self, id_: str, key_values: List[Tuple[str, Any]] or None = None) -> Dict or None:
+    def create_user(self, id_: int, key_values: List[Tuple[str, Any]] or None = None) -> Dict or None:
         """Creates a new user with default data and saves it to the database
 
         Args:
-            id_ (str): ID of new user
+            id_ (int): ID of new user
             key_values (List[Tuple[str, Any]]orNone, optional): list of (key, value) to set to a new user
 
         Returns:
@@ -206,16 +259,17 @@ class UsersHandler:
         try:
             # Create a new user with default params
             logging.info(f"Creating a new user {id_}")
+            telegram_config = self.config.get("telegram")
             user = {
+                "format_version": version_major(),
                 "user_id": id_,
                 "user_name": DEFAULT_USER_NAME,
-                "admin": True if id_ in self.config["telegram"]["admin_ids"] else False,
+                "admin": True if id_ in telegram_config.get("admin_ids") else False,
                 "banned": (
-                    False if id_ in self.config["telegram"]["admin_ids"] else self.config["telegram"]["ban_by_default"]
+                    False if id_ in telegram_config.get("admin_ids") else telegram_config.get("ban_by_default")
                 ),
-                "module": self.config["modules"]["default_module"],
+                "module": self.config.get("modules").get("default"),
                 "requests_total": 0,
-                "format_version": version_major(),
             }
 
             # Set additional keys
@@ -224,11 +278,9 @@ class UsersHandler:
                     user[key] = value
 
             # Read database
-            database_file = self.config["files"]["users_database"]
-            logging.info(f"Reading users database from {database_file}")
-            with self._lock:
-                with open(database_file, "r", encoding="utf-8") as file_:
-                    database = json.loads(file_.read())
+            database = self.read_database()
+            if database is None:
+                return None
 
             # Check if user exists
             for user_ in database:
@@ -239,6 +291,7 @@ class UsersHandler:
             database.append(user)
 
             # Save database
+            database_file = self.config.get("files").get("users_database")
             logging.info(f"Saving users database to {database_file}")
             with self._lock:
                 with open(database_file, "w+", encoding="utf-8") as file_:

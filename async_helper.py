@@ -18,11 +18,26 @@ You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-# config.json will replace values here
-CONFIG_DEFAULT = {
-    
-}
+import asyncio
 
-class ConfigManager:
-    def __init__(self) -> None:
-        pass
+
+def async_helper(awaitable_) -> None:
+    """Runs async function inside sync
+    TODO: Get rid of this
+
+    Args:
+        awaitable_ (_type_): coroutine
+    """
+    # Try to get current event loop
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    # Check it
+    if loop and loop.is_running():
+        loop.create_task(awaitable_)
+
+    # We need new event loop
+    else:
+        asyncio.run(awaitable_)

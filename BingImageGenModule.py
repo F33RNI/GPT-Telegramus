@@ -25,10 +25,10 @@ from typing import List, Dict
 
 from BingImageCreator import ImageGen
 
-import BotHandler
+import bot_handler
 import users_handler
 from JSONReaderWriter import load_json
-from RequestResponseContainer import RequestResponseContainer
+from request_response_container import RequestResponseContainer
 
 
 class BingImageGenModule:
@@ -156,4 +156,4 @@ class BingImageGenModule:
             request_response.error = True
 
         # Finish message
-        BotHandler.async_helper(BotHandler.send_message_async(self.config, self.messages, request_response, end=True))
+        bot_handler.async_helper(bot_handler.send_message_async(self.config, self.messages, request_response, end=True))

@@ -19,10 +19,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import doctest
-import BotHandler
+import bot_handler
 import unittest
 
 
 def load_tests(loader, tests, ignore):
-    tests.addTests(doctest.DocTestSuite(BotHandler))
+    tests.addTests(doctest.DocTestSuite(bot_handler))
     return tests

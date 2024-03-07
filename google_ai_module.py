@@ -25,83 +25,80 @@ import os
 import multiprocessing
 import ctypes
 import logging
-import requests
-from typing import List, Dict
-from google.ai.generativelanguage import (
-    Part,
-    Content,
-)
-import google.generativeai as genai
+from typing import Dict, Type
 
 # pylint: disable=no-name-in-module
-from google.generativeai.client import (
-    _ClientManager,
-)
+from google.generativeai.client import _ClientManager
+import google.generativeai as genai
+from google.ai.generativelanguage import Part, Content
 
-import BotHandler
+import messages
 import users_handler
-from RequestResponseContainer import RequestResponseContainer
+from async_helper import async_helper
+from bot_sender import send_message_async
+from request_response_container import RequestResponseContainer
+
+# Self name
+_NAME = "gemini"
 
 
 class GoogleAIModule:
     def __init__(
         self,
         config: Dict,
-        config_key: str,
-        messages: List[Dict],
-        users_handler: users_handler.UsersHandler,
+        messages_: Type[messages.Messages],
+        users_handler_: Type[users_handler.UsersHandler],
     ) -> None:
+        """Initializes class variables (must be done in main process)
+
+        Args:
+            config (Dict): global config
+            messages_ (Type[messages.Messages]): initialized messages handler
+            users_handler_ (Type[users_handler.UsersHandler]): initialized users handler
+        """
         self.config = config
-        self.config_key = config_key
-        self.messages = messages
-        self.users_handler = users_handler
+        self.messages = messages_
+        self.users_handler = users_handler_
 
         # All variables here must be multiprocessing
         self.cancel_requested = multiprocessing.Value(ctypes.c_bool, False)
         self.processing_flag = multiprocessing.Value(ctypes.c_bool, False)
         self._last_request_time = multiprocessing.Value(ctypes.c_double, 0.0)
 
-        self._enabled = False
+        # Don't use this variables outside the module's process
         self._model = None
         self._vision_model = None
 
-    def initialize(self, proxy=None) -> None:
-        """
-        Initializes Google AI module using the generative language API: https://ai.google.dev/api
+    def initialize(self) -> None:
+        """Initializes Google AI module using the generative language API: https://ai.google.dev/api
         This method must be called from another process
-        :return:
+
+        Raises:
+            Exception: initialization error
         """
         # Internal variables for current process
-        self._enabled = False
         self._model = None
-
-        self.processing_flag.value = False
-        self.cancel_requested.value = False
-
         try:
-            # Use manual proxy
-            if not proxy and self.config[self.config_key]["proxy"] and self.config[self.config_key]["proxy"] != "auto":
-                proxy = self.config[self.config_key]["proxy"]
+            self.processing_flag.value = False
+            self.cancel_requested.value = False
 
-            # Log
-            logging.info(f"Initializing Google AI module with proxy {proxy}")
+            # Get module's config
+            module_config = self.config.get(_NAME)
 
-            # Set proxy
-            if proxy:
+            # Use proxy
+            if module_config.get("proxy") and module_config.get("proxy") != "auto":
+                proxy = module_config.get("proxy")
                 os.environ["http_proxy"] = proxy
-
-            # Set enabled status
-            self._enabled = self.config["modules"][self.config_key]
-            if not self._enabled:
-                logging.warning("Google AI module disabled in config file!")
-                raise Exception("Google AI module disabled in config file!")
+                logging.info(f"Initializing Google AI module with proxy {proxy}")
+            else:
+                logging.info("Initializing Google AI module without proxy")
 
             # Set up the model
             generation_config = {
-                "temperature": self.config[self.config_key].get("temperature", 0.9),
-                "top_p": self.config[self.config_key].get("top_p", 1),
-                "top_k": self.config[self.config_key].get("top_k", 1),
-                "max_output_tokens": self.config[self.config_key].get("max_output_tokens", 2048),
+                "temperature": module_config.get("temperature", 0.9),
+                "top_p": module_config.get("top_p", 1),
+                "top_k": module_config.get("top_k", 1),
+                "max_output_tokens": module_config.get("max_output_tokens", 2048),
             }
             safety_settings = []
             self._model = genai.GenerativeModel(
@@ -116,16 +113,16 @@ class GoogleAIModule:
             )
 
             client_manager = _ClientManager()
-            client_manager.configure(api_key=self.config[self.config_key]["api_key"])
+            client_manager.configure(api_key=module_config.get("api_key"))
             # pylint: disable=protected-access
             self._model._client = client_manager.get_default_client("generative")
             self._vision_model._client = client_manager.get_default_client("generative")
             # pylint: enable=protected-access
             logging.info("Google AI module initialized")
 
-        # Error
+        # Reset module and re-raise the error
         except Exception as e:
-            self._enabled = False
+            self._model = None
             raise e
 
     def process_request(self, request_response: RequestResponseContainer) -> None:
@@ -134,16 +131,15 @@ class GoogleAIModule:
         :param request_response: RequestResponseContainer object
         :return:
         """
-        lang = request_response.user.get("lang", 0)
-        conversations_dir = self.config["files"]["conversations_dir"]
-        conversation_id = request_response.user.get(f"{self.config_key}_conversation_id")
+        conversations_dir = self.config.get("files").get("conversations_dir")
+        conversation_id = self.users_handler.get_key(request_response.user_id, f"{_NAME}_conversation_id")
 
         # Check if we are initialized
-        if not self._enabled:
-            logging.error("Google AI module not initialized!")
-            request_response.response = (
-                self.messages[lang]["response_error"].replace("\\n", "\n").format("Google AI module not initialized!")
-            )
+        if self._model is None:
+            logging.error("Google AI module not initialized")
+            request_response.response = self.messages.get_message(
+                "response_error", user_id=request_response.user_id
+            ).format(error_text="Google AI module not initialized")
             request_response.error = True
             self.processing_flag.value = False
             return
@@ -152,37 +148,36 @@ class GoogleAIModule:
             # Set flag that we are currently processing request
             self.processing_flag.value = True
 
+            # Get module's config
+            module_config = self.config.get(_NAME)
+
             # Cool down
-            if time.time() - self._last_request_time.value <= self.config[self.config_key]["cooldown_seconds"]:
-                time_to_wait = self.config[self.config_key]["cooldown_seconds"] - (
-                    time.time() - self._last_request_time.value
-                )
+            if time.time() - self._last_request_time.value <= module_config.get("cooldown_seconds"):
+                time_to_wait = module_config.get("cooldown_seconds") - (time.time() - self._last_request_time.value)
                 logging.warning(f"Too frequent requests. Waiting {time_to_wait} seconds...")
-                time.sleep(
-                    self._last_request_time.value + self.config[self.config_key]["cooldown_seconds"] - time.time()
-                )
+                time.sleep(self._last_request_time.value + module_config.get("cooldown_seconds") - time.time())
             self._last_request_time.value = time.time()
 
             response = None
             conversation = []
-            # Try to download image
-            if request_response.image_url:
-                logging.info("Downloading user image")
-                image = requests.get(request_response.image_url, timeout=120)
 
+            # Gemini vision
+            if request_response.request_image:
                 logging.info("Asking Gemini...")
                 response = self._vision_model.generate_content(
                     [
                         Part(
                             inline_data={
                                 "mime_type": "image/jpeg",
-                                "data": image.content,
+                                "data": request_response.request_image,
                             }
                         ),
-                        Part(text=request_response.request),
+                        Part(text=request_response.request_text),
                     ],
                     stream=True,
                 )
+
+            # Gemini (text)
             else:
                 # Try to load conversation
                 conversation = _load_conversation(conversations_dir, conversation_id) or []
@@ -190,7 +185,9 @@ class GoogleAIModule:
                 if conversation_id is None:
                     conversation_id = str(uuid.uuid4())
 
-                conversation.append(Content.to_json(Content(role="user", parts=[Part(text=request_response.request)])))
+                conversation.append(
+                    Content.to_json(Content(role="user", parts=[Part(text=request_response.request_text)]))
+                )
 
                 logging.info("Asking Gemini...")
                 response = self._model.generate_content(
@@ -204,56 +201,59 @@ class GoogleAIModule:
                 if len(chunk.parts) < 1 or "text" not in chunk.parts[0]:
                     continue
 
-                request_response.response += chunk.parts[0].text
-                BotHandler.async_helper(
-                    BotHandler.send_message_async(self.config, self.messages, request_response, end=False)
+                # Append and send response
+                request_response.response_text += chunk.parts[0].text
+                async_helper(
+                    send_message_async(self.config.get("telegram"), self.messages, request_response, end=False)
                 )
 
+            # Canceled, don't save conversation
             if self.cancel_requested.value:
                 logging.info("Gemini module canceled")
-            elif not request_response.image_url:
-                conversation.append(Content.to_json(Content(role="model", parts=response.parts)))
 
+            # Save conversation if not gemini-vision
+            elif not request_response.request_image:
+                # Try to save conversation
+                conversation.append(Content.to_json(Content(role="model", parts=response.parts)))
                 if not _save_conversation(conversations_dir, conversation_id, conversation):
                     conversation_id = None
-                request_response.user[f"{self.config_key}_conversation_id"] = conversation_id
-                self.users_handler.save_user(request_response.user)
+
+                # Save conversation ID
+                self.users_handler.set_key(request_response.user_id, f"{_NAME}_conversation_id", conversation_id)
 
         # Error
         except Exception as e:
-            self._enabled = False
             raise e
+
         finally:
             self.processing_flag.value = False
 
-        # Finish message
-        BotHandler.async_helper(BotHandler.send_message_async(self.config, self.messages, request_response, end=True))
+        # Finish
+        async_helper(send_message_async(self.config.get("telegram"), self.messages, request_response, end=True))
 
-    def clear_conversation_for_user(self, user: dict) -> None:
-        """
-        Clears conversation (chat history) for selected user
-        :param user_handler:
-        :param user:
-        :return: True if cleared successfully
-        """
-        conversation_id = user.get(f"{self.config_key}_conversation_id")
+    def clear_conversation_for_user(self, user_id: int) -> None:
+        """Clears conversation (chat history) for selected user"""
+        # Get current conversation_id
+        conversation_id = self.users_handler.get_key(user_id, f"{_NAME}_conversation_id")
         if conversation_id is None:
             return
 
         # Delete from API
-        _delete_conversation(self.config["files"]["conversations_dir"], conversation_id)
+        _delete_conversation(self.config.get("files").get("conversations_dir"), conversation_id)
 
         # Delete from user
-        user[f"{self.config_key}_conversation_id"] = None
-        self.users_handler.save_user(user)
+        self.users_handler.set_key(user_id, f"{_NAME}_conversation_id", None)
 
 
 def _load_conversation(conversations_dir, conversation_id):
-    """
-    Loads conversation
-    :param conversations_dir:
-    :param conversation_id:
-    :return: Content of conversation, None if error
+    """Tries to load conversation
+
+    Args:
+        conversations_dir (_type_): _description_
+        conversation_id (_type_): _description_
+
+    Returns:
+        _type_: content of conversation, None if error
     """
     logging.info(f"Loading conversation {conversation_id}")
     try:
@@ -268,7 +268,7 @@ def _load_conversation(conversations_dir, conversation_id):
             with open(conversation_file, "r", encoding="utf-8") as json_file:
                 return json.load(json_file)
         else:
-            logging.warning(f"File {conversation_file} not exists!")
+            logging.warning(f"File {conversation_file} not exists")
 
     except Exception as e:
         logging.warning(f"Error loading conversation {conversation_id}", exc_info=e)
@@ -277,12 +277,15 @@ def _load_conversation(conversations_dir, conversation_id):
 
 
 def _save_conversation(conversations_dir, conversation_id, conversation) -> bool:
-    """
-    Saves conversation
-    :param conversations_dir:
-    :param conversation_id:
-    :param conversation:
-    :return: True if no error
+    """Tries to save conversation without raising any error
+
+    Args:
+        conversations_dir (_type_): _description_
+        conversation_id (_type_): _description_
+        conversation (_type_): _description_
+
+    Returns:
+        bool: True if no error
     """
     logging.info(f"Saving conversation {conversation_id}")
     try:
@@ -290,9 +293,14 @@ def _save_conversation(conversations_dir, conversation_id, conversation) -> bool
             logging.info("conversation_id is None. Skipping saving")
             return False
 
+        # Create conversation dir
+        if not os.path.exists(conversations_dir):
+            logging.info(f"Creating {conversations_dir} directory")
+            os.makedirs(conversations_dir)
+
         # Save as json file
         conversation_file = os.path.join(conversations_dir, conversation_id + ".json")
-        with open(conversation_file, "w", encoding="utf-8") as json_file:
+        with open(conversation_file, "w+", encoding="utf-8") as json_file:
             json.dump(conversation, json_file, indent=4)
 
     except Exception as e:
@@ -303,10 +311,14 @@ def _save_conversation(conversations_dir, conversation_id, conversation) -> bool
 
 
 def _delete_conversation(conversations_dir, conversation_id) -> bool:
-    """
-    Deletes conversation
-    :param conversation_id:
-    :return:
+    """Tries to delete conversation without raising any error
+
+    Args:
+        conversations_dir (_type_): _description_
+        conversation_id (_type_): _description_
+
+    Returns:
+        bool: True if no error
     """
     logging.info(f"Deleting conversation {conversation_id}")
     # Delete conversation file if exists

@@ -1,19 +1,19 @@
 {
     "language_name": "🇺🇸 English",
     "language_icon": "🇺🇸",
-    "language_select_error": "❌ Error selecting language!\n\n{0}",
+    "language_select_error": "❌ Error selecting language!\n\n{error_text}",
     "language_select": "Please select an interface language",
     "language_changed": "🇺🇸 You've selected English\n\nYou can change the language at any time by typing the /lang command",
-    "start_message": "Hello, 👋 choomba! 👋\n\n📄 GPT-Telegramus version {0}\n\n💜 GPT-Telegramus author: Fern (aka F3RNI)\n💻 Contributors:\n1️⃣ Keepalove (aka Azarell) (aka Sprav04ka)\n2️⃣ Hanssen\n3️⃣ Sergey Krashevich\n4️⃣ Wahit Fitriyanto\n5️⃣ Alexander Fadeyev\n\n😺 GitHub page: https://github.com/F33RNI/GPT-Telegramus\n\n🎵 Support the project by buying my music: https://f3rni.bandcamp.com",
+    "start_message": "Hello, 👋 choomba! 👋\n\n📄 GPT-Telegramus version {version}\n\n💜 GPT-Telegramus author: Fern (aka F3RNI)\n💻 Contributors:\n1️⃣ Keepalove (aka Azarell) (aka Sprav04ka)\n2️⃣ Hanssen\n3️⃣ Sergey Krashevich\n4️⃣ Wahit Fitriyanto\n5️⃣ Alexander Fadeyev\n\n😺 GitHub page: https://github.com/F33RNI/GPT-Telegramus\n\n🎵 Support the project by buying my music: https://f3rni.bandcamp.com",
     "help_message": "📄 /start - Welcome message and bot version\n❓ /help - Show this message\n↕ /module - Change module to chat with\n🧹 /clear - Clear chat history\n🌎 /lang - Change the language\n🆔 /chatid - Show your chat_id\n\nNow to get started send me any message 💬",
     "help_message_admin": "Admin commands:\n\n💬 /queue - Show requests queue\n🔃 /restart - Restart proxies and telegram bot\n👤 /users - Show list of all users\n🔨 /ban <id> [reason] - Ban a user by their id with reason (optional)\n🔓 /unban <id> - Unban a user by their id\n📢 /broadcast <message> - Send text message to everyone except banned users",
-    "empty_request_module_changed": "✅ Your module has been changed to {0}\nNow send me your request as a message",
-    "media_group_response": "Generated images for \"{}\" request",
+    "empty_request_module_changed": "✅ Your module has been changed to {module_name}\nNow send me your request as a message",
+    "media_group_response": "Generated images for \"{request_text}\" request",
     "permissions_deny": "❌ You do not have permission for this command!",
     "queue_overflow": "Queue is full. Try again later ⏳",
     "queue_empty": "🗑 Queue is empty",
-    "queue_accepted": "✅ Request to the {0} module added to the queue.\nPosition: {1}/{2} ⏳",
-    "response_error": "❌ Error: {0}\n\nClear the history and make another request or try again later",
+    "queue_accepted": "✅ Request to the {module_name} module added to the queue.\nPosition: {queue_size}/{queue_max} ⏳",
+    "response_error": "❌ Error: {error_text}\n\nClear the history and make another request or try again later",
     "empty_message": "⚠️ Empty! See logs for details",
     "regenerate_error_not_last": "❌ Error! Can only regenerate the last request!",
     "regenerate_error_empty": "❌ Error! Empty request!",
@@ -21,29 +21,30 @@
     "stop_error_not_last": "❌ Error! Can only abort the last request!",
     "stop_error": "❌ Error! Can not stop generating!",
     "edgegpt_sources": "\n📄 {0}: {1}",
-    "users_admin": "Banned? Admin? Language Module UserID (Name) - Requests\n\n{0}",
+    "users_read_error": "❌ Error reading or parsing list of users!",
+    "users_admin": "Banned? Admin? Language Module ID Name - Requests\n\n{users_data}",
     "restarting": "🙏 Restarting in progress...\nPlease wait",
-    "restarting_done": "✅ The restart is completed",
-    "chat_cleared": "✅ Chat history cleared for {0}",
-    "clear_error": "❌ Error clearing chat history!\n\n{0}",
+    "restarting_done": "{errors}\n✅ The restart is completed",
+    "chat_cleared": "✅ Chat history cleared for {module_name}",
+    "clear_error": "❌ Error clearing chat history!\n\n{error_text}",
     "clear_select_module": "Select the module whose chat history you want to clear,\nor ignore this message",
-    "module_select_module": "Your current module: {}\nSelect the module to chat with,\nor ignore this message",
-    "user_cooldown_error": "❌ Please wait {0} before sending request to the {1} module!",
+    "module_select_module": "Your current module: {current_module}\nSelect the module to chat with,\nor ignore this message",
+    "user_cooldown_error": "❌ Please wait {time_formatted} before sending request to the {module_name} module!",
     "hours": "h",
     "minutes": "m",
     "seconds": "s",
-    "ban_message_admin": "✅ Banned user: {0}\n\nReason: {1}",
+    "ban_message_admin": "✅ Banned user: {banned_user}\n\nReason: {ban_reason}",
     "ban_no_user_id": "❌ Error! Please specify user_id",
-    "ban_message_user": "❌ You're not whitelisted or you have been banned! \n\nReason: {0}",
+    "ban_message_user": "❌ You're not whitelisted or you have been banned!\n\nReason: {ban_reason}",
     "ban_reason_default": "Reason not specified",
-    "unban_message_admin": "✅ Unbanned user: {0}",
+    "unban_message_admin": "✅ Unbanned user: {unbanned_user}",
     "broadcast_no_message": "❌ No message to broadcast!",
-    "broadcast": "📢 {0}",
+    "broadcast": "📢 {message}",
     "broadcast_initiated": "⏳ Broadcasting in progress... Please wait and don't send new messages!",
-    "broadcast_done": "✅ Broadcast completed! Messages sent to users:\n{0}",
-    "style_changed": "✅ Conversation style changed to {0}",
-    "style_change_error": "❌ Error changing conversation style!\n\n{0}",
-    "style_select": "Your conversation style: {}\nSelect new conversation style of Bing,\nor ignore this message",
+    "broadcast_done": "✅ Broadcast completed! Messages sent to users:\n{broadcast_ok_users}",
+    "style_changed": "✅ Conversation style changed to {changed_style}",
+    "style_change_error": "❌ Error changing conversation style!\n\n{error_text}",
+    "style_select": "Your conversation style: {current_style}\nSelect new conversation style of Bing,\nor ignore this message",
     "style_precise": "📏 Precise",
     "style_balanced": "⚖️ Balanced",
     "style_creative": "🎨 Creative",
@@ -53,18 +54,30 @@
     "button_clear": "🧹 Clear history",
     "button_module": "↕️ Change module",
     "button_style_change": "⚙️ Change style",
-    "modules": [
-        "💬 ChatGPT",
-        "🖼 DALL-E",
-        "🔵 Bing AI",
-        "🎨 Bing ImageGen",
-        "♊ Gemini"
-    ],
-    "module_icons": [
-        "💬",
-        "🖼",
-        "🔵",
-        "🎨",
-        "♊"
-    ]
+    "modules": {
+        "lmao_chatgpt": {
+            "icon": "💬",
+            "name": "ChatGPT (LMAO API)"
+        },
+        "chatgpt": {
+            "icon": "💬",
+            "name": "ChatGPT"
+        },
+        "dalle": {
+            "icon": "🖼",
+            "name": "DALL-E"
+        },
+        "ms_copilot": {
+            "icon": "🔵",
+            "name": "MS Copilot"
+        },
+        "ms_copilot_designer": {
+            "icon": "🎨",
+            "name": "MS Copilot designer"
+        },
+        "gemini": {
+            "icon": "♊",
+            "name": "Gemini"
+        }
+    }
 }
