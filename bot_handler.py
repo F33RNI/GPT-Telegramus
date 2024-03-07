@@ -743,7 +743,7 @@ class BotHandler:
             request_status = request_response_container.PROCESSING_STATE_NAMES[container.processing_state]
             message_ = (
                 f"{counter} ({container.id}). {self.users_handler.get_key(container.user_id, 'user_name', '')} "
-                f"({container.user_id}) to {container.module_name} ({request_status}): {container.request}\n"
+                f"({container.user_id}) to {container.module_name} ({request_status}): {container.request_text}\n"
             )
             message += message_
             counter += 1
