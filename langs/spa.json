@@ -24,7 +24,7 @@
     "users_read_error": "❌ ¡Error al leer o analizar la lista de usuarios!",
     "users_admin": "¿Baneado? ¿Admin? Idioma Módulo ID Nombre - Solicitudes\n\n{users_data}",
     "restarting": "🙏 Reinicio en curso...\nEspera por favor",
-    "restarting_done": "{errors}\n✅ El reinicio se ha completado",
+    "restarting_done": "{reload_logs}\n✅ El reinicio se ha completado",
     "chat_cleared": "✅ Historial del chat borrado para {module_name}",
     "clear_error": "❌ Error al borrar el historial del chat!\n\n{error_text}",
     "clear_select_module": "Selecciona el módulo cuyo historial de chat deseas borrar,\no ignora este mensaje",

@@ -87,6 +87,7 @@ async def _send_safe(
     context: ContextTypes.DEFAULT_TYPE,
     reply_to_message_id: int or None = None,
     reply_markup: InlineKeyboardMarkup or None = None,
+    markdown: bool = False,
 ):
     """Sends message without raising any error
 
@@ -96,6 +97,7 @@ async def _send_safe(
         context (ContextTypes.DEFAULT_TYPE): context object from bot's callback
         reply_to_message_id (int or None, optional): ID of message to reply on. Defaults to None
         reply_markup (InlineKeyboardMarkup or None, optional): buttons. Defaults to None
+        markdown (bool, optional): True to parse as markdown. Defaults to False
     """
     try:
         await context.bot.send_message(
@@ -104,6 +106,7 @@ async def _send_safe(
             reply_to_message_id=reply_to_message_id,
             reply_markup=reply_markup,
             disable_web_page_preview=True,
+            parse_mode="MarkdownV2" if markdown else None,
         )
     except Exception as e:
         logging.error(f"Error sending {text} to {chat_id}", exc_info=e)
@@ -160,21 +163,8 @@ class BotHandler:
                 builder = ApplicationBuilder().token(telegram_config.get("api_key"))
                 self._application = builder.build()
 
-                # Set commands description
-                if telegram_config.get("commands_description_enabled"):
-                    try:
-                        logging.info("Trying to set bot commands")
-                        bot_commands = []
-                        for command_description in telegram_config.get("commands_description"):
-                            bot_commands.append(
-                                BotCommand(
-                                    command_description["command"],
-                                    command_description["description"],
-                                )
-                            )
-                        self._event_loop.run_until_complete(self._application.bot.set_my_commands(bot_commands))
-                    except Exception as e:
-                        logging.error("Error setting bot commands description", exc_info=e)
+                # Set commands
+                self._event_loop.run_until_complete(self._set_bot_commands_list())
 
                 # User commands
                 logging.info("Adding user command handlers")
@@ -187,9 +177,9 @@ class BotHandler:
                 self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_LANG, self.bot_command_lang))
                 self._application.add_handler(CaptionCommandHandler(BOT_COMMAND_CHAT_ID, self.bot_command_chatid))
 
-                # Direct module commands
-                for module_name, _ in self.modules.items():
-                    logging.info(f"Adding /{module_name} command handlers")
+                # Create all possible command handlers
+                for module_name in module_wrapper_global.MODULES:
+                    logging.info(f"Adding /{module_name} command handler")
                     self._application.add_handler(
                         CaptionCommandHandler(
                             module_name, functools.partial(self.bot_module_request, module_name=module_name)
@@ -263,6 +253,38 @@ class BotHandler:
 
         # If we're here, exit requested
         logging.warning("Telegram bot stopped")
+
+    async def _set_bot_commands_list(self) -> None:
+        """Sets telegram bot commands
+        This must be called inside start_bot() or bot_command_restart()
+        """
+        telegram_config = self.config.get("telegram")
+        if telegram_config.get("commands_description_enabled"):
+            try:
+                logging.info("Trying to set bot commands")
+                bot_commands = []
+                for command_description in telegram_config.get("commands_description"):
+                    bot_commands.append(
+                        BotCommand(
+                            command_description["command"],
+                            command_description["description"],
+                        )
+                    )
+                module_icon_names = self.messages.get_message("modules")
+                for module_name, module in self.modules.items():
+                    if module is None:
+                        continue
+                    module_icon_name = module_icon_names.get(module_name)
+                    module_name_user = f"{module_icon_name.get('icon')} {module_icon_name.get('name')}"
+                    bot_commands.append(
+                        BotCommand(
+                            module_name,
+                            module_name_user,
+                        )
+                    )
+                await self._application.bot.set_my_commands(bot_commands)
+            except Exception as e:
+                logging.error("Error setting bot commands description", exc_info=e)
 
     async def query_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Buttons (reply_markup) callback
@@ -431,6 +453,12 @@ class BotHandler:
             context (ContextTypes.DEFAULT_TYPE): context object from bot's callback
             module_name (str or None, optional): name of module (command) or None in case of message. Defaults to None
         """
+        # Handle unknown module
+        if module_name:
+            if self.modules.get(module_name) is None:
+                await self.bot_command_help(update, context)
+                return
+
         # Get user
         banned, user = await self._user_get_check(update, context)
         if user is None:
@@ -645,38 +673,45 @@ class BotHandler:
                 # Check every 1s
                 time.sleep(1)
 
-        error_messages = ""
+        reload_logs = ""
 
         # Unload selected module or all of them
         for module_name, module in self.modules.items():
+            if module is None:
+                continue
             if requested_module is not None and module_name != requested_module:
                 continue
             logging.info(f"Trying to close and unload {module_name} module")
             try:
                 module.on_exit()
-                gc.collect()
+                self.modules[module_name] = None
+                reload_logs += f"Closed module {module_name}\n"
             except Exception as e:
                 logging.error(f"Error closing {module_name} module", exc_info=e)
-                error_messages += f"Error closing {module_name} module: {e}\n"
+                reload_logs += f"Error closing {module_name} module: {e}\n"
+        gc.collect()
 
-        # Reload configs in global restart
-        if requested_module is None:
-            logging.info(f"Reloading config from {self.config_file} file")
-            try:
-                config_new = load_and_parse_config(self.config_file)
-                for key, value in config_new.items():
-                    self.config[key] = value
-            except Exception as e:
-                logging.error("Error reloading config", exc_info=e)
-                error_messages += f"Error reloading config: {e}\n"
+        # Reload configs
+        logging.info(f"Reloading config from {self.config_file} file")
+        try:
+            config_new = load_and_parse_config(self.config_file)
+            for key, value in config_new.items():
+                if requested_module is not None and key != requested_module:
+                    continue
+                reload_logs += f"Reloaded config with key {key}\n"
+                self.config[key] = value
+        except Exception as e:
+            logging.error("Error reloading config", exc_info=e)
+            reload_logs += f"Error reloading config: {e}\n"
 
         # Reload messages in global restart
         if requested_module is None:
             try:
                 self.messages.langs_load(self.config.get("files").get("messages_dir"))
+                reload_logs += "Languages reloaded\n"
             except Exception as e:
                 logging.error("Error reloading messages", exc_info=e)
-                error_messages += f"Error reloading messages: {e}\n"
+                reload_logs += f"Error reloading messages: {e}\n"
 
         # Try to load selected module or all of them
         for module_name in self.config.get("modules").get("enabled"):
@@ -688,16 +723,22 @@ class BotHandler:
                     module_name, self.config, self.messages, self.users_handler, self.logging_queue
                 )
                 self.modules[module_name] = module
+                reload_logs += f"Intialized and loaded {module_name} module\n"
             except Exception as e:
                 logging.error(f"Error initializing {module_name} module: {e} Module will be ignored")
-                error_messages += f"Error initializing {module_name} module: {e} Module will be ignored\n"
+                reload_logs += f"Error initializing {module_name} module: {e} Module will be ignored\n"
+
+        # Reload commands list
+        await self._set_bot_commands_list()
+        reload_logs += "Bot command description updated\n"
 
         # Done?
         logging.info("Restarting done")
         await _send_safe(
             user_id,
-            self.messages.get_message("restarting_done", lang_id=lang_id).format(errors=error_messages),
+            self.messages.get_message("restarting_done", lang_id=lang_id).format(reload_logs=f"```\n{reload_logs}```"),
             context,
+            markdown=True,
         )
 
     async def bot_command_queue(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -819,7 +860,9 @@ class BotHandler:
 
             # Build markup
             buttons = []
-            for enabled_module_id, _ in self.modules.items():
+            for enabled_module_id, module in self.modules.items():
+                if module is None:
+                    continue
                 if enabled_module_id not in module_wrapper_global.MODULES_WITH_HISTORY:
                     continue
                 buttons.append(
@@ -1219,7 +1262,9 @@ class BotHandler:
 
         # Build markup
         buttons = []
-        for enabled_module_id, _ in self.modules.items():
+        for enabled_module_id, module in self.modules.items():
+            if module is None:
+                continue
             buttons.append(
                 InlineKeyboardButton(
                     module_icon_names.get(enabled_module_id).get("icon")

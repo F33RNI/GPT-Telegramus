@@ -24,7 +24,7 @@
     "users_read_error": "❌ 读取或解析用户列表时出错！",
     "users_admin": "封禁? 管理? 语言 模块 ID 名字- 请求数\n\n{users_data}",
     "restarting": "🙏 正在重启中...\n请稍等",
-    "restarting_done": "{errors}\n✅ 重启已完成",
+    "restarting_done": "{reload_logs}\n✅ 重启已完成",
     "chat_cleared": "✅ 已为 {module_name} 清除对话历史",
     "clear_error": "❌ 在清除历史时遇到错误！\n\n{error_text}",
     "clear_select_module": "选择你想清理对话历史的模块\n或忽略这条消息",

@@ -24,7 +24,7 @@
     "users_read_error": "❌ Kesalahan membaca atau menguraikan daftar pengguna!",
     "users_admin": "Dilarang? Admin? Bahasa Modul ID Nama - Permintaan\n\n{users_data}",
     "restarting": "🙏 Sedang dilakukan proses restart...\nTunggu sebentar",
-    "restarting_done": "{errors}\n✅ Restart selesai",
+    "restarting_done": "{reload_logs}\n✅ Restart selesai",
     "chat_cleared": "✅ Riwayat obrolan dibersihkan untuk {module_name}",
     "clear_error": "❌ Kesalahan membersihkan riwayat obrolan!\n\n{error_text}",
     "clear_select_module": "Pilih modul yang ingin Anda bersihkan riwayat obrolannya,\natau abaikan pesan ini",

@@ -24,7 +24,7 @@
     "users_read_error": "❌ Error reading or parsing list of users!",
     "users_admin": "Banned? Admin? Language Module ID Name - Requests\n\n{users_data}",
     "restarting": "🙏 Restarting in progress...\nPlease wait",
-    "restarting_done": "{errors}\n✅ The restart is completed",
+    "restarting_done": "{reload_logs}\n✅ The restart is completed",
     "chat_cleared": "✅ Chat history cleared for {module_name}",
     "clear_error": "❌ Error clearing chat history!\n\n{error_text}",
     "clear_select_module": "Select the module whose chat history you want to clear,\nor ignore this message",
