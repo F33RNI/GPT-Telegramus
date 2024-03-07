@@ -49,7 +49,7 @@ _LANG_FILE_KEYS = [
     "continue_error_not_last",
     "stop_error_not_last",
     "stop_error",
-    "edgegpt_sources",
+    "response_link_format",
     "users_read_error",
     "users_admin",
     "restarting",
