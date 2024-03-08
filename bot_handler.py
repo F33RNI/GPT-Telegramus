@@ -978,7 +978,7 @@ class BotHandler:
 
             await _send_safe(
                 user_id,
-                self.messages.get_message("style_select").format(current_style=current_style_text),
+                self.messages.get_message("style_select", lang_id=lang_id).format(current_style=current_style_text),
                 context,
                 reply_markup=InlineKeyboardMarkup(bot_sender.build_menu(buttons)),
             )
@@ -1102,7 +1102,7 @@ class BotHandler:
             await _send_safe(
                 user_id,
                 self.messages.get_message("ban_message_admin", lang_id=lang_id).format(
-                    banned_user=f"{self.users_handler.get_key(0, 'user_name', '', user=ban_user) (ban_user_id)}",
+                    banned_user=f"{self.users_handler.get_key(0, 'user_name', '', user=ban_user)} ({ban_user_id})",
                     ban_reason=ban_reason,
                 ),
                 context,
@@ -1111,7 +1111,7 @@ class BotHandler:
             await _send_safe(
                 user_id,
                 self.messages.get_message("unban_message_admin", lang_id=lang_id).format(
-                    unbanned_user=f"{self.users_handler.get_key(0, 'user_name', '', user=ban_user) (ban_user_id)}",
+                    unbanned_user=f"{self.users_handler.get_key(0, 'user_name', '', user=ban_user)} ({ban_user_id})",
                 ),
                 context,
             )
