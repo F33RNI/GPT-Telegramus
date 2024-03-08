@@ -1,0 +1,83 @@
+{
+    "language_name": "🇪🇸 Español",
+    "language_icon": "🇪🇸",
+    "language_select_error": "❌ Error al seleccionar el idioma!\n\n{error_text}",
+    "language_select": "Por favor, selecciona un idioma de interfaz",
+    "language_changed": "🇪🇸 Has selecionado Español\n\nPuedes cambiar el idioma en cualquier momento escribiendo el comando /lang",
+    "start_message": "Hola, 👋 choomba! 👋\n\n📄 GPT-Telegramus version {version}\n\n💜 Autor de GPT-Telegramus: Fern (también conocido como F3RNI)\n💻 Colaboradores:\n🤍 Keepalove (Azarell) (Sprav04ka)\n🤍 Hanssen\n🤍 https://github.com/F33RNI/GPT-Telegramus#-contributors\n\n Página de GitHub: https://github.com/F33RNI/GPT-Telegramus\n\n Apoya el proyecto comprando mi música: https://f3rni.bandcamp.com",
+    "help_message": "📄 /start - Mensaje de bienvenida y versión del bot\n❓ /help - Muestra este mensaje\n↕ /módulo - Cambia el módulo para chatear\n /clear - Limpiar el historial del chat\n /lang - Cambiar el idioma\n🆔 /chatid - Muestra tu chat_id\n\nAhora, para comenzar, envíame cualquier mensaje 💬",
+    "help_message_admin": "Comandos de administrador:\n\n💬 /queue - Muestra la cola de solicitudes\n🔃 /restart [módulo, opcional] - Reiniciar módulo (o todos ellos), recargar configuración, idiomas y comandos\n👤 /users - Muestra la lista de todos los usuarios\n🔨 /ban <id> [razón] - Banea a un usuario por su id con razón (opcional)\n🔓 /unban <id> - Desbanea a un usuario por su id\n📢 /broadcast <mensaje> - Envía un mensaje de texto a todos menos a los usuarios baneados",
+    "empty_request_module_changed": "✅ Tu módulo se ha cambiado a {module_name}\nAhora envíame tu solicitud como mensaje",
+    "media_group_response": "Imágenes generadas para la solicitud \"{request_text}\"",
+    "permissions_deny": "❌ No tienes permiso para este comando!",
+    "queue_overflow": "La cola está llena. Vuelve a intentarlo más tarde ⏳",
+    "queue_empty": "La cola está vacía 🗑",
+    "queue_accepted": "✅ Solicitud al módulo {module_name} agregada a la cola.\nPosición: {queue_size}/{queue_max} ⏳",
+    "response_error": "❌ Error: {error_text}\n\nLimpia el historial y haz otra solicitud o vuelve a intentarlo más tarde",
+    "empty_message": "⚠️ Vacío! Consulta los registros para obtener más detalles",
+    "regenerate_error_not_last": "❌ Error! ¡Solo se puede regenerar la última solicitud!",
+    "regenerate_error_empty": "❌ Error! ¡Solicitud vacía!",
+    "continue_error_not_last": "❌ Error! ¡Solo se puede continuar con la última solicitud!",
+    "stop_error_not_last": "❌ Error! ¡Solo se puede detener la generación de la última solicitud!",
+    "stop_error": "❌ Error! ¡No se puede detener la generación!",
+    "response_link_format": "\n📄 {source_name}: {link}",
+    "users_read_error": "❌ ¡Error al leer o analizar la lista de usuarios!",
+    "users_admin": "¿Baneado? ¿Admin? Idioma Módulo ID Nombre - Solicitudes\n\n{users_data}",
+    "restarting": "🙏 Reinicio en curso...\nEspera por favor",
+    "restarting_done": "{reload_logs}\n✅ El reinicio se ha completado",
+    "chat_cleared": "✅ Historial del chat borrado para {module_name}",
+    "clear_error": "❌ Error al borrar el historial del chat!\n\n{error_text}",
+    "clear_select_module": "Selecciona el módulo cuyo historial de chat deseas borrar,\no ignora este mensaje",
+    "module_select_module": "Tu módulo actual: {current_module}\nSelecciona el módulo para chatear,\no ignora este mensaje",
+    "user_cooldown_error": "❌ Espera {time_formatted} antes de enviar una solicitud al módulo {module_name}!",
+    "hours": "h",
+    "minutes": "m",
+    "seconds": "s",
+    "ban_message_admin": "✅ Usuario baneado: {banned_user}\n\nRazón: {ban_reason}",
+    "ban_no_user_id": "❌ Error! Especifica el user_id",
+    "ban_message_user": "❌ No estás en la lista blanca o has sido baneado!\n\nRazón: {ban_reason}",
+    "ban_reason_default": "Razón no especificada",
+    "unban_message_admin": "✅ Usuario desbaneado: {unbanned_user}",
+    "broadcast_no_message": "❌ No hay mensaje para difundir!",
+    "broadcast": "📢 {message}",
+    "broadcast_initiated": "⏳ Difusión en curso... ¡Espera y no envíes nuevos mensajes!",
+    "broadcast_done": "✅ Difusión completada! Mensajes enviados a usuarios:\n{broadcast_ok_users}",
+    "style_changed": "✅ Estilo de conversación cambiado a {changed_style}",
+    "style_change_error": "❌ Error al cambiar el estilo de conversación!\n\n{error_text}",
+    "style_select": "Tu estilo de conversación: {current_style}\nSelecciona un nuevo estilo de conversación de Bing,\no ignora este mensaje",
+    "style_precise": "📏 Preciso",
+    "style_balanced": "⚖️ Equilibrado",
+    "style_creative": "🎨 Creativo",
+    "button_stop_generating": "🛑 Detener la generación",
+    "button_continue": "⏩ Continuar",
+    "button_regenerate": "🔄 Regenerar",
+    "button_clear": "🧹 Limpiar historial",
+    "button_module": "↕️ Cambiar módulo",
+    "button_style_change": "⚙️ Cambiar estilo",
+    "modules": {
+        "lmao_chatgpt": {
+            "icon": "💬",
+            "name": "ChatGPT (LMAO API)"
+        },
+        "chatgpt": {
+            "icon": "💬",
+            "name": "ChatGPT"
+        },
+        "dalle": {
+            "icon": "🖼",
+            "name": "DALL-E"
+        },
+        "ms_copilot": {
+            "icon": "🔵",
+            "name": "MS Copilot"
+        },
+        "ms_copilot_designer": {
+            "icon": "🎨",
+            "name": "MS Copilot designer"
+        },
+        "gemini": {
+            "icon": "♊",
+            "name": "Gemini"
+        }
+    }
+}

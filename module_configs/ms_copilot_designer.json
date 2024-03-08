@@ -1,0 +1,19 @@
+{
+    "__comment01__": "File for loading and saving cookies. Install cookie editor extension, for example:",
+    "__comment02__": "<https://chrome.google.com/webstore/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm>",
+    "__comment03__": "Go to <https://copilot.microsoft.com/> log into your account, and ask Copilot about something",
+    "__comment04__": "Open the extension, click Export on the bottom right, then Export as JSON",
+    "__comment05__": "(This saves your cookies to clipboard). Create a new .json file and paste cookies into it",
+    "__comment06__": "save file and specify path to it here. File also must have write permissions",
+    "cookies_file": "EdgeGPT_cookies.json",
+
+    "__comment07__": "If needed, specify proxy in http://ip:port format (specify http even if it's https proxy)",
+    "__comment08__": "Use http://username:password@ip:port format in case of proxy with authorization",
+    "proxy": "",
+
+    "__comment09__": "Response timeout (in seconds)",
+    "timeout_seconds": 240,
+
+    "__comment10__": "How often each user can send requests to this module (specify 0 to remove the restriction)",
+    "user_cooldown_seconds": 30
+}

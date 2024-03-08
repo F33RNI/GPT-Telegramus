@@ -1,15 +1,14 @@
-revChatGPT==6.8.6
 git+https://github.com/F33RNI/EdgeGPT@main#egg=EdgeGPT
-bardapi==0.1.38
 git+https://github.com/F33RNI/md2tgmd.git@main
+git+https://github.com/F33RNI/LlM-Api-Open.git@main
+revChatGPT==6.8.6
 python-telegram-bot==20.3
 openai>=0.26.4
 tiktoken>=0.2.0
 OpenAIAuth>=0.3.2
-asyncio>=3.4.3
 requests>=2.28.1
-telegram>=0.0.1
 psutil>=5.9.4
 BingImageCreator>=0.5.0
 langdetect>=1.0.9
 google-generativeai >= 0.3.1
+packaging>=23.2

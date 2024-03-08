@@ -1,0 +1,83 @@
+{
+    "language_name": "🇨🇳 简体中文",
+    "language_icon": "🇨🇳",
+    "language_select_error": "❌ 在选择语言时遇到错误！\n\n{error_text}",
+    "language_select": "请选择一个界面语言",
+    "language_changed": "🇨🇳 你已经选择了简体中文\n\n你可以通过输入 /lang 指令来随时修改语言",
+    "start_message": "你好， 👋 朋友！ 👋\n\n📄 GPT-Telegramus 版本 {version}\n\n💜 GPT-Telegramus 作者： Fern (aka F3RNI)\n💻 贡献者：\n🤍 Keepalove (Azarell) (Sprav04ka)\n🤍 Hanssen\n🤍 https://github.com/F33RNI/GPT-Telegramus#-contributors\n\n😺 GitHub page: https://github.com/F33RNI/GPT-Telegramus\n\n🎵 通过购买我的音乐来支持这个项目： https://f3rni.bandcamp.com",
+    "help_message": "📄 /start - 欢迎信息和机器人版本\n❓ /help - 展示这条消息\n↕ /module - 变更要对话的模块\n🧹 /clear - 清除对话历史\n🌎 /lang - 变更语言\n🆔 /chatid - 显示你的 chat_id\n\n现在，发送给我任何消息以开始 💬",
+    "help_message_admin": "管理员指令：\n\n💬 /queue - 展示请求队列\n🔃 /restart [模块, 可选] - 重新启动模块（或所有模块），重新加载配置，语言和命令\n👤 /users - 展示所有用户列表\n🔨 /ban <id> [reason] - 封禁一个用户，附带理由（可选）\n🔓 /unban <id> - 通过 id 解除对用户的封禁\n📢 /broadcast <message> - 给所有人发送消息，除了被封禁的用户",
+    "empty_request_module_changed": "✅ 你的模块已变更为 {module_name}\n现在以消息来向我发送你的请求",
+    "media_group_response": "已为请求 \"{request_text}\" 生成图片",
+    "permissions_deny": "❌ 你没有使用这个指令的权限！",
+    "queue_overflow": "队列已满，稍后再试 ⏳",
+    "queue_empty": "🗑 队列为空",
+    "queue_accepted": "✅ 向模块 {module_name} 的请求已经添加到队列中。\n位置： {queue_size}/{queue_max} ⏳",
+    "response_error": "❌ 错误： {error_text}\n\n清除对话历史并稍后再重试",
+    "empty_message": "⚠️ 消息为空！查看日志以获取详情",
+    "regenerate_error_not_last": "❌ 错误！只能重新生成最后一个请求！",
+    "regenerate_error_empty": "❌ 错误！请求为空！",
+    "continue_error_not_last": "❌ 错误！只能继续最后一个请求！",
+    "stop_error_not_last": "❌ 错误！只能放弃最后一个请求！",
+    "stop_error": "❌ 错误！无法停止生成！",
+    "response_link_format": "\n📄 {source_name}: {link}",
+    "users_read_error": "❌ 读取或解析用户列表时出错！",
+    "users_admin": "封禁? 管理? 语言 模块 ID 名字- 请求数\n\n{users_data}",
+    "restarting": "🙏 正在重启中...\n请稍等",
+    "restarting_done": "{reload_logs}\n✅ 重启已完成",
+    "chat_cleared": "✅ 已为 {module_name} 清除对话历史",
+    "clear_error": "❌ 在清除历史时遇到错误！\n\n{error_text}",
+    "clear_select_module": "选择你想清理对话历史的模块\n或忽略这条消息",
+    "module_select_module": "你当前选择的模块：{current_module}\n选择想要对话的模块，\n或忽略这条消息",
+    "user_cooldown_error": "❌ 在请求 {time_formatted} 模组之前，请等待 {module_name}!",
+    "hours": "h",
+    "minutes": "m",
+    "seconds": "s",
+    "ban_message_admin": "✅ 已封禁用户：{banned_user}\n\n理由：{ban_reason}",
+    "ban_no_user_id": "❌ 错误！请指定 user_id",
+    "ban_message_user": "❌ 你不在白名单中或你已被封禁！\n\n理由：{ban_reason}",
+    "ban_reason_default": "理由未指定",
+    "unban_message_admin": "✅ 已解除封禁用户 {unbanned_user}",
+    "broadcast_no_message": "❌ 没有要广播的消息！",
+    "broadcast": "📢 {message}",
+    "broadcast_initiated": "⏳ 正在广播中... 请稍等，并不要发送新的消息！",
+    "broadcast_done": "✅ 广播完成！消息共发送用户数：\n{broadcast_ok_users}",
+    "style_changed": "✅ 对话风格变更至 {changed_style}",
+    "style_change_error": "❌ 变更风格时遇到错误！\n\n{error_text}",
+    "style_select": "你选择的聊天风格：{current_style}\n为 Bing 选择新的聊天风格，\n或忽略这条消息",
+    "style_precise": "📏 精确",
+    "style_balanced": "⚖️ 平衡",
+    "style_creative": "🎨 创意",
+    "button_stop_generating": "🛑 停止生成",
+    "button_continue": "⏩ 继续",
+    "button_regenerate": "🔄 重新生成",
+    "button_clear": "🧹 清除历史",
+    "button_module": "↕️ 变更模组",
+    "button_style_change": "⚙️ 变更风格",
+    "modules": {
+        "lmao_chatgpt": {
+            "icon": "💬",
+            "name": "ChatGPT (LMAO API)"
+        },
+        "chatgpt": {
+            "icon": "💬",
+            "name": "ChatGPT"
+        },
+        "dalle": {
+            "icon": "🖼",
+            "name": "DALL-E"
+        },
+        "ms_copilot": {
+            "icon": "🔵",
+            "name": "MS Copilot"
+        },
+        "ms_copilot_designer": {
+            "icon": "🎨",
+            "name": "MS Copilot designer"
+        },
+        "gemini": {
+            "icon": "♊",
+            "name": "Gemini"
+        }
+    }
+}

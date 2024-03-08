@@ -1,5 +1,5 @@
 """
-Copyright (C) 2023-2024 Fern Lane, Hanssen
+Copyright (C) 2023-2024 Fern Lane
 
 This file is part of the GPT-Telegramus distribution
 (see <https://github.com/F33RNI/GPT-Telegramus>)
@@ -18,11 +18,14 @@ You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-import doctest
-import bot_handler
-import unittest
+from packaging import version
+
+__version__ = "5.0.0"
 
 
-def load_tests(loader, tests, ignore):
-    tests.addTests(doctest.DocTestSuite(bot_handler))
-    return tests
+def version_major() -> int:
+    """
+    Returns:
+        int: major version
+    """
+    return version.parse(__version__).major

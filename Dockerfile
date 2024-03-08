@@ -31,7 +31,7 @@ COPY --link --from=python:3.10-slim /lib6[4] /lib64
 COPY --link --from=build /app/dist/telegramus /app/telegramus
 
 WORKDIR /app
-COPY config.json messages.json /app/
+COPY config.json module_configs/ langs/ /app/
 
 # Run main script
 CMD ["telegramus"]

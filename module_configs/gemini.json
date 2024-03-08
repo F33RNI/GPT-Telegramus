@@ -1,0 +1,23 @@
+{
+    "__comment01__": "Api key from <https://makersuite.google.com/app/apikey>",
+    "api_key": "",
+
+    "__comment02__": "AI config. See <https://ai.google.dev/api/python/google/generativeai/GenerationConfig> for more",
+    "temperature": 0.9,
+    "top_p": 1,
+    "top_k": 1,
+    "max_output_tokens": 2048,
+
+    "__comment03__": "Minimum interval (seconds, can be float) between each Gemini request",
+    "cooldown_seconds": 1,
+
+    "__comment04__": "If needed, specify proxy in http://ip:port format (specify http even if it's https proxy)",
+    "__comment05__": "Use http://username:password@ip:port format in case of proxy with authorization",
+    "proxy": "",
+
+    "__comment06__": "Response timeout (in seconds)",
+    "timeout_seconds": 120,
+
+    "__comment07__": "How often each user can send requests to this module (specify 0 to remove the restriction)",
+    "user_cooldown_seconds": 0
+}

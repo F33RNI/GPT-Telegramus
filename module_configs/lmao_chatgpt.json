@@ -1,0 +1,61 @@
+{
+    "__comment01__": "Original config: <https://github.com/F33RNI/LlM-Api-Open/blob/main/config.json>",
+
+    "__comment02__": "File for loading and saving cookies. Install cookie editor extension, for example:",
+    "__comment03__": "https://chrome.google.com/webstore/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm",
+    "__comment04__": "Go to https://chat.openai.com/ and ask ChatGPT about something",
+    "__comment05__": "Open the extension, click Export on the bottom right, then Export as JSON",
+    "__comment06__": "(This saves your cookies to clipboard). Create a new .json file and paste cookies into it",
+    "__comment07__": "save file and specify path to it here. File also must have write permissions",
+    "cookies_file": "ChatGPT_cookies.json",
+
+    "__comment08__": "Set to true to enable proxy",
+    "proxy_enabled": false,
+
+    "__comment09__": "Proxy host (ip) as string",
+    "proxy_host": "123.45.67.89",
+
+    "__comment10__": "Proxy port as integer",
+    "proxy_port": 8080,
+
+    "__comment11__": "Proxy username or empty",
+    "proxy_user": "",
+
+    "__comment12__": "Proxy password or empty",
+    "proxy_password": "",
+    
+    "__comment13__": "ChatGPT Web page address",
+    "base_url": "https://chat.openai.com/",
+
+    "__comment14__": "Start browser in headless mode (without GUI)",
+    "headless": true,
+
+    "__comment15__": "Chrome arguments",
+    "chrome_options": [
+        "--disable-infobars",
+        "--ignore-ssl-errors=yes",
+        "--ignore-certificate-errors",
+        "--disable-default-apps",
+        "--disable-notifications",
+        "--disable-popup-window",
+        "--no-sandbox",
+        "--auto-open-devtools-for-tabs",
+        "--window-size=1920x960"
+    ],
+
+    "__comment16__": "--headless= argument. Leave empty to use default value",
+    "headless_mode": "old",
+
+    "__comment17__": "Time (s) for automatically refresh page if no new prompts or responses (to update session)",
+    "__comment18__": "Set to 0 to disable auto-refresher",
+    "auto_refresh_interval": 120,
+
+    "__comment19__": "User agent to prevent detection of headless chrome. Leave empty to disable it",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
+
+    "__comment20__": "Response timeout (in seconds)",
+    "timeout_seconds": 120,
+
+    "__comment21__": "How often each user can send requests to this module (specify 0 to remove the restriction)",
+    "user_cooldown_seconds": 0
+}
