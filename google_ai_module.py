@@ -137,7 +137,7 @@ class GoogleAIModule:
         # Check if we are initialized
         if self._model is None:
             logging.error("Google AI module not initialized")
-            request_response.response = self.messages.get_message(
+            request_response.response_text = self.messages.get_message(
                 "response_error", user_id=request_response.user_id
             ).format(error_text="Google AI module not initialized")
             request_response.error = True
