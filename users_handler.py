@@ -310,7 +310,7 @@ class UsersHandler:
             request_last_image = os.path.join(user_images_dir, str(id_))
 
             # Save image
-            if request_last_image is not None:
+            if image_bytes is not None:
                 logging.info(f"Saving user's last request image to {request_last_image}")
                 with open(request_last_image, "wb+") as file:
                     file.write(image_bytes)
