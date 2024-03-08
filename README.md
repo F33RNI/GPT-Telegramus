@@ -1,7 +1,7 @@
 # 🤖 GPT-Telegramus
 
-| ![GPT-Telegramus logo](Logo.png) | <h3>The best Telegram bot for ChatGPT, EdgeGPT (aka Bing AI), DALL-E, Bing Image generator, Bard and Gemini with stream writing, requests with images (for Bard and Gemini only), multiple languages, admin control, automatic proxy searcher, data logging and more!</h3> |
-| -------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| ![GPT-Telegramus logo](logo.png) | <h3>The best Telegram bot for ChatGPT, Microsoft Copilot (aka Bing AI, aka Sidney, aka EdgeGPT), DALL-E, Bing Image generator, Bard and Gemini with stream writing, requests with images (for Bard and Gemini only), multiple languages, admin control, automatic proxy searcher, data logging and more!</h3> |
+| -------------------------------- | :-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 
 <div style="width:100%;text-align:center;">
     <p align="center">
@@ -17,7 +17,7 @@
     </p>
 </div>
 
-![Banner]( Banner.png)
+![Project banner](banner.png)
 
 ----------
 
