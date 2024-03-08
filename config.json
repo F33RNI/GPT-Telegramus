@@ -19,6 +19,7 @@
     "files": {
         "module_configs_dir": "module_configs",
         "users_database": "users.json",
+        "user_images_dir": "user_images",
         "conversations_dir": "conversations",
         "data_collecting_dir": "data",
         "messages_dir": "langs"

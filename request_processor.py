@@ -18,7 +18,6 @@ You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-import base64
 import logging
 import multiprocessing
 from typing import Dict
@@ -93,13 +92,9 @@ def request_processor(
         # Save request data (for regenerate function)
         users_handler_.set_key(user_id, "request_last", request_.request_text)
         if request_.request_image:
-            users_handler_.set_key(
-                user_id,
-                "request_last_image",
-                base64.urlsafe_b64encode(request_.request_image).decode(),
-            )
+            users_handler_.save_request_image(user_id, request_.request_image)
         else:
-            users_handler_.set_key(user_id, "request_last_image", None)
+            users_handler_.save_request_image(user_id, None)
         users_handler_.set_key(user_id, "reply_message_id_last", request_.reply_message_id)
 
         # Update container in the queue

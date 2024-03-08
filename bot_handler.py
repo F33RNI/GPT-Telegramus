@@ -21,7 +21,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 import asyncio
-import base64
 from ctypes import c_bool
 import datetime
 import functools
@@ -342,9 +341,7 @@ class BotHandler:
 
                 # Get user's latest request
                 request_text = self.users_handler.get_key(0, "request_last", user=user)
-                request_image = self.users_handler.get_key(0, "request_last_image", user=user)
-                if request_image:
-                    request_image = base64.urlsafe_b64decode(request_image.encode())
+                request_image = self.users_handler.read_request_image(0, user=user)
 
                 # Check for empty request
                 if not request_text:

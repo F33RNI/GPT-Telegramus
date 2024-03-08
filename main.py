@@ -139,6 +139,16 @@ def main():
         # Load config
         config = multiprocessing.Manager().dict(load_and_parse_config(args.config))
 
+        # Create conversations and user images dirs (it's not necessary but just in case)
+        conversations_dir = config.get("files").get("conversations_dir")
+        if not os.path.exists(conversations_dir):
+            logging.info(f"Creating {conversations_dir} directory")
+            os.makedirs(conversations_dir)
+        user_images_dir = config.get("files").get("user_images_dir")
+        if not os.path.exists(user_images_dir):
+            logging.info(f"Creating {user_images_dir} directory")
+            os.makedirs(user_images_dir)
+
         # Initialize users and messages handlers
         users_handler_ = users_handler.UsersHandler(config)
         messages_ = messages.Messages(users_handler_)

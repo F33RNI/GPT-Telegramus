@@ -5,6 +5,7 @@ logs/
 chats/
 users.json
 conversations/
+user_images
 EdgeGPT_cookies.json
 Bard_cookies.json
 ChatGPT_cookies.json

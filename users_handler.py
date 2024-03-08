@@ -246,6 +246,101 @@ class UsersHandler:
         except Exception as e:
             logging.error(f"Error setting value of key {key} for user {id_}", exc_info=e)
 
+    def read_request_image(self, id_: int, user: Dict or None = None) -> bytes or None:
+        """Tries to load user's last request image
+
+        Args:
+            id_ (int): ID of user
+            user (Dict or None, optional): None to load from file, or Dict to use pre-loaded one. Defaults to None
+
+        Returns:
+            bytes or None: image as bytes or None if not exists / error
+        """
+        # Find user
+        if user is None:
+            user = self.get_user(id_)
+        if user is None:
+            return None
+
+        # Try to get image path
+        request_last_image = user.get("request_last_image")
+
+        # No image
+        if request_last_image is None or not os.path.exists(request_last_image):
+            return None
+
+        # Read
+        try:
+            logging.info(f"Reading user's last request image from {request_last_image}")
+            image_bytes = None
+            with open(request_last_image, "rb") as file:
+                image_bytes = file.read()
+            return image_bytes
+        except Exception as e:
+            logging.error("Error retrieving user's last request image", exc_info=e)
+
+        return None
+
+    def save_request_image(self, id_: int, image_bytes: bytes or None) -> None:
+        """Saves user's last request image into file and it's path into users database
+
+        Args:
+            id_ (int): ID of user
+            image_bytes (bytes or None): image to save as bytes or None to delete existing one
+        """
+        try:
+            # Read database
+            database = self.read_database()
+            if database is None:
+                return
+
+            # Find user
+            user_index = -1
+            for i, user_ in enumerate(database):
+                if user_["user_id"] == id_:
+                    user_index = i
+                    break
+
+            # Create directories if not exists
+            user_images_dir = self.config.get("files").get("user_images_dir")
+            if not os.path.exists(user_images_dir):
+                logging.info(f"Creating {user_images_dir} directory")
+                os.makedirs(user_images_dir)
+
+            request_last_image = os.path.join(user_images_dir, str(id_))
+
+            # Save image
+            if request_last_image is not None:
+                logging.info(f"Saving user's last request image to {request_last_image}")
+                with open(request_last_image, "wb+") as file:
+                    file.write(image_bytes)
+
+            # Delete if exists
+            else:
+                if os.path.exists(request_last_image):
+                    logging.info(f"Deleting user's last request image {request_last_image}")
+                    os.remove(request_last_image)
+                request_last_image = None
+
+            # User exists
+            if user_index != -1:
+                # Set the key
+                database[user_index]["request_last_image"] = request_last_image
+
+                # Save database
+                database_file = self.config.get("files").get("users_database")
+                logging.info(f"Saving users database to {database_file}")
+                with self._lock:
+                    with open(database_file, "w+", encoding="utf-8") as file_:
+                        json.dump(database, file_, ensure_ascii=False, indent=4)
+
+            # No user -> create a new one
+            else:
+                self.create_user(id_, key_values=[("request_last_image", request_last_image)])
+
+        except Exception as e:
+            logging.error("Error saving user's last request image", exc_info=e)
+
     def create_user(self, id_: int, key_values: List[Tuple[str, Any]] or None = None) -> Dict or None:
         """Creates a new user with default data and saves it to the database
 
