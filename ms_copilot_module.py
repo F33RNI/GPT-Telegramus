@@ -172,6 +172,11 @@ class MSCopilotModule:
                         if messages_ is None or len(messages_) == 0:
                             continue
                         for message in messages_:
+                            # Check author
+                            author = message.get("author")
+                            if author is None or author != "bot":
+                                continue
+
                             # Text response
                             text = message.get("text")
                             if text:
