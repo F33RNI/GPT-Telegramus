@@ -158,7 +158,22 @@ See **🐧 Running as service on linux**, **🍓 Running on Raspberry Pi (ARM)**
 
 ## 🍓 Running on Raspberry Pi (ARM)
 
-> Just follow the `🐧 Running as service on linux` guide
+1. Install Python 3.11 or later *(not tested)* if not installed
+
+   1. ```shell
+      sudo apt-get update
+      sudo apt-get install -y build-essential tk-dev libncurses5-dev libncursesw5-dev libreadline6-dev libdb5.3-dev libgdbm-dev libsqlite3-dev libssl-dev libbz2-dev libexpat1-dev liblzma-dev zlib1g-dev libffi-dev
+      wget https://www.python.org/ftp/python/3.11.8/Python-3.11.8.tgz
+      sudo tar zxf Python-3.11.8.tgz
+      cd Python-3.11.8
+      sudo ./configure --enable-optimizations
+      sudo make -j 4
+      sudo make altinstall
+      ```
+
+   2. Check version by typing `python3.11 -V`. After this, you should use `python3.11` command instead of `python` or you can add it to the `bashrc` by typing `echo "alias python=/usr/local/bin/python3.11" >> ~/.bashrc`
+
+2. Follow the `🐧 Running as service on linux` guide
 
 ----------
 
@@ -216,6 +231,7 @@ See **🐧 Running as service on linux**, **🍓 Running on Raspberry Pi (ARM)**
 - 🇧🇾 Беларуская
 - 🇺🇦 Українська
 - فارسی 🇮🇷
+- 🇪🇸 Español
 
 You can add **a new language**. For that:
 
