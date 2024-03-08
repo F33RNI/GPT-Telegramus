@@ -25,7 +25,7 @@ import os
 import multiprocessing
 import ctypes
 import logging
-from typing import Dict, Type
+from typing import Dict
 
 # pylint: disable=no-name-in-module
 from google.generativeai.client import _ClientManager
@@ -46,15 +46,15 @@ class GoogleAIModule:
     def __init__(
         self,
         config: Dict,
-        messages_: Type[messages.Messages],
-        users_handler_: Type[users_handler.UsersHandler],
+        messages_: messages.Messages,
+        users_handler_: users_handler.UsersHandler,
     ) -> None:
         """Initializes class variables (must be done in main process)
 
         Args:
             config (Dict): global config
-            messages_ (Type[messages.Messages]): initialized messages handler
-            users_handler_ (Type[users_handler.UsersHandler]): initialized users handler
+            messages_ (messages.Messages): initialized messages handler
+            users_handler_ (users_handler.UsersHandler): initialized users handler
         """
         self.config = config
         self.messages = messages_
