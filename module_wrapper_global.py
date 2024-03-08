@@ -27,7 +27,10 @@ from typing import Dict
 
 from lmao.module_wrapper import STATUS_NOT_INITIALIZED, STATUS_IDLE, STATUS_BUSY, STATUS_FAILED
 from lmao.module_wrapper import MODULES as LMAO_MODULES
+
 from google_ai_module import GoogleAIModule
+from ms_copilot_module import MSCopilotModule
+from ms_copilot_designer_module import MSCopilotDesignerModule
 
 import messages
 import users_handler
@@ -163,6 +166,18 @@ class ModuleWrapperGlobal:
         elif name == "gemini":
             self.module = GoogleAIModule(config, self.messages, self.users_handler)
 
+        ##############
+        # MS Copilot #
+        ##############
+        elif name == "ms_copilot":
+            self.module = MSCopilotModule(config, self.messages, self.users_handler)
+
+        #######################
+        # MS Copilot Designer #
+        #######################
+        elif name == "ms_copilot_designer":
+            self.module = MSCopilotDesignerModule(config, self.messages, self.users_handler)
+
     def process_request(self, request_response: request_response_container.RequestResponseContainer) -> None:
         """Processes request
         This is called from separate queue process (non main)
@@ -269,6 +284,21 @@ class ModuleWrapperGlobal:
             self.module.initialize()
             self.module.process_request(request_response)
 
+        ##############
+        # MS Copilot #
+        ##############
+        elif self.name == "ms_copilot":
+            self.module.initialize()
+            self.module.process_request(request_response)
+            self.module.exit()
+
+        #######################
+        # MS Copilot Designer #
+        #######################
+        elif self.name == "ms_copilot_designer":
+            self.module.initialize()
+            self.module.process_request(request_response)
+
         # Done
         logging.info(f"{self.name} request processing finished")
 
@@ -336,6 +366,11 @@ class ModuleWrapperGlobal:
             with self.module.cancel_requested.get_lock():
                 self.module.cancel_requested.value = True
 
+        # MS Copilot
+        elif self.name == "ms_copilot":
+            with self.module.cancel_requested.get_lock():
+                self.module.cancel_requested.value = True
+
     def delete_conversation(self, user_id: int) -> None:
         """Deletes module's conversation history
         This is called from main process and it MUST finish in a reasonable time
@@ -391,6 +426,10 @@ class ModuleWrapperGlobal:
 
         # Gemini
         elif self.name == "gemini":
+            self.module.clear_conversation_for_user(user_id)
+
+        # MS Copilot
+        elif self.name == "ms_copilot":
             self.module.clear_conversation_for_user(user_id)
 
     def on_exit(self) -> None:

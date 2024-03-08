@@ -7,12 +7,16 @@ users.json
 conversations/
 user_images
 EdgeGPT_cookies.json
+MSCopilot_cookies.json
 Bard_cookies.json
 ChatGPT_cookies.json
 data/
 Banner.psd
 Banner.xcf
 Banner.tif
+banner.psd
+banner.xcf
+banner.tif
 UsersRecover.py
 venv
 .venv

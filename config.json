@@ -3,11 +3,13 @@
     "config_version": 5,
 
     "__comment02__": "General config of enabled modules",
-    "__comment03__": "Available modules: lmao_chatgpt, chatgpt, dalle, ms_copilot, ms_copilot_designer, gemini",
+    "__comment03__": "Available modules: lmao_chatgpt, ms_copilot, ms_copilot_designer, gemini",
     "modules": {
         "__comment01__": "Enabled modules",
         "enabled": [
             "lmao_chatgpt",
+            "ms_copilot",
+            "ms_copilot_designer",
             "gemini"
         ],
 
