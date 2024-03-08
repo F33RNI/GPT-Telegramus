@@ -126,10 +126,13 @@ class GoogleAIModule:
             raise e
 
     def process_request(self, request_response: RequestResponseContainer) -> None:
-        """
-        Processes request to Google AI
-        :param request_response: RequestResponseContainer object
-        :return:
+        """Processes request to Google AI
+
+        Args:
+            request_response (RequestResponseContainer): container from the queue
+
+        Raises:
+            Exception: in case of error
         """
         conversations_dir = self.config.get("files").get("conversations_dir")
         conversation_id = self.users_handler.get_key(request_response.user_id, f"{_NAME}_conversation_id")
@@ -183,7 +186,7 @@ class GoogleAIModule:
                 conversation = _load_conversation(conversations_dir, conversation_id) or []
                 # Generate new random conversation ID
                 if conversation_id is None:
-                    conversation_id = str(uuid.uuid4())
+                    conversation_id = f"{_NAME}_{uuid.uuid4()}"
 
                 conversation.append(
                     Content.to_json(Content(role="user", parts=[Part(text=request_response.request_text)]))
@@ -301,7 +304,7 @@ def _save_conversation(conversations_dir, conversation_id, conversation) -> bool
         # Save as json file
         conversation_file = os.path.join(conversations_dir, conversation_id + ".json")
         with open(conversation_file, "w+", encoding="utf-8") as json_file:
-            json.dump(conversation, json_file, indent=4)
+            json.dump(conversation, json_file, indent=4, ensure_ascii=False)
 
     except Exception as e:
         logging.error(f"Error saving conversation {conversation_id}", exc_info=e)
