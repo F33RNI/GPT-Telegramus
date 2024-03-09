@@ -39,7 +39,7 @@ PROCESSING_STATE_NAMES = ["Waiting", "Starting", "Active", "Done", "Timed out", 
 class RequestResponseContainer:
     def __init__(
         self,
-        user_id: str,
+        user_id: int,
         reply_message_id: int,
         module_name: str,
         request_text: str or None = None,
@@ -54,49 +54,23 @@ class RequestResponseContainer:
         reply_markup: InlineKeyboardMarkup or None = None,
         pid: int = 0,
     ) -> None:
-        """TODO: Universal request-response wrapper
+        """_summary_
 
         Args:
-            user (str): ID of user
-            reply_message_id (int): ID of message reply to
-            processing_state (str, optional): PROCESSING_STATE_.... Defaults to PROCESSING_STATE_IN_QUEUE
-            message_id (int, optional): current message ID (for editing aka live replying). Defaults to -1
-            request (str, optional): text request. Defaults to ""
-            response (str, optional): text response. Defaults to ""
-            response_images (type, optional): Images in the responses.
-                Defaults to None.
-            request_type (type, optional): REQUEST_TYPE_CHATGPT / REQUEST_TYPE_DALLE / ...
-                Defaults to REQUEST_TYPE_CHATGPT.
-            request_timestamp (str, optional): Timestamp of request (for data collecting).
-            FORMATTED
-                Defaults to "".
-            response_timestamp (str, optional): Timestamp of response (for data collecting).
-                Defaults to "".
-            response_send_timestamp_last (int, optional): Timestamp of last response (for editing aka live replying).
-                Defaults to 0.
-            reply_markup (type, optional): Message buttons.
-                Defaults to None.
-            pid (int, optional): Current multiprocessing process PID for handling this container.
-                Defaults to 0.
-            image_url (type, optional): URL of the photo inside the message.
-                Defaults to None.
-
-         logging.info("Downloading user image")
-                image = requests.get(request_response.image_url, timeout=120)
-
-                logging.info("Asking Gemini...")
-                response = self._vision_model.generate_content(
-                    [
-                        Part(
-                            inline_data={
-                                "mime_type": "image/jpeg",
-                                "data": image.content,
-                            }
-                        ),
-                        Part(text=request_response.request),
-                    ],
-                    stream=True,
-                )
+            user_id (int): ID of the user
+            reply_message_id (int): ID of user's message (to reply on)
+            module_name (str): name of requested module ("lmao_chatgpt", "gemini", etc.)
+            request_text (str or None, optional): user's request text
+            request_image (bytes or None, optional): user's request image as bytes
+            request_timestamp (str or None, optional): formatted time of the request
+            response_text (str or None, optional): module's response text
+            response_images (List[str] or None, optional): links to images of module's response
+            response_timestamp (str or None, optional): formatted time of final response
+            response_send_timestamp_last (float, optional): timestamp of last response (for editing aka live replying)
+            processing_state (int, optional): state of container. Defaults to PROCESSING_STATE_IN_QUEUE
+            message_id (int, optional): id or response message (after sending it, for editing)
+            reply_markup (InlineKeyboardMarkup or None, optional): message buttons
+            pid (int, optional): PID of module's process
         """
         # Required args
         self.user_id = user_id

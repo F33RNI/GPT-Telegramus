@@ -177,6 +177,10 @@ class MSCopilotModule:
                             if author is None or author != "bot":
                                 continue
 
+                            # Ignore internal messages
+                            if message.get("messageType") is not None:
+                                continue
+
                             # Text response
                             text = message.get("text")
                             if text:
