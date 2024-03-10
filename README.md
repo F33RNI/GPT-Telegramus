@@ -1,7 +1,7 @@
 # 🤖 GPT-Telegramus v5
 
-| ![GPT-Telegramus logo](logo.png) | <h3>The best Telegram bot for ChatGPT, Microsoft Copilot (aka Bing AI, aka Sidney, aka EdgeGPT), Microsoft Copilot Designer (aka BingImageCreator) and Gemini with stream writing, requests with images (currently, for Gemini only), multiple languages, admin control, data logging and more!</h3> |
-| -------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| ![GPT-Telegramus logo](logo.png) | <h3>The best free Telegram bot for ChatGPT, Microsoft Copilot (aka Bing AI, aka Sidney, aka EdgeGPT), Microsoft Copilot Designer (aka BingImageCreator) and Gemini with stream writing, requests with images (currently, for Gemini only), multiple languages, admin control, data logging and more!</h3> |
+| -------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 
 <div style="width:100%;text-align:center;">
     <p align="center">
@@ -21,7 +21,7 @@
 
 ----------
 
-## 🚧 GPT-Telegramus is under heavy development
+## 🚧 GPT-Telegramus is under development
 
 > 😔 Currently, GPT-Telegramus doesn't have paid ChatGPT and DALL-E support
 >
