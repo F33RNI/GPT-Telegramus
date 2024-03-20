@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from packaging import version
 
-__version__ = "5.0.2"
+__version__ = "5.0.3"
 
 
 def version_major() -> int:
